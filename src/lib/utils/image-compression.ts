@@ -25,3 +25,28 @@ function renameExtension(name: string, ext: string) {
   const base = dot === -1 ? name : name.slice(0, dot);
   return `${base}.${ext}`;
 }
+
+/**
+ * Read intrinsic pixel dimensions of an image file without mounting it in
+ * the DOM. We persist these in `incident_media` so the gallery can reserve
+ * space with `aspect-ratio` and avoid layout shift when thumbnails load.
+ *
+ * Uses `createImageBitmap` (widely supported in modern browsers) and
+ * gracefully returns `null` dimensions on unsupported files instead of
+ * throwing, since photo metadata is a nice-to-have, not a blocker.
+ */
+export async function readImageDimensions(
+  file: File,
+): Promise<{ width: number | null; height: number | null }> {
+  if (typeof createImageBitmap !== 'function' || !file.type.startsWith('image/')) {
+    return { width: null, height: null };
+  }
+  try {
+    const bitmap = await createImageBitmap(file);
+    const dims = { width: bitmap.width, height: bitmap.height };
+    bitmap.close?.();
+    return dims;
+  } catch {
+    return { width: null, height: null };
+  }
+}

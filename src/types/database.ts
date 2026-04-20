@@ -122,6 +122,7 @@ export type Database = {
           expires_at: string | null
           id: string
           location: unknown
+          media_count: number
           score: number
           severity: Database["public"]["Enums"]["severity_level"]
           status: Database["public"]["Enums"]["incident_status"]
@@ -139,6 +140,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           location: unknown
+          media_count?: number
           score?: number
           severity?: Database["public"]["Enums"]["severity_level"]
           status?: Database["public"]["Enums"]["incident_status"]
@@ -156,6 +158,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           location?: unknown
+          media_count?: number
           score?: number
           severity?: Database["public"]["Enums"]["severity_level"]
           status?: Database["public"]["Enums"]["incident_status"]
@@ -414,6 +417,7 @@ export type Database = {
           expires_at: string | null
           id: string
           location: unknown
+          media_count: number
           score: number
           severity: Database["public"]["Enums"]["severity_level"]
           status: Database["public"]["Enums"]["incident_status"]
@@ -581,6 +585,7 @@ export type Database = {
           id: string
           lat: number
           lng: number
+          media_count: number
           score: number
           severity: Database["public"]["Enums"]["severity_level"]
           status: Database["public"]["Enums"]["incident_status"]
@@ -613,6 +618,7 @@ export type Database = {
           id: string
           lat: number
           lng: number
+          media_count: number
           score: number
           severity: Database["public"]["Enums"]["severity_level"]
           status: Database["public"]["Enums"]["incident_status"]

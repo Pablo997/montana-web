@@ -15,6 +15,7 @@ type IncidentRow = {
   upvotes: number;
   downvotes: number;
   score: number;
+  media_count?: number | null;
   created_at: string;
   updated_at: string;
   expires_at: string | null;
@@ -78,6 +79,7 @@ export function rowToIncident(row: IncidentRow): Incident {
     upvotes: row.upvotes,
     downvotes: row.downvotes,
     score: row.score,
+    mediaCount: row.media_count ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     expiresAt: row.expires_at,

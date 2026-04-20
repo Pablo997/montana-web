@@ -31,6 +31,8 @@ export interface Incident {
   upvotes: number;
   downvotes: number;
   score: number;
+  /** Number of photos attached; maintained by a trigger on `incident_media`. */
+  mediaCount: number;
   createdAt: string;
   updatedAt: string;
   expiresAt: string | null;

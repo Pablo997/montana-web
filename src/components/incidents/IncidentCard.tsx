@@ -1,4 +1,5 @@
 import { INCIDENT_TYPE_LABELS, SEVERITY_LABELS, type Incident } from '@/types/incident';
+import { IncidentMediaGrid } from './IncidentMediaGrid';
 import { VoteButtons } from './VoteButtons';
 
 interface Props {
@@ -26,6 +27,10 @@ export function IncidentCard({ incident }: Props) {
 
       {incident.description ? (
         <p className="incident-card__description">{incident.description}</p>
+      ) : null}
+
+      {incident.mediaCount > 0 ? (
+        <IncidentMediaGrid incidentId={incident.id} expectedCount={incident.mediaCount} />
       ) : null}
 
       <footer className="incident-card__footer">

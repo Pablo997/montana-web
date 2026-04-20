@@ -594,6 +594,58 @@ body {
   gap: 0.5rem;
 }
 
+/* ------------------------------ Media grid ------------------------------- */
+.incident-media {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.incident-media__item {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  aspect-ratio: 1 / 1;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.incident-media__item:hover,
+.incident-media__item:focus-visible {
+  transform: scale(1.02);
+  border-color: var(--color-brand);
+}
+
+.incident-media__image {
+  object-fit: cover;
+}
+
+.incident-media__placeholder {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: incident-media-shimmer 1.2s linear infinite;
+}
+
+@keyframes incident-media-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.incident-media__error {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
 /* --------------------------------- Badge --------------------------------- */
 .badge {
   display: inline-flex;

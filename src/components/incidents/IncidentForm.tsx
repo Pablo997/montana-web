@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createIncident } from '@/lib/incidents/api';
+import { createIncident, uploadIncidentMedia } from '@/lib/incidents/api';
 import { CreateIncidentSchema, type CreateIncidentInput } from '@/lib/incidents/schemas';
 import { compressImage } from '@/lib/utils/image-compression';
 import { offlineQueue } from '@/lib/utils/offline-queue';
@@ -41,6 +41,7 @@ export function IncidentForm({
   const [isPending, startTransition] = useTransition();
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoAccuracy, setGeoAccuracy] = useState<number | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const handleFiles = async (list: FileList | null) => {
     if (!list) return;
@@ -104,8 +105,42 @@ export function IncidentForm({
           return;
         }
         const created = await createIncident(payload);
-        // TODO: upload photos to storage under <user_id>/<incident_id>/
-        onCreated?.(created);
+        let uploadedCount = 0;
+
+        // Photos are uploaded after the row exists so we can scope them to
+        // `<user_id>/<incident_id>/…` (required by the Storage RLS policy)
+        // and insert matching `incident_media` rows. Failures here do not
+        // roll back the incident itself — a text-only report is still
+        // valuable in the field.
+        if (photos.length > 0) {
+          setUploadStatus(`Uploading 0/${photos.length} photo${photos.length > 1 ? 's' : ''}…`);
+          let done = 0;
+          const results = await Promise.allSettled(
+            photos.map((file) =>
+              uploadIncidentMedia(created, file).finally(() => {
+                done += 1;
+                setUploadStatus(`Uploading ${done}/${photos.length}…`);
+              }),
+            ),
+          );
+          uploadedCount = results.filter((r) => r.status === 'fulfilled').length;
+          const failed = results.length - uploadedCount;
+          if (failed > 0) {
+            console.error(
+              'Some photos failed to upload',
+              results.filter((r) => r.status === 'rejected'),
+            );
+            setError(
+              `Incident saved, but ${failed} photo${failed > 1 ? 's' : ''} failed to upload.`,
+            );
+          }
+          setUploadStatus(null);
+        }
+
+        // Optimistic media counter. The `on_incident_media_change` trigger
+        // will also bump it server-side and realtime will reconcile, but
+        // updating locally avoids a round-trip flash in the details panel.
+        onCreated?.({ ...created, mediaCount: uploadedCount });
       } catch (err) {
         console.error(err);
         offlineQueue.enqueue(payload);
@@ -204,7 +239,7 @@ export function IncidentForm({
         />
         {photos.length > 0 ? (
           <small className="incident-form__hint">
-            {photos.length} photo{photos.length > 1 ? 's' : ''} ready (upload coming soon).
+            {uploadStatus ?? `${photos.length} photo${photos.length > 1 ? 's' : ''} ready.`}
           </small>
         ) : null}
       </label>

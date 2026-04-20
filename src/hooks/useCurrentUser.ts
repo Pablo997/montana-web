@@ -12,9 +12,14 @@ interface CurrentUser {
 /**
  * Reactive source of truth for the logged-in user on the client.
  *
- * We combine a one-shot `getUser()` on mount with `onAuthStateChange` so
- * the hook reflects live sign-in / sign-out events (e.g. after the magic
- * link callback) without requiring a full page reload.
+ * Uses `getSession()` (reads from localStorage, no network round-trip)
+ * instead of `getUser()` (hits `/auth/v1/user` to revalidate the JWT).
+ * RLS on the server is the authoritative gate, so for *UI decisions*
+ * like "show vote buttons / hide for the author" a local read is fine
+ * and avoids a per-component network request.
+ *
+ * `onAuthStateChange` keeps the hook reactive to sign-in / sign-out
+ * events — e.g. right after the magic link callback.
  */
 export function useCurrentUser(): CurrentUser {
   const [state, setState] = useState<CurrentUser>({ userId: null, loading: true });
@@ -23,9 +28,9 @@ export function useCurrentUser(): CurrentUser {
     const supabase = createSupabaseBrowserClient();
     let cancelled = false;
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
-      setState({ userId: data.user?.id ?? null, loading: false });
+      setState({ userId: data.session?.user.id ?? null, loading: false });
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
