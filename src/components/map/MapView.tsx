@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as maptilersdk from '@maptiler/sdk';
+import '@maptiler/sdk/style.css';
 import {
   DEFAULT_CENTER,
   DEFAULT_MAP_STYLE,
