@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
+import * as maptilersdk from '@maptiler/sdk';
 import { useMapStore } from '@/store/useMapStore';
 import type { Incident, SeverityLevel } from '@/types/incident';
 
 interface Props {
-  map: mapboxgl.Map;
+  map: maptilersdk.Map;
 }
 
 const SEVERITY_COLOR: Record<SeverityLevel, string> = {
@@ -21,7 +21,7 @@ const SEVERITY_COLOR: Record<SeverityLevel, string> = {
  * them with BEM CSS rather than symbol layers.
  */
 export function IncidentMarkers({ map }: Props) {
-  const markers = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const markers = useRef<Map<string, maptilersdk.Marker>>(new Map());
   const incidents = useMapStore((s) => s.incidents);
   const select = useMapStore((s) => s.select);
 
@@ -42,7 +42,7 @@ export function IncidentMarkers({ map }: Props) {
           e.stopPropagation();
           select(incident.id);
         });
-        const marker = new mapboxgl.Marker({ element: el })
+        const marker = new maptilersdk.Marker({ element: el })
           .setLngLat([incident.location.lng, incident.location.lat])
           .addTo(map);
         markers.current.set(incident.id, marker);

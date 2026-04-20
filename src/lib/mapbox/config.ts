@@ -1,17 +1,17 @@
-export const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
+export const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY ?? '';
 
-/** Default map style — outdoors shows contour lines and hiking-friendly POIs. */
-export const DEFAULT_MAP_STYLE = 'mapbox://styles/mapbox/outdoors-v12';
+/** Outdoor style with contour lines and hiking POIs. */
+export const DEFAULT_MAP_STYLE = 'outdoor-v2';
 
 /** Fallback center if the user denies geolocation (Pyrenees roughly). */
 export const DEFAULT_CENTER: [number, number] = [0.5, 42.65];
 export const DEFAULT_ZOOM = 8;
 
 export const TERRAIN_SOURCE = {
-  id: 'mapbox-dem',
+  id: 'maptiler-dem',
   spec: {
     type: 'raster-dem' as const,
-    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+    url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
     tileSize: 512,
     maxzoom: 14,
   },

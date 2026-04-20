@@ -18,14 +18,13 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
     "browser-image-compression": "^2.0.2",
-    "mapbox-gl": "^3.8.0",
+    "@maptiler/sdk": "^3.4.0",
     "next": "14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -1,8 +1,8 @@
+@import '@maptiler/sdk/dist/maptiler-sdk.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import 'mapbox-gl/dist/mapbox-gl.css';
 
 :root {
   --color-bg: #0f1412;

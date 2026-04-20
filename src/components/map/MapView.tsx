@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
+import * as maptilersdk from '@maptiler/sdk';
 import {
   DEFAULT_CENTER,
   DEFAULT_MAP_STYLE,
   DEFAULT_ZOOM,
-  MAPBOX_TOKEN,
+  MAPTILER_KEY,
   TERRAIN_EXAGGERATION,
   TERRAIN_SOURCE,
 } from '@/lib/mapbox/config';
@@ -17,11 +17,11 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { IncidentMarkers } from './IncidentMarkers';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 
-mapboxgl.accessToken = MAPBOX_TOKEN;
+maptilersdk.config.apiKey = MAPTILER_KEY;
 
 export function MapView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<maptilersdk.Map | null>(null);
   const setIncidents = useMapStore((s) => s.setIncidents);
   const { position } = useGeolocation();
 
@@ -30,7 +30,7 @@ export function MapView() {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const map = new mapboxgl.Map({
+    const map = new maptilersdk.Map({
       container: containerRef.current,
       style: DEFAULT_MAP_STYLE,
       center: DEFAULT_CENTER,
@@ -39,9 +39,9 @@ export function MapView() {
       attributionControl: true,
     });
 
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'bottom-right');
     map.addControl(
-      new mapboxgl.GeolocateControl({
+      new maptilersdk.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
         showUserHeading: true,
