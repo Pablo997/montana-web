@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import { createIncident } from '@/lib/incidents/api';
+import { CreateIncidentSchema, type CreateIncidentInput } from '@/lib/incidents/schemas';
 import { compressImage } from '@/lib/utils/image-compression';
 import { offlineQueue } from '@/lib/utils/offline-queue';
 import { watchBestFix } from '@/lib/utils/geolocation';
 import {
   INCIDENT_TYPE_LABELS,
   SEVERITY_LABELS,
-  type CreateIncidentInput,
   type Incident,
   type IncidentType,
   type LatLng,
@@ -78,18 +78,23 @@ export function IncidentForm({
     event.preventDefault();
     setError(null);
 
-    const payload: CreateIncidentInput = {
+    const result = CreateIncidentSchema.safeParse({
       type,
       severity,
-      title: title.trim(),
-      description: description.trim() || undefined,
+      title,
+      description,
       location,
-    };
+    });
 
-    if (payload.title.length < 3) {
-      setError('Title must be at least 3 characters long.');
+    if (!result.success) {
+      // Show the first field error; tiny form so we don't need per-field
+      // wiring yet. Upgrade to react-hook-form + zodResolver if this grows.
+      const first = result.error.issues[0];
+      setError(first?.message ?? 'Invalid form.');
       return;
     }
+
+    const payload: CreateIncidentInput = result.data;
 
     startTransition(async () => {
       try {

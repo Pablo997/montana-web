@@ -5,6 +5,11 @@ interface Props {
   incident: Incident;
 }
 
+/**
+ * Read-only summary of an incident used inside the details panel. The
+ * vote controls are self-contained and manage their own auth, loading
+ * and optimistic state.
+ */
 export function IncidentCard({ incident }: Props) {
   return (
     <article className="incident-card">

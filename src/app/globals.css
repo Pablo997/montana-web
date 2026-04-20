@@ -673,10 +673,29 @@ body {
   background: rgba(217, 48, 37, 0.15);
 }
 
+.vote__button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .vote__count {
   font-variant-numeric: tabular-nums;
   min-width: 1.5ch;
   text-align: center;
+}
+
+.vote--readonly {
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.vote__count--up {
+  color: #8de0bb;
+}
+
+.vote__count--down {
+  color: #ff9f94;
 }
 
 /* --------------------------------- Button -------------------------------- */

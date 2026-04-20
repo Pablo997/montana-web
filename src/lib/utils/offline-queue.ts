@@ -1,4 +1,4 @@
-import type { CreateIncidentInput } from '@/types/incident';
+import type { CreateIncidentInput } from '@/lib/incidents/schemas';
 
 const QUEUE_KEY = 'montana:pending-incidents';
 

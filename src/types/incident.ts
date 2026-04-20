@@ -53,15 +53,6 @@ export interface IncidentVote {
   createdAt: string;
 }
 
-export interface CreateIncidentInput {
-  type: IncidentType;
-  severity: SeverityLevel;
-  title: string;
-  description?: string;
-  location: LatLng;
-  elevationM?: number;
-}
-
 export const INCIDENT_TYPE_LABELS: Record<IncidentType, string> = {
   accident: 'Accident',
   trail_blocked: 'Trail blocked',

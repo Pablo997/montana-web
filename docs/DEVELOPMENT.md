@@ -58,26 +58,30 @@ src/
 │  ├─ layout.tsx              # Root HTML shell
 │  ├─ page.tsx                # Home: header + map
 │  ├─ globals.css             # BEM component styles + Tailwind layers
-│  └─ api/incidents/route.ts  # GET /api/incidents?lng=&lat=&radius=
+│  └─ auth/                   # Magic-link sign-in page + OAuth callback
 ├─ components/
-│  ├─ layout/                 # SiteHeader, future shell primitives
-│  ├─ map/                    # MapView, IncidentMarkers
-│  ├─ incidents/              # IncidentCard, VoteButtons, IncidentForm, IncidentDetailsPanel
+│  ├─ layout/                 # SiteHeader, SignOutButton
+│  ├─ map/                    # MapView, IncidentMarkers, FilterPanel
+│  ├─ incidents/              # IncidentCard, VoteButtons, IncidentForm,
+│  │                          # IncidentDetailsPanel, ReportIncidentButton/Dialog
 │  └─ ui/                     # Generic primitives (add as needed)
 ├─ hooks/
 │  ├─ useGeolocation.ts
-│  └─ useRealtimeIncidents.ts
+│  ├─ useRealtimeIncidents.ts
+│  └─ useCurrentUser.ts       # Reactive auth state for client components
 ├─ lib/
 │  ├─ supabase/               # client / server / middleware helpers
 │  ├─ mapbox/config.ts        # API key, default view, terrain source (MapTiler)
 │  ├─ incidents/
-│  │  ├─ api.ts               # createIncident, fetchNearby, castVote, removeVote
-│  │  └─ mappers.ts           # DB row ↔ Incident DTO
+│  │  ├─ api.ts               # createIncident, fetchIncidentsInBbox, cast/removeVote…
+│  │  ├─ mappers.ts           # DB row ↔ Incident DTO (handles WKB hex)
+│  │  ├─ schemas.ts           # Zod schemas + inferred types (single source of truth)
+│  │  └─ tile-cache.ts        # Slippy-tile helpers for bbox dedup
 │  └─ utils/
 │     ├─ geolocation.ts
 │     ├─ image-compression.ts
 │     └─ offline-queue.ts
-├─ store/useMapStore.ts       # Zustand: incidents Map, selection, filters
+├─ store/useMapStore.ts       # Zustand: incidents Map, selection, filters, report flow
 ├─ types/incident.ts          # Shared domain types and label maps
 └─ middleware.ts              # Refreshes Supabase session cookies
 supabase/
@@ -97,6 +101,7 @@ supabase/
 - **Server vs client**: prefer Server Components for pages, move to `"use client"` only for interactive UI (map, forms, hooks).
 - **Secrets**: `SUPABASE_SERVICE_ROLE_KEY` is **server-only**. Never import it from a client component.
 - **Types**: after any migration, run `npm run db:types` to regenerate `src/types/database.ts` (not checked in until first migration is applied; safe to regenerate).
+- **Validation**: every payload that crosses a trust boundary (form → RPC, future HTTP handler) goes through a Zod schema in `src/lib/incidents/schemas.ts`. Infer TS types from there instead of writing them by hand so form input and RPC signature can never drift.
 
 ---
 
