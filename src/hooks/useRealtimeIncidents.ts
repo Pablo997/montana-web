@@ -29,7 +29,9 @@ export function useRealtimeIncidents() {
 
           const row = payload.new as Parameters<typeof rowToIncident>[0];
           const incident = rowToIncident(row);
-          if (incident.status === 'dismissed') {
+          // The viewport RPCs filter to (pending | validated), so any
+          // transition out of those states should drop the marker.
+          if (incident.status === 'dismissed' || incident.status === 'resolved') {
             remove(incident.id);
           } else {
             upsert(incident);

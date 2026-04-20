@@ -112,6 +112,36 @@ export async function castVote(incidentId: string, vote: Vote): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Mark an incident as resolved. Only callable by the author (RLS on
+ * `public.incidents`). The row stays in the DB for audit / history but
+ * is filtered out of the viewport RPCs, so it disappears from the map
+ * as soon as the realtime UPDATE reaches each client.
+ */
+export async function resolveIncident(incidentId: string): Promise<void> {
+  const { error } = await supabase()
+    .from('incidents')
+    .update({ status: 'resolved' })
+    .eq('id', incidentId);
+
+  if (error) throw error;
+}
+
+/**
+ * Hard-delete an incident. RLS only lets the author hit their own rows.
+ * The cascade on `incident_votes` / `incident_media` is defined in the
+ * initial schema, so this also cleans up related rows and storage
+ * objects via the existing triggers.
+ */
+export async function deleteIncident(incidentId: string): Promise<void> {
+  const { error } = await supabase()
+    .from('incidents')
+    .delete()
+    .eq('id', incidentId);
+
+  if (error) throw error;
+}
+
 /** Remove a user's existing vote. */
 export async function removeVote(incidentId: string): Promise<void> {
   const userId = await currentUserId();

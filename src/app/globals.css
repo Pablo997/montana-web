@@ -780,6 +780,75 @@ body {
   border-color: #24755a;
 }
 
+.button--danger {
+  background: #d93025;
+  border-color: #d93025;
+  color: #fff;
+}
+
+.button--danger:hover {
+  background: #b7261c;
+  border-color: #b7261c;
+}
+
+.button--ghost-danger {
+  color: #ff9f94;
+  border-color: rgba(217, 48, 37, 0.45);
+}
+
+.button--ghost-danger:hover {
+  border-color: #d93025;
+  background: rgba(217, 48, 37, 0.12);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------------------------- Author actions ----------------------------- */
+.author-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.author-actions__buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.author-actions__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(217, 48, 37, 0.08);
+  border: 1px solid rgba(217, 48, 37, 0.35);
+  border-radius: 10px;
+}
+
+.author-actions__confirm-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.author-actions__confirm-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.author-actions__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ff9f94;
+}
+
 /* --------------------------------- Panel --------------------------------- */
 .panel {
   position: absolute;

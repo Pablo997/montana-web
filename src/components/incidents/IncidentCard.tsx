@@ -1,4 +1,8 @@
+'use client';
+
 import { INCIDENT_TYPE_LABELS, SEVERITY_LABELS, type Incident } from '@/types/incident';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { IncidentAuthorActions } from './IncidentAuthorActions';
 import { IncidentMediaGrid } from './IncidentMediaGrid';
 import { VoteButtons } from './VoteButtons';
 
@@ -9,9 +13,13 @@ interface Props {
 /**
  * Read-only summary of an incident used inside the details panel. The
  * vote controls are self-contained and manage their own auth, loading
- * and optimistic state.
+ * and optimistic state. When the viewer is the author we also expose
+ * resolve / delete controls below the card.
  */
 export function IncidentCard({ incident }: Props) {
+  const { userId } = useCurrentUser();
+  const isAuthor = userId !== null && userId === incident.userId;
+
   return (
     <article className="incident-card">
       <header className="incident-card__header">
@@ -39,6 +47,8 @@ export function IncidentCard({ incident }: Props) {
           {new Date(incident.createdAt).toLocaleString()}
         </time>
       </footer>
+
+      {isAuthor ? <IncidentAuthorActions incident={incident} /> : null}
     </article>
   );
 }
