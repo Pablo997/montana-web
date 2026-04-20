@@ -210,6 +210,197 @@ body {
   pointer-events: auto;
 }
 
+.map__overlay--bottom-left {
+  top: auto;
+  left: 1rem;
+  bottom: 1rem;
+}
+
+.map__pick-banner {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-brand);
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  z-index: 6;
+  font-size: 0.9rem;
+}
+
+/* ----------------------------- Report button ---------------------------- */
+.report-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  background: var(--color-brand);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.report-button:hover {
+  background: #24755a;
+}
+
+.report-button:active {
+  transform: translateY(1px);
+}
+
+.report-button > span[aria-hidden] {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* --------------------------------- Modal --------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.modal__content {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.modal__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* ----------------------------- Incident form ---------------------------- */
+.incident-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.incident-form__location {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.incident-form__label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.incident-form__coords {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.incident-form__location-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.incident-form__field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.incident-form__field > span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.incident-form__field input,
+.incident-form__field select,
+.incident-form__field textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 120ms ease;
+}
+
+.incident-form__field input:focus,
+.incident-form__field select:focus,
+.incident-form__field textarea:focus {
+  outline: none;
+  border-color: var(--color-brand);
+}
+
+.incident-form__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.incident-form__error {
+  padding: 0.6rem 0.85rem;
+  background: rgba(217, 48, 37, 0.15);
+  color: #ff9f94;
+  border: 1px solid rgba(217, 48, 37, 0.4);
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.incident-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 /* ----------------------------- Incident card ----------------------------- */
 .incident-card {
   background: var(--color-surface);

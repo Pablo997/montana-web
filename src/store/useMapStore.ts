@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Incident, IncidentType, SeverityLevel } from '@/types/incident';
+import type { Incident, IncidentType, LatLng, SeverityLevel } from '@/types/incident';
 
 interface MapFilters {
   types: IncidentType[] | null;
@@ -11,11 +11,23 @@ interface MapState {
   incidents: Map<string, Incident>;
   selectedId: string | null;
   filters: MapFilters;
+
+  reportOpen: boolean;
+  reportLocation: LatLng | null;
+  pickingLocation: boolean;
+
   setIncidents: (incidents: Incident[]) => void;
+  mergeIncidents: (incidents: Incident[]) => void;
   upsertIncident: (incident: Incident) => void;
   removeIncident: (id: string) => void;
   select: (id: string | null) => void;
   setFilters: (filters: Partial<MapFilters>) => void;
+
+  openReport: (location: LatLng | null) => void;
+  closeReport: () => void;
+  startPickingLocation: () => void;
+  cancelPickingLocation: () => void;
+  setReportLocation: (location: LatLng) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -26,10 +38,20 @@ export const useMapStore = create<MapState>((set) => ({
     minSeverity: null,
     onlyValidated: false,
   },
+  reportOpen: false,
+  reportLocation: null,
+  pickingLocation: false,
+
   setIncidents: (incidents) =>
     set(() => ({
       incidents: new Map(incidents.map((i) => [i.id, i])),
     })),
+  mergeIncidents: (incidents) =>
+    set((state) => {
+      const next = new Map(state.incidents);
+      incidents.forEach((i) => next.set(i.id, i));
+      return { incidents: next };
+    }),
   upsertIncident: (incident) =>
     set((state) => {
       const next = new Map(state.incidents);
@@ -45,4 +67,12 @@ export const useMapStore = create<MapState>((set) => ({
   select: (id) => set({ selectedId: id }),
   setFilters: (filters) =>
     set((state) => ({ filters: { ...state.filters, ...filters } })),
+
+  openReport: (location) =>
+    set({ reportOpen: true, reportLocation: location, pickingLocation: false }),
+  closeReport: () => set({ reportOpen: false, pickingLocation: false }),
+  startPickingLocation: () => set({ reportOpen: false, pickingLocation: true }),
+  cancelPickingLocation: () => set({ pickingLocation: false, reportOpen: true }),
+  setReportLocation: (location) =>
+    set({ reportLocation: location, reportOpen: true, pickingLocation: false }),
 }));

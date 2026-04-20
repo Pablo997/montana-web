@@ -20,7 +20,29 @@ type IncidentRow = {
   expires_at: string | null;
 };
 
-/** Extracts lng/lat from either flat columns or a PostGIS GeoJSON object. */
+/** Parses a PostGIS EWKB hex-encoded Point (SRID 4326). */
+function parseWkbHexPoint(hex: string): { lng: number; lat: number } | null {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+  // EWKB Point with SRID: 1 byte order + 4 bytes type+flags + 4 bytes SRID
+  // + 8 bytes X + 8 bytes Y = 25 bytes = 50 hex chars.
+  if (clean.length < 50) return null;
+
+  const buf = new ArrayBuffer(8);
+  const view = new DataView(buf);
+  const readLEDouble = (start: number) => {
+    for (let i = 0; i < 8; i++) {
+      view.setUint8(i, parseInt(clean.substring(start + i * 2, start + i * 2 + 2), 16));
+    }
+    return view.getFloat64(0, true);
+  };
+
+  const lng = readLEDouble(18);
+  const lat = readLEDouble(34);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return { lng, lat };
+}
+
+/** Extracts lng/lat from flat columns, GeoJSON, or PostGIS WKB hex. */
 function extractPoint(row: IncidentRow): { lat: number; lng: number } {
   if (typeof row.lng === 'number' && typeof row.lat === 'number') {
     return { lat: row.lat, lng: row.lng };
@@ -34,6 +56,10 @@ function extractPoint(row: IncidentRow): { lat: number; lng: number } {
   ) {
     const [lng, lat] = (geo as { coordinates: number[] }).coordinates;
     return { lat, lng };
+  }
+  if (typeof geo === 'string') {
+    const parsed = parseWkbHexPoint(geo);
+    if (parsed) return { lat: parsed.lat, lng: parsed.lng };
   }
   return { lat: 0, lng: 0 };
 }

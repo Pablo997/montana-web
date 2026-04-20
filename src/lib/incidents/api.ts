@@ -25,7 +25,12 @@ export async function createIncident(input: CreateIncidentInput): Promise<Incide
     .single();
 
   if (error) throw error;
-  return rowToIncident(data as never);
+
+  // The RPC returns the `incidents` row whose `location` column serialises
+  // as WKB hex. We already know the lng/lat since we just sent them, so we
+  // override them on the DTO to avoid parsing PostGIS binary on the client.
+  const row = data as Parameters<typeof rowToIncident>[0];
+  return rowToIncident({ ...row, lng: input.location.lng, lat: input.location.lat });
 }
 
 /** Fetch visible incidents near a point using the SQL helper. */
@@ -38,6 +43,21 @@ export async function fetchNearbyIncidents(
     p_lng: lng,
     p_lat: lat,
     p_radius_m: radiusMeters,
+  });
+
+  if (error) throw error;
+  return (data ?? []).map(rowToIncident);
+}
+
+export type BBox = { minLng: number; minLat: number; maxLng: number; maxLat: number };
+
+/** Fetch every visible incident inside a lng/lat envelope. */
+export async function fetchIncidentsInBbox(bbox: BBox): Promise<Incident[]> {
+  const { data, error } = await supabase().rpc('incidents_in_bbox', {
+    p_min_lng: bbox.minLng,
+    p_min_lat: bbox.minLat,
+    p_max_lng: bbox.maxLng,
+    p_max_lat: bbox.maxLat,
   });
 
   if (error) throw error;

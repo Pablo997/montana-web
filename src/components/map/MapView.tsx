@@ -11,12 +11,16 @@ import {
   TERRAIN_EXAGGERATION,
   TERRAIN_SOURCE,
 } from '@/lib/mapbox/config';
-import { fetchNearbyIncidents } from '@/lib/incidents/api';
+import { fetchIncidentsInBbox, type BBox } from '@/lib/incidents/api';
+import { bboxForTiles, tilesForBbox } from '@/lib/incidents/tile-cache';
 import { useMapStore } from '@/store/useMapStore';
 import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { IncidentMarkers } from './IncidentMarkers';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
+import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
+import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
+import type { LatLng } from '@/types/incident';
 
 maptilersdk.config.apiKey = MAPTILER_KEY;
 
@@ -24,10 +28,17 @@ export function MapView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maptilersdk.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const setIncidents = useMapStore((s) => s.setIncidents);
+  const mergeIncidents = useMapStore((s) => s.mergeIncidents);
+  const pickingLocation = useMapStore((s) => s.pickingLocation);
+  const setReportLocation = useMapStore((s) => s.setReportLocation);
+  const cancelPickingLocation = useMapStore((s) => s.cancelPickingLocation);
   const { position } = useGeolocation();
 
   useRealtimeIncidents();
+
+  // Stable ref so the moveend handler is only wired up once.
+  const mergeIncidentsRef = useRef(mergeIncidents);
+  mergeIncidentsRef.current = mergeIncidents;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -38,7 +49,6 @@ export function MapView() {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       pitch: 45,
-      attributionControl: true,
     });
 
     map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'bottom-right');
@@ -46,46 +56,119 @@ export function MapView() {
       new maptilersdk.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
-        showUserHeading: true,
       }),
       'bottom-right',
     );
+
+    // Tile IDs whose incidents have already been hydrated. Realtime keeps
+    // these consistent with the DB, so we never need to refetch them.
+    const hydratedTiles = new Set<string>();
+
+    const loadVisibleIncidents = () => {
+      const bounds = map.getBounds();
+      const viewport: BBox = {
+        minLng: bounds.getWest(),
+        minLat: bounds.getSouth(),
+        maxLng: bounds.getEast(),
+        maxLat: bounds.getNorth(),
+      };
+
+      const missing = tilesForBbox(viewport).filter((key) => !hydratedTiles.has(key));
+      if (missing.length === 0) return;
+
+      const fetchBbox = bboxForTiles(missing) ?? viewport;
+
+      // Optimistically mark tiles as hydrated so a rapid `moveend` burst
+      // doesn't dispatch duplicate RPCs for the same region.
+      missing.forEach((key) => hydratedTiles.add(key));
+
+      fetchIncidentsInBbox(fetchBbox)
+        .then((list) => mergeIncidentsRef.current(list))
+        .catch((err) => {
+          console.error('Failed to load incidents', err);
+          missing.forEach((key) => hydratedTiles.delete(key));
+        });
+    };
+
+    // Debounce `moveend` so we don't spam the RPC while the user pans/zooms.
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+    const onMoveEnd = () => {
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(loadVisibleIncidents, 250);
+    };
 
     map.on('load', () => {
       map.addSource(TERRAIN_SOURCE.id, TERRAIN_SOURCE.spec);
       map.setTerrain({ source: TERRAIN_SOURCE.id, exaggeration: TERRAIN_EXAGGERATION });
       setMapReady(true);
+      loadVisibleIncidents();
     });
+
+    map.on('moveend', onMoveEnd);
 
     mapRef.current = map;
 
-    // Load incidents around the default center immediately so the map is
-    // never empty even if the user denies geolocation.
-    fetchNearbyIncidents(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 100_000)
-      .then(setIncidents)
-      .catch((err) => console.error('Failed to load incidents', err));
-
     return () => {
+      if (debounceId) clearTimeout(debounceId);
+      map.off('moveend', onMoveEnd);
       map.remove();
       mapRef.current = null;
       setMapReady(false);
     };
-  }, [setIncidents]);
+  }, []);
 
   useEffect(() => {
     if (!position) return;
+    // Viewport fetch will re-run automatically via `moveend` after flyTo.
     mapRef.current?.flyTo({ center: [position.lng, position.lat], zoom: 12 });
+  }, [position]);
 
-    fetchNearbyIncidents(position.lng, position.lat)
-      .then(setIncidents)
-      .catch((err) => console.error('Failed to load incidents', err));
-  }, [position, setIncidents]);
+  // Location-picking mode: next click on the map becomes the incident location.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !pickingLocation) return;
+
+    const canvas = map.getCanvas();
+    const prevCursor = canvas.style.cursor;
+    canvas.style.cursor = 'crosshair';
+
+    const onClick = (e: maptilersdk.MapMouseEvent) => {
+      const loc: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      setReportLocation(loc);
+    };
+
+    map.once('click', onClick);
+
+    return () => {
+      canvas.style.cursor = prevCursor;
+      map.off('click', onClick);
+    };
+  }, [pickingLocation, setReportLocation]);
+
+  const fallbackLocation: LatLng = position
+    ? { lat: position.lat, lng: position.lng }
+    : { lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] };
 
   return (
     <div className="map">
       <div ref={containerRef} className="map__canvas" />
       {mapReady && mapRef.current ? <IncidentMarkers map={mapRef.current} /> : null}
+
+      <div className="map__overlay map__overlay--bottom-left">
+        <ReportIncidentButton fallbackLocation={fallbackLocation} />
+      </div>
+
+      {pickingLocation ? (
+        <div className="map__pick-banner" role="status">
+          <span>Tap the map to pick the incident location</span>
+          <button type="button" className="button" onClick={cancelPickingLocation}>
+            Cancel
+          </button>
+        </div>
+      ) : null}
+
       <IncidentDetailsPanel />
+      <ReportIncidentDialog />
     </div>
   );
 }

@@ -594,6 +594,35 @@ export type Database = {
           user_id: string
         }[]
       }
+      incidents_in_bbox: {
+        Args: {
+          p_min_lng: number
+          p_min_lat: number
+          p_max_lng: number
+          p_max_lat: number
+          p_types?: Database["public"]["Enums"]["incident_type"][]
+          p_min_severity?: Database["public"]["Enums"]["severity_level"]
+          p_limit?: number
+        }
+        Returns: {
+          created_at: string
+          description: string
+          downvotes: number
+          elevation_m: number
+          expires_at: string
+          id: string
+          lat: number
+          lng: number
+          score: number
+          severity: Database["public"]["Enums"]["severity_level"]
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at: string
+          upvotes: number
+          user_id: string
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
