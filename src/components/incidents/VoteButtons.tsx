@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { castVote, fetchUserVote, removeVote } from '@/lib/incidents/api';
+import { castVote, removeVote } from '@/lib/incidents/api';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useMapStore } from '@/store/useMapStore';
 import type { Incident } from '@/types/incident';
@@ -25,33 +25,18 @@ type Vote = 1 | -1;
  *   - Counts are updated optimistically via `upsertIncident` so the UI
  *     feels instant; the voting trigger on the server will then broadcast
  *     the authoritative counts via realtime, which merges into the store.
+ *   - The current viewer's vote is already embedded in `incident.userVote`
+ *     (hydrated by the read RPCs), so we render with the right selected
+ *     state on first paint — no hydration flicker.
  */
 export function VoteButtons({ incident }: Props) {
   const router = useRouter();
-  const { userId, loading: authLoading } = useCurrentUser();
+  const { userId } = useCurrentUser();
   const upsertIncident = useMapStore((s) => s.upsertIncident);
-  const [userVote, setUserVote] = useState<Vote | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isAuthor = userId !== null && userId === incident.userId;
-
-  // Hydrate the user's existing vote whenever a different incident or a
-  // different viewer is active. Skip for anonymous users and authors.
-  useEffect(() => {
-    if (authLoading || !userId || isAuthor) {
-      setUserVote(null);
-      return;
-    }
-    let cancelled = false;
-    fetchUserVote(incident.id)
-      .then((v) => {
-        if (!cancelled) setUserVote(v);
-      })
-      .catch((err) => console.error('Failed to load user vote', err));
-    return () => {
-      cancelled = true;
-    };
-  }, [incident.id, userId, authLoading, isAuthor]);
+  const userVote = incident.userVote;
 
   if (isAuthor) {
     return (
@@ -69,7 +54,6 @@ export function VoteButtons({ incident }: Props) {
     }
     const previous = userVote;
     const next: Vote | null = previous === vote ? null : vote;
-    setUserVote(next);
     upsertIncident(applyVoteDelta(incident, previous, next));
 
     startTransition(async () => {
@@ -80,7 +64,6 @@ export function VoteButtons({ incident }: Props) {
         console.error(err);
         // Roll back optimistic UI. The authoritative counts will be
         // re-synced on the next realtime event or viewport refetch.
-        setUserVote(previous);
         upsertIncident(incident);
       }
     });
@@ -141,5 +124,6 @@ function applyVoteDelta(
     upvotes: Math.max(0, up),
     downvotes: Math.max(0, down),
     score: Math.max(0, up) - Math.max(0, down),
+    userVote: next,
   };
 }

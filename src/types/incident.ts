@@ -33,6 +33,13 @@ export interface Incident {
   score: number;
   /** Number of photos attached; maintained by a trigger on `incident_media`. */
   mediaCount: number;
+  /**
+   * The current viewer's vote on this incident: `1` upvote, `-1` downvote,
+   * or `null` when anonymous / not voted. Hydrated by the read RPCs so the
+   * vote buttons can render their correct state on first paint without a
+   * secondary request.
+   */
+  userVote: 1 | -1 | null;
   createdAt: string;
   updatedAt: string;
   expiresAt: string | null;

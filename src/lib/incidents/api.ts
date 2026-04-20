@@ -218,24 +218,3 @@ function mediaRowToDto(row: IncidentMediaRow): IncidentMedia {
     height: row.height,
   };
 }
-
-/**
- * Read the current user's vote for an incident. Returns `null` when the
- * user is anonymous or has not voted yet. Used to hydrate the vote
- * buttons with the right selected state when the detail panel opens.
- */
-export async function fetchUserVote(incidentId: string): Promise<Vote | null> {
-  const userId = await currentUserId();
-  if (!userId) return null;
-
-  const { data, error } = await supabase()
-    .from('incident_votes')
-    .select('vote')
-    .eq('incident_id', incidentId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-  return data.vote === 1 ? 1 : -1;
-}

@@ -594,6 +594,7 @@ export type Database = {
           updated_at: string
           upvotes: number
           user_id: string
+          user_vote: number
         }[]
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
@@ -627,6 +628,7 @@ export type Database = {
           updated_at: string
           upvotes: number
           user_id: string
+          user_vote: number
         }[]
       }
       populate_geometry_columns:
