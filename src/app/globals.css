@@ -210,10 +210,161 @@ body {
   pointer-events: auto;
 }
 
+.map__overlay--top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
 .map__overlay--bottom-left {
   top: auto;
   left: 1rem;
   bottom: 1rem;
+}
+
+.map__overlay--bottom-right {
+  top: auto;
+  left: auto;
+  right: 1rem;
+  bottom: 1rem;
+}
+
+/* ---------------------------- Filter panel ------------------------------ */
+.filter-panel {
+  position: relative;
+}
+
+.filter-panel__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.filter-panel__toggle:hover {
+  border-color: var(--color-brand);
+}
+
+.filter-panel__toggle[aria-expanded='true'] {
+  border-color: var(--color-brand);
+  transform: translateY(-1px);
+}
+
+.filter-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--color-brand);
+  color: #0f1412;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.filter-panel__dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: min(22rem, 90vw);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+
+.filter-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-panel__heading {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.filter-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.filter-panel__radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.filter-panel__radio,
+.filter-panel__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-panel__radio input,
+.filter-panel__check input {
+  accent-color: var(--color-brand);
+}
+
+.filter-panel__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.filter-panel__count {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------- Chip ---------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.chip:hover {
+  border-color: var(--color-brand);
+  color: var(--color-text);
+}
+
+.chip--active {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #0f1412;
+  font-weight: 600;
 }
 
 .map__pick-banner {

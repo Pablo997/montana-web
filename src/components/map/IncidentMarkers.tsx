@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as maptilersdk from '@maptiler/sdk';
 import { useMapStore } from '@/store/useMapStore';
 import type { Incident, SeverityLevel } from '@/types/incident';
+import { incidentMatchesFilters } from './FilterPanel';
 
 interface Props {
   map: maptilersdk.Map;
@@ -23,12 +24,24 @@ const SEVERITY_COLOR: Record<SeverityLevel, string> = {
 export function IncidentMarkers({ map }: Props) {
   const markers = useRef<Map<string, maptilersdk.Marker>>(new Map());
   const incidents = useMapStore((s) => s.incidents);
+  const filters = useMapStore((s) => s.filters);
   const select = useMapStore((s) => s.select);
+
+  // Recompute the visible slice whenever the store or filters change. The
+  // memo keeps the reference stable when nothing actually moved so the
+  // effect below does not churn unnecessarily.
+  const visibleIncidents = useMemo(() => {
+    const list: Incident[] = [];
+    incidents.forEach((incident) => {
+      if (incidentMatchesFilters(incident, filters)) list.push(incident);
+    });
+    return list;
+  }, [incidents, filters]);
 
   useEffect(() => {
     const active = new Set<string>();
 
-    incidents.forEach((incident) => {
+    visibleIncidents.forEach((incident) => {
       active.add(incident.id);
       const existing = markers.current.get(incident.id);
       if (existing) {
@@ -49,14 +62,14 @@ export function IncidentMarkers({ map }: Props) {
       }
     });
 
-    // Remove markers for incidents no longer in the store
+    // Remove markers for incidents filtered out or no longer in the store.
     markers.current.forEach((marker, id) => {
       if (!active.has(id)) {
         marker.remove();
         markers.current.delete(id);
       }
     });
-  }, [incidents, map, select]);
+  }, [visibleIncidents, map, select]);
 
   return null;
 }

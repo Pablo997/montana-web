@@ -17,6 +17,7 @@ import { useMapStore } from '@/store/useMapStore';
 import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { IncidentMarkers } from './IncidentMarkers';
+import { FilterPanel } from './FilterPanel';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
 import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
@@ -49,15 +50,21 @@ export function MapView() {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       pitch: 45,
+      // MapTiler SDK auto-mounts these by default; we opt out so they don't
+      // end up duplicated alongside the ones we place ourselves.
+      navigationControl: false,
+      geolocateControl: false,
     });
 
-    map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    // Built-in controls go on the top-right so our own FAB (bottom-right)
+    // and filter panel (top-left) don't fight them for tap targets.
+    map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(
       new maptilersdk.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
       }),
-      'bottom-right',
+      'top-right',
     );
 
     // Tile IDs whose incidents have already been hydrated. Realtime keeps
@@ -154,7 +161,11 @@ export function MapView() {
       <div ref={containerRef} className="map__canvas" />
       {mapReady && mapRef.current ? <IncidentMarkers map={mapRef.current} /> : null}
 
-      <div className="map__overlay map__overlay--bottom-left">
+      <div className="map__overlay map__overlay--top-left">
+        <FilterPanel />
+      </div>
+
+      <div className="map__overlay map__overlay--bottom-right">
         <ReportIncidentButton fallbackLocation={fallbackLocation} />
       </div>
 
