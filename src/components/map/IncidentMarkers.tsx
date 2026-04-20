@@ -16,7 +16,7 @@ const SEVERITY_COLOR: Record<SeverityLevel, string> = {
 };
 
 /**
- * Keeps one Mapbox marker per incident in the store, creating/updating/
+ * Keeps one MapTiler marker per incident in the store, creating/updating/
  * removing them as the store changes. Uses DOM markers so we can style
  * them with BEM CSS rather than symbol layers.
  */

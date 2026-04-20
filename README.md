@@ -10,7 +10,7 @@ Montana lets hikers, trail runners and climbers report hazards (blocked trails, 
 
 ## Features
 
-- Interactive terrain map with 3D elevation (Mapbox Outdoors + terrain DEM).
+- Interactive terrain map with 3D elevation (MapTiler Outdoor + terrain DEM).
 - Report incidents with type, severity, title, description and photos.
 - Up / down voting with automatic status transitions driven by database triggers.
 - Real-time updates via Supabase Realtime — markers move/appear/disappear live.
@@ -23,7 +23,7 @@ Montana lets hikers, trail runners and climbers report hazards (blocked trails, 
 | Layer       | Choice                                    |
 | ----------- | ----------------------------------------- |
 | Framework   | Next.js 14 (App Router) + TypeScript      |
-| Map         | Mapbox GL JS + Mapbox Terrain DEM         |
+| Map         | MapTiler SDK + MapTiler Terrain DEM       |
 | Database    | PostgreSQL + PostGIS (Supabase)           |
 | Auth        | Supabase Auth (OAuth / magic link)        |
 | Storage     | Supabase Storage (incident media)         |
@@ -40,7 +40,7 @@ Everything fits inside the free tiers for the MVP. See the development guide for
 
 - Node.js ≥ 20
 - [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`npm i -g supabase`)
-- A Mapbox account (free) for an access token
+- A MapTiler account (free, no credit card) for an API key
 - Docker (only if you want to run Supabase locally)
 
 ### 2. Clone and install
@@ -61,7 +61,7 @@ Fill in:
 
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — from your Supabase project.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only, never expose to the client.
-- `NEXT_PUBLIC_MAPBOX_TOKEN` — public token from [Mapbox account](https://account.mapbox.com/access-tokens/).
+- `NEXT_PUBLIC_MAPTILER_KEY` — API key from [MapTiler Cloud](https://cloud.maptiler.com/account/keys/).
 
 ### 4. Set up the database
 
@@ -103,7 +103,7 @@ montana/
 │  ├─ hooks/               # Reusable client hooks (geolocation, realtime, ...)
 │  ├─ lib/
 │  │  ├─ supabase/         # Browser, server and middleware clients
-│  │  ├─ mapbox/           # Map configuration and constants
+│  │  ├─ mapbox/           # Map configuration and constants (MapTiler)
 │  │  ├─ incidents/        # Data access (`api.ts`) and row ↔ DTO mappers
 │  │  └─ utils/            # Image compression, offline queue, geolocation
 │  ├─ store/               # Zustand stores

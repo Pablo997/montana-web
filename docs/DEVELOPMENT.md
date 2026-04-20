@@ -2,7 +2,7 @@
 
 This document is the single source of truth for architecture, conventions, data model and the phased roadmap. It is meant to be read both by humans and by coding assistants working on the repository; keep it accurate and up to date when you change the system.
 
-> TL;DR: **Next.js + Supabase (Postgres + PostGIS) + Mapbox**. Everything is free-tier friendly. No custom backend: RLS policies and Postgres triggers encode the business rules.
+> TL;DR: **Next.js + Supabase (Postgres + PostGIS) + MapTiler**. Everything is free-tier friendly. No custom backend: RLS policies and Postgres triggers encode the business rules.
 
 ---
 
@@ -36,9 +36,9 @@ Montana is a community-moderated map of mountain incidents and points of interes
 │  Route Handlers ─────┼─────────▶ Storage (incident-media)      │
 │  Client (RSC + CSR)  │        │  Realtime (postgres_changes)   │
 │      ▲               │        └────────────────────────────────┘
-│      │ Mapbox GL JS  │
+│      │ MapTiler SDK  │
 │      ▼               │
-│  Mapbox tiles / DEM  │
+│  MapTiler tiles/DEM  │
 └──────────────────────┘
 ```
 
@@ -69,7 +69,7 @@ src/
 │  └─ useRealtimeIncidents.ts
 ├─ lib/
 │  ├─ supabase/               # client / server / middleware helpers
-│  ├─ mapbox/config.ts        # Tokens, default view, terrain source
+│  ├─ mapbox/config.ts        # API key, default view, terrain source (MapTiler)
 │  ├─ incidents/
 │  │  ├─ api.ts               # createIncident, fetchNearby, castVote, removeVote
 │  │  └─ mappers.ts           # DB row ↔ Incident DTO
@@ -154,7 +154,7 @@ To persist across restarts, `ALTER DATABASE postgres SET montana.validation_thre
 
 ### Map rendering
 
-- `MapView` owns the `mapboxgl.Map` instance. Terrain source and DEM are added on `load`.
+- `MapView` owns the `maptilersdk.Map` instance. Terrain source and DEM are added on `load`.
 - `IncidentMarkers` diff-renders one DOM marker per incident, color-coded by severity. Clicking selects the incident in the store, which opens `IncidentDetailsPanel`.
 
 ### Forms
@@ -171,11 +171,11 @@ To persist across restarts, `ALTER DATABASE postgres SET montana.validation_thre
 
 Mountain users have peculiar constraints. Bake these in from day one.
 
-1. **Spotty connectivity**. Treat failed writes as the norm. The offline queue covers incident submissions; for reads we rely on cached tiles (Mapbox handles this with its own cache).
+1. **Spotty connectivity**. Treat failed writes as the norm. The offline queue covers incident submissions; for reads we rely on cached tiles (MapTiler SDK handles this with its own cache).
 2. **Slow GPS fixes under tree canopy / valleys**. Always pass `maximumAge: 30000` and show the last known position while waiting for a better fix.
-3. **Battery**. Avoid continuous `watchPosition`; use Mapbox's `GeolocateControl` which the user opts into explicitly.
+3. **Battery**. Avoid continuous `watchPosition`; use `GeolocateControl` which the user opts into explicitly.
 4. **Elevation context**. Show `elevation_m` on incident cards and render terrain with `setTerrain({ exaggeration: 1.3 })` so users can interpret vertical relief at a glance.
-5. **Map style**. `mapbox/outdoors-v12` includes contour lines, hiking trails and natural POIs that match the audience.
+5. **Map style**. `outdoor-v2` (MapTiler) includes contour lines, hiking trails and natural POIs that match the audience.
 6. **Photo weight**. Limit to 3 photos per incident, compress client-side to ≤ 1 MB WebP with `browser-image-compression`. This keeps storage and bandwidth small enough for the free tier even at thousands of reports.
 7. **Accuracy matters more than recency in the field**. Status badges and vote counts must be visible at a glance; we render severity with a consistent color scale (yellow / orange / red).
 8. **Safety**. Users are in the field; keep critical flows reachable in ≤ 2 taps (report, cancel, vote).
@@ -190,7 +190,7 @@ Each phase is a working slice of product. Do not move to the next phase until th
 
 Repository structure, Next.js + TS + Tailwind, Supabase migrations, base components and BEM stylesheet.
 
-**Exit criteria**: `npm run dev` shows the header and an empty Mapbox map.
+**Exit criteria**: `npm run dev` shows the header and an empty MapTiler map.
 
 ### Phase 1 — Auth + incidents read path
 
@@ -256,7 +256,7 @@ Only start once Phase 6 has a few hundred real incidents. Candidates:
 - Reputation score and trust-weighted votes.
 - Moderation dashboard and reporting.
 - Video uploads via Cloudflare Stream.
-- Migrate tiles to MapLibre + OpenFreeMap if Mapbox pricing bites.
+- Migrate tiles to MapLibre + OpenFreeMap if MapTiler pricing bites.
 
 ---
 
@@ -279,7 +279,7 @@ For the MVP we favour a few high-value checks over exhaustive coverage.
 - Validate user-supplied strings both in the DB (`CHECK` constraints) and in the client form.
 - Rate-limit incident creation per user (Phase 6).
 - Strip EXIF GPS data on upload if it is more accurate than the reported location and the user did not intend to share it (consider in Phase 4).
-- Mapbox token is public but scope it to `styles:read`, `styles:tiles` and `fonts:read` — no secret scopes.
+- MapTiler key is public but restrict it to allowed HTTP referrers in the MapTiler Cloud dashboard.
 
 ---
 
@@ -291,13 +291,13 @@ Based on Nov 2025 free tiers. Recompute before you launch.
 | ------------------- | --------------------------------- | ----------------------- |
 | Vercel Hobby        | 100 GB bandwidth / month          | ~5–10 GB                |
 | Supabase Free       | 500 MB DB, 1 GB storage, 2 GB egress, 50K MAU | Safe up to ~5–10K MAU with compressed images |
-| Mapbox              | 50,000 map loads / month          | Good for a few thousand weekly actives |
+| MapTiler            | 100,000 map loads / month         | Good for a few thousand weekly actives |
 | Domain              | ~$10 / year                       | Optional                |
 
 Scale triggers to watch:
 
 - DB size > 400 MB → upgrade to Supabase Pro ($25 / mo) or archive `dismissed` rows.
-- Map loads approaching 45K → add client-side caching or move to MapLibre + OpenFreeMap.
+- Map loads approaching 90K → add client-side caching or move to MapLibre + OpenFreeMap.
 - Storage approaching 900 MB → migrate media to Cloudflare R2 (generous free tier, S3-compatible).
 
 ---
@@ -318,6 +318,6 @@ This repo is optimised for pair-programming with tools like Cursor.
 
 - **RLS** — Row Level Security. Postgres feature that restricts rows a role can read/write.
 - **RPC** — Remote Procedure Call. A Postgres function exposed via Supabase's REST/RT layer.
-- **DEM** — Digital Elevation Model. Raster of per-pixel elevation used by Mapbox to render 3D terrain.
+- **DEM** — Digital Elevation Model. Raster of per-pixel elevation used to render 3D terrain (MapTiler terrain-rgb-v2).
 - **PostGIS** — Geospatial extension for Postgres. Provides the `geography` type and functions like `ST_DWithin`.
 - **Magic link** — Passwordless email login flow used by Supabase Auth.
