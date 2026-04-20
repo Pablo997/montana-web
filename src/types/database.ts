@@ -562,17 +562,14 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
-      longtransactionsenabled: { Args: never; Returns: boolean }
-      montana_threshold: {
-        Args: { fallback: number; key: string }
-        Returns: number
-      }
-      nearby_incidents: {
+      incidents_in_bbox: {
         Args: {
-          p_lat: number
-          p_lng: number
+          p_limit?: number
+          p_max_lat: number
+          p_max_lng: number
+          p_min_lat: number
+          p_min_lng: number
           p_min_severity?: Database["public"]["Enums"]["severity_level"]
-          p_radius_m?: number
           p_types?: Database["public"]["Enums"]["incident_type"][]
         }
         Returns: {
@@ -594,15 +591,18 @@ export type Database = {
           user_id: string
         }[]
       }
-      incidents_in_bbox: {
+      longtransactionsenabled: { Args: never; Returns: boolean }
+      montana_threshold: {
+        Args: { fallback: number; key: string }
+        Returns: number
+      }
+      nearby_incidents: {
         Args: {
-          p_min_lng: number
-          p_min_lat: number
-          p_max_lng: number
-          p_max_lat: number
-          p_types?: Database["public"]["Enums"]["incident_type"][]
+          p_lat: number
+          p_lng: number
           p_min_severity?: Database["public"]["Enums"]["severity_level"]
-          p_limit?: number
+          p_radius_m?: number
+          p_types?: Database["public"]["Enums"]["incident_type"][]
         }
         Returns: {
           created_at: string
