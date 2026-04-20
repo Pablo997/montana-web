@@ -46,8 +46,8 @@ Everything fits inside the free tiers for the MVP. See the development guide for
 ### 2. Clone and install
 
 ```bash
-git clone https://github.com/<you>/montana.git
-cd montana
+git clone https://github.com/Pablo997/montana-web.git
+cd montana-web
 npm install
 ```
 
