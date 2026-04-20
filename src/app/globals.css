@@ -70,6 +70,121 @@ body {
   gap: 0.5rem;
 }
 
+.site-header__user {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------- Auth ---------------------------------- */
+.auth {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background: radial-gradient(circle at 50% 0%, #1b2a23 0%, var(--color-bg) 60%);
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.auth__back {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.auth__back:hover {
+  color: var(--color-text);
+}
+
+.auth__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.auth__subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.auth__form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.auth__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.auth__input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: border-color 120ms ease;
+}
+
+.auth__input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+}
+
+.auth__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth__submit {
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.auth__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth__notice {
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.auth__notice--success {
+  background: rgba(47, 143, 111, 0.15);
+  color: #8de0bb;
+  border: 1px solid rgba(47, 143, 111, 0.4);
+}
+
+.auth__notice--error {
+  background: rgba(217, 48, 37, 0.15);
+  color: #ff9f94;
+  border: 1px solid rgba(217, 48, 37, 0.4);
+}
+
 /* --------------------------------- Map ----------------------------------- */
 .map {
   position: relative;

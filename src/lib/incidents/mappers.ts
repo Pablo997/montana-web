@@ -8,7 +8,9 @@ type IncidentRow = {
   status: Incident['status'];
   title: string;
   description: string | null;
-  location: unknown;
+  location?: unknown;
+  lng?: number | null;
+  lat?: number | null;
   elevation_m: number | null;
   upvotes: number;
   downvotes: number;
@@ -18,8 +20,12 @@ type IncidentRow = {
   expires_at: string | null;
 };
 
-/** Extracts lng/lat from a PostGIS geography(Point) encoded as GeoJSON. */
-function extractPoint(geo: unknown): { lat: number; lng: number } {
+/** Extracts lng/lat from either flat columns or a PostGIS GeoJSON object. */
+function extractPoint(row: IncidentRow): { lat: number; lng: number } {
+  if (typeof row.lng === 'number' && typeof row.lat === 'number') {
+    return { lat: row.lat, lng: row.lng };
+  }
+  const geo = row.location;
   if (
     geo &&
     typeof geo === 'object' &&
@@ -41,7 +47,7 @@ export function rowToIncident(row: IncidentRow): Incident {
     status: row.status,
     title: row.title,
     description: row.description,
-    location: extractPoint(row.location),
+    location: extractPoint(row),
     elevationM: row.elevation_m,
     upvotes: row.upvotes,
     downvotes: row.downvotes,

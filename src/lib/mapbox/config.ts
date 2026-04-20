@@ -1,7 +1,9 @@
+import { MapStyle } from '@maptiler/sdk';
+
 export const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY ?? '';
 
 /** Outdoor style with contour lines and hiking POIs. */
-export const DEFAULT_MAP_STYLE = 'outdoor-v2';
+export const DEFAULT_MAP_STYLE = MapStyle.OUTDOOR_V4;
 
 /** Fallback center if the user denies geolocation (Pyrenees roughly). */
 export const DEFAULT_CENTER: [number, number] = [0.5, 42.65];

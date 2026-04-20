@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/style.css';
 import {
@@ -23,6 +23,7 @@ maptilersdk.config.apiKey = MAPTILER_KEY;
 export function MapView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maptilersdk.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const setIncidents = useMapStore((s) => s.setIncidents);
   const { position } = useGeolocation();
 
@@ -53,15 +54,23 @@ export function MapView() {
     map.on('load', () => {
       map.addSource(TERRAIN_SOURCE.id, TERRAIN_SOURCE.spec);
       map.setTerrain({ source: TERRAIN_SOURCE.id, exaggeration: TERRAIN_EXAGGERATION });
+      setMapReady(true);
     });
 
     mapRef.current = map;
 
+    // Load incidents around the default center immediately so the map is
+    // never empty even if the user denies geolocation.
+    fetchNearbyIncidents(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 100_000)
+      .then(setIncidents)
+      .catch((err) => console.error('Failed to load incidents', err));
+
     return () => {
       map.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
-  }, []);
+  }, [setIncidents]);
 
   useEffect(() => {
     if (!position) return;
@@ -75,7 +84,7 @@ export function MapView() {
   return (
     <div className="map">
       <div ref={containerRef} className="map__canvas" />
-      {mapRef.current ? <IncidentMarkers map={mapRef.current} /> : null}
+      {mapReady && mapRef.current ? <IncidentMarkers map={mapRef.current} /> : null}
       <IncidentDetailsPanel />
     </div>
   );
