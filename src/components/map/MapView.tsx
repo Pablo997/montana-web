@@ -179,12 +179,17 @@ export function MapView() {
       setLocating(false);
       const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
+      // Appending the raw state helps during remote debugging: if the
+      // user still sees `(state=denied)` after fully resetting the
+      // site permission, something deeper (system-level, extension,
+      // private-relay) is intercepting the query.
+      const hint = ` (state=${permissionState})`;
       setGeoError(
-        isIOS
-          ? 'Safari has this site marked as "Deny". Tap "aA" on the URL bar → Website Settings → Location → Ask. Then reload.'
+        (isIOS
+          ? 'Safari has this site marked as Deny. Long-press reload on the URL bar → Website Settings → Location → Ask. Then reload.'
           : isAndroid
-            ? 'Chrome has this site marked as "Blocked". Tap the padlock on the URL bar → Permissions → Location → Allow.'
-            : 'Your browser has this site marked as blocked for location. Open the site settings (padlock icon) and allow it.',
+            ? 'Chrome has this site marked as Blocked. Tap the padlock on the URL bar → Permissions → Location → Allow.'
+            : 'Your browser has this site blocked for location. Open the site settings (padlock) and allow it.') + hint,
       );
       return;
     }

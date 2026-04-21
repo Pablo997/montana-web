@@ -12,15 +12,14 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  {
-    // `geolocation=*` intentionally allows all origins. Some iOS Safari
-    // versions misparse the `(self)` syntax and silently block the
-    // permission prompt even though the origin matches. The app is
-    // never embedded in a third-party frame (X-Frame-Options: DENY),
-    // so a permissive policy here has no real-world attack surface.
-    key: 'Permissions-Policy',
-    value: 'camera=(self), geolocation=*, microphone=(), payment=(), usb=()',
-  },
+  // `Permissions-Policy` intentionally omitted. Some iOS Safari
+  // versions interpret any form of the header (`(self)`, `*`, even
+  // explicit origin lists) as restricting geolocation and return
+  // `denied` from `navigator.permissions.query` regardless of the
+  // user's choice. With the header absent, the browser defaults to
+  // "allow same-origin, no cross-origin" which is exactly what we
+  // want. We can reinstate the header with per-feature granularity
+  // once we need to gate e.g. camera access in nested iframes.
 ];
 
 /** @type {import('next').NextConfig} */
