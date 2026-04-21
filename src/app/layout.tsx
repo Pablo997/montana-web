@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
@@ -8,6 +8,16 @@ const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
+  display: 'swap',
+});
+
+// Outfit: rounded geometric sans used exclusively for the brand
+// wordmark. Friendlier than Inter's sharp terminals while keeping a
+// modern, tech-oriented feel — fits an outdoor / nature product.
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-brand',
   display: 'swap',
 });
 
@@ -28,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
         {children}
         <Analytics />

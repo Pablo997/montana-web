@@ -82,6 +82,84 @@ body {
   overflow: hidden;
 }
 
+/* ---------------------------- Map-only shell ----------------------------- */
+/* Full-bleed container for the map page: no header strip, the map paints
+   the entire viewport and chrome lives as floating islands. */
+.map-shell {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ---------------------------- Floating header ---------------------------- */
+/* Two independent glass pills in the top corners. No full-width bar — the
+   map is the content, controls are overlays. Inspired by Windy/Mapbox. */
+
+/* Centered, chromeless brand over the map. No background: we rely on
+   a crisp dark stroke around the text (the same trick MapTiler uses
+   for place labels) so it stays legible on both snow-bright and
+   forest-dark tiles without the blurry drop-shadow look. */
+.floating-header__brand {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #fff;
+  text-decoration: none;
+  transition: opacity 120ms ease;
+}
+
+.floating-header__brand:hover {
+  opacity: 0.85;
+}
+
+.floating-header__logo {
+  display: block;
+  flex-shrink: 0;
+  /* Single soft shadow keeps the outline readable over busy tiles
+     without washing it out like the previous multi-layer stack. */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+}
+
+.floating-header__wordmark {
+  font-family: var(--font-brand), ui-rounded, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: 0.005em;
+  line-height: 1;
+  /* Outline-style legibility: paint the stroke under the fill so the
+     text always has a thin dark halo regardless of the tile beneath.
+     Smaller stroke width than before since Outfit's rounder shapes
+     don't need as much halo to stay legible. */
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.55);
+  paint-order: stroke fill;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.floating-header__actions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Push MapTiler's built-in top-right controls (nav + geolocate) down so
+   they don't collide with our floating user-menu pill on the right.
+   !important is needed because MapLibre inlines `top: 10px` via its
+   own stylesheet. */
+.maplibregl-ctrl-top-right {
+  top: 3.75rem !important;
+}
+
 /* -------------------------------- Header --------------------------------- */
 .site-header {
   position: relative;
@@ -138,9 +216,10 @@ body {
 }
 
 .site-header__wordmark {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-family: var(--font-brand), ui-rounded, system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
   line-height: 1;
   background: linear-gradient(180deg, #f4fbf7 0%, #b6d5c7 100%);
   -webkit-background-clip: text;
