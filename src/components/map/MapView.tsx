@@ -166,11 +166,11 @@ export function MapView() {
     // the normal error-code path still runs.
     let permissionState: PermissionState | 'unknown' = 'unknown';
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = await (navigator.permissions as any)?.query?.({
-        name: 'geolocation',
-      });
-      if (res?.state) permissionState = res.state as PermissionState;
+      const perms: Permissions | undefined = navigator.permissions;
+      if (perms && typeof perms.query === 'function') {
+        const res = await perms.query({ name: 'geolocation' as PermissionName });
+        permissionState = res.state;
+      }
     } catch {
       /* older browsers: keep 'unknown', proceed to direct call */
     }
