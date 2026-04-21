@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { Logo } from '@/components/brand/Logo';
-import { SignOutButton } from './SignOutButton';
+import { UserMenu } from './UserMenu';
 
 export async function SiteHeader() {
   const supabase = createSupabaseServerClient();
@@ -18,12 +18,7 @@ export async function SiteHeader() {
 
       <div className="site-header__actions">
         {user ? (
-          <>
-            <span className="site-header__user" title={user.email ?? ''}>
-              {user.email}
-            </span>
-            <SignOutButton />
-          </>
+          <UserMenu email={user.email ?? 'Account'} />
         ) : (
           <Link href="/auth/sign-in" className="button button--primary">
             Sign in

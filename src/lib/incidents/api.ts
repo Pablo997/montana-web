@@ -39,6 +39,20 @@ async function currentUserId(): Promise<string | null> {
  * network, so obvious client bugs fail fast with a readable error instead
  * of an opaque Postgres 23514 (check constraint violation).
  */
+export class RateLimitError extends Error {
+  constructor(
+    public readonly scope: 'hourly' | 'daily',
+    public readonly limit: number,
+  ) {
+    super(
+      scope === 'hourly'
+        ? `You've reached the limit of ${limit} incidents per hour. Please wait before reporting another one.`
+        : `You've reached the daily limit of ${limit} incidents. Come back tomorrow.`,
+    );
+    this.name = 'RateLimitError';
+  }
+}
+
 export async function createIncident(input: CreateIncidentInput): Promise<Incident> {
   const payload = CreateIncidentSchema.parse(input);
 
@@ -56,7 +70,22 @@ export async function createIncident(input: CreateIncidentInput): Promise<Incide
     })
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // The BEFORE INSERT trigger (`enforce_incident_rate_limit`) raises a
+    // P0001 exception with a `RATE_LIMIT_{HOURLY,DAILY}` message and the
+    // configured limit in the `hint` field. Translate it to a typed error
+    // so the UI can render a friendly quota message instead of a raw
+    // Postgres dump.
+    const msg = error.message ?? '';
+    const hint = (error as { hint?: string }).hint ?? '';
+    if (msg.includes('RATE_LIMIT_HOURLY')) {
+      throw new RateLimitError('hourly', Number(hint) || 5);
+    }
+    if (msg.includes('RATE_LIMIT_DAILY')) {
+      throw new RateLimitError('daily', Number(hint) || 30);
+    }
+    throw error;
+  }
 
   // The RPC returns the `incidents` row whose `location` column serialises
   // as WKB hex. We already know the lng/lat since we just sent them, so we

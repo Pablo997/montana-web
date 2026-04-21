@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createIncident, uploadIncidentMedia } from '@/lib/incidents/api';
+import { RateLimitError, createIncident, uploadIncidentMedia } from '@/lib/incidents/api';
 import { CreateIncidentSchema, type CreateIncidentInput } from '@/lib/incidents/schemas';
 import { compressImage } from '@/lib/utils/image-compression';
 import { offlineQueue } from '@/lib/utils/offline-queue';
@@ -143,6 +143,14 @@ export function IncidentForm({
         onCreated?.({ ...created, mediaCount: uploadedCount });
       } catch (err) {
         console.error(err);
+        // Rate-limit errors are user-facing and deterministic: surface the
+        // quota message directly and do NOT queue for retry (it'd just be
+        // rejected again). Everything else is treated as a transient
+        // network/server failure and buffered offline.
+        if (err instanceof RateLimitError) {
+          setError(err.message);
+          return;
+        }
         offlineQueue.enqueue(payload);
         setError('Could not reach the server. Saved locally and will retry when online.');
       }

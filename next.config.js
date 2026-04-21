@@ -1,3 +1,23 @@
+// Security headers applied to every response. These are defence-in-depth
+// only: the app does not rely on them for correctness, but turning them
+// on costs nothing and mitigates common attack classes (clickjacking,
+// MIME sniffing, referrer leakage, powerful-feature abuse).
+//
+// We intentionally do NOT ship a strict CSP yet: MapTiler, Supabase
+// storage, Vercel analytics and `next/font` each need their own
+// allow-listed origins and a misconfigured CSP would silently break
+// tiles or auth. Revisit once we've measured real prod requests.
+const securityHeaders = [
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(self), geolocation=(self), microphone=(), payment=(), usb=()',
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -13,6 +33,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

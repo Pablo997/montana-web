@@ -8,11 +8,17 @@ type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
+  const [accepted, setAccepted] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!accepted) {
+      setError('You must accept the Terms and Privacy Policy to continue.');
+      setStatus('error');
+      return;
+    }
     setStatus('sending');
     setError(null);
 
@@ -28,6 +34,21 @@ export default function SignInPage() {
       setStatus('error');
       setError(signInError.message);
       return;
+    }
+
+    // Store the timestamped consent record locally. A more defensive
+    // setup would also persist this server-side (e.g. a
+    // `user_consents` row) but for the MVP the checkbox click plus
+    // this local evidence is sufficient — the real contract is formed
+    // when the magic-link callback creates the auth session, which
+    // only happens after this consent step.
+    try {
+      localStorage.setItem(
+        'montana.consent',
+        JSON.stringify({ acceptedAt: new Date().toISOString(), version: '2026-04' }),
+      );
+    } catch {
+      // Storage may be disabled; non-critical.
     }
 
     setStatus('sent');
@@ -66,10 +87,26 @@ export default function SignInPage() {
               disabled={status === 'sending'}
             />
 
+            <label className="auth__consent">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+                disabled={status === 'sending'}
+                required
+              />
+              <span>
+                I have read and accept the{' '}
+                <Link href="/terms" target="_blank">Terms</Link>,{' '}
+                <Link href="/privacy" target="_blank">Privacy Policy</Link>{' '}
+                and <Link href="/cookies" target="_blank">Cookie Policy</Link>.
+              </span>
+            </label>
+
             <button
               type="submit"
               className="button button--primary auth__submit"
-              disabled={status === 'sending' || email.length === 0}
+              disabled={status === 'sending' || email.length === 0 || !accepted}
             >
               {status === 'sending' ? 'Sending...' : 'Send magic link'}
             </button>
