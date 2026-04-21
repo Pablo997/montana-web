@@ -434,6 +434,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      default_incident_ttl: {
+        Args: {
+          p_severity: Database["public"]["Enums"]["severity_level"]
+          p_type: Database["public"]["Enums"]["incident_type"]
+        }
+        Returns: string
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -565,6 +572,29 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_incident_by_id: {
+        Args: { p_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          downvotes: number
+          elevation_m: number
+          expires_at: string
+          id: string
+          lat: number
+          lng: number
+          media_count: number
+          score: number
+          severity: Database["public"]["Enums"]["severity_level"]
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          type: Database["public"]["Enums"]["incident_type"]
+          updated_at: string
+          upvotes: number
+          user_id: string
+          user_vote: number
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       incidents_in_bbox: {
         Args: {
@@ -599,6 +629,10 @@ export type Database = {
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       montana_threshold: {
+        Args: { fallback: number; key: string }
+        Returns: number
+      }
+      montana_threshold_num: {
         Args: { fallback: number; key: string }
         Returns: number
       }
@@ -1266,6 +1300,10 @@ export type Database = {
           table_name: string
         }
         Returns: string
+      }
+      wilson_lower_bound: {
+        Args: { p_pos: number; p_total: number }
+        Returns: number
       }
     }
     Enums: {

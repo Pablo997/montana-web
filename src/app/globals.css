@@ -587,6 +587,24 @@ body {
   line-height: 1.4;
 }
 
+.incident-card__share {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.incident-card__share:hover {
+  border-color: var(--color-brand);
+  color: var(--color-text);
+}
+
 .incident-card__footer {
   display: flex;
   align-items: center;

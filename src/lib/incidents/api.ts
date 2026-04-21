@@ -81,6 +81,21 @@ export async function fetchNearbyIncidents(
   return (data ?? []).map(rowToIncident);
 }
 
+/**
+ * Look up a single incident by id. Returns `null` when the incident
+ * doesn't exist or has been dismissed. Powers the client side of deep
+ * links (/incidents/[id]) when the store hasn't hydrated the row yet.
+ */
+export async function fetchIncidentById(id: string): Promise<Incident | null> {
+  const { data, error } = await supabase()
+    .rpc('get_incident_by_id', { p_id: id })
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return rowToIncident(data as Parameters<typeof rowToIncident>[0]);
+}
+
 /** Fetch every visible incident inside a lng/lat envelope. */
 export async function fetchIncidentsInBbox(bbox: BBox): Promise<Incident[]> {
   const parsed = BBoxSchema.parse(bbox);

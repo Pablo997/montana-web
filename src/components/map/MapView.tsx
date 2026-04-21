@@ -33,7 +33,16 @@ export function MapView() {
   const pickingLocation = useMapStore((s) => s.pickingLocation);
   const setReportLocation = useMapStore((s) => s.setReportLocation);
   const cancelPickingLocation = useMapStore((s) => s.cancelPickingLocation);
+  const selectedId = useMapStore((s) => s.selectedId);
+  const incidents = useMapStore((s) => s.incidents);
   const { position } = useGeolocation();
+
+  // Deep-link / programmatic selection: whenever the selection changes
+  // to a known incident, pan to it. Skip if the marker is already
+  // within the current viewport so regular map clicks don't jitter.
+  const selectedIncident = selectedId ? incidents.get(selectedId) ?? null : null;
+  const selectedLng = selectedIncident?.location.lng ?? null;
+  const selectedLat = selectedIncident?.location.lat ?? null;
 
   useRealtimeIncidents();
 
@@ -129,6 +138,19 @@ export function MapView() {
     // Viewport fetch will re-run automatically via `moveend` after flyTo.
     mapRef.current?.flyTo({ center: [position.lng, position.lat], zoom: 12 });
   }, [position]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || selectedLng == null || selectedLat == null) return;
+    const bounds = map.getBounds();
+    const alreadyVisible =
+      selectedLng >= bounds.getWest() &&
+      selectedLng <= bounds.getEast() &&
+      selectedLat >= bounds.getSouth() &&
+      selectedLat <= bounds.getNorth();
+    if (alreadyVisible) return;
+    map.flyTo({ center: [selectedLng, selectedLat], zoom: Math.max(map.getZoom(), 13) });
+  }, [selectedLng, selectedLat]);
 
   // Location-picking mode: next click on the map becomes the incident location.
   useEffect(() => {
