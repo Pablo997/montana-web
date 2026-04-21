@@ -21,6 +21,7 @@ import { MapEmptyState } from './MapEmptyState';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
 import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
+import { buildPermissionDeniedMessage } from '@/lib/geo/permissionMessage';
 import type { LatLng } from '@/types/incident';
 
 maptilersdk.config.apiKey = MAPTILER_KEY;
@@ -177,20 +178,7 @@ export function MapView() {
 
     if (permissionState === 'denied') {
       setLocating(false);
-      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      // Appending the raw state helps during remote debugging: if the
-      // user still sees `(state=denied)` after fully resetting the
-      // site permission, something deeper (system-level, extension,
-      // private-relay) is intercepting the query.
-      const hint = ` (state=${permissionState})`;
-      setGeoError(
-        (isIOS
-          ? 'Safari has this site marked as Deny. Long-press reload on the URL bar → Website Settings → Location → Ask. Then reload.'
-          : isAndroid
-            ? 'Chrome has this site marked as Blocked. Tap the padlock on the URL bar → Permissions → Location → Allow.'
-            : 'Your browser has this site blocked for location. Open the site settings (padlock) and allow it.') + hint,
-      );
+      setGeoError(buildPermissionDeniedMessage(navigator.userAgent, permissionState));
       return;
     }
 
@@ -225,16 +213,9 @@ export function MapView() {
       },
       (err) => {
         setLocating(false);
-        const ua = navigator.userAgent;
-        const isIOS = /iP(hone|ad|od)/.test(ua);
-        const isAndroid = /Android/.test(ua);
         const msg =
           err.code === 1
-            ? isIOS
-              ? 'Safari denied location for this site. Tap "aA" on the URL bar → Website Settings → Location → Ask.'
-              : isAndroid
-                ? 'Chrome denied location for this site. Tap the padlock on the URL bar → Permissions → Location → Allow.'
-                : 'Location blocked. Open the site settings (padlock icon) and allow location.'
+            ? buildPermissionDeniedMessage(navigator.userAgent)
             : err.code === 2
               ? 'Location unavailable. Move outdoors or enable Wi-Fi / GPS.'
               : 'Could not get your location. Try again in a moment.';
