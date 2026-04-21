@@ -56,13 +56,42 @@ export function UserMenu({ email }: Props) {
     setError(null);
     setLoading('delete');
     const supabase = createSupabaseBrowserClient();
+
+    // 1) Wipe the user's media from Storage first. Supabase no longer
+    // allows direct DELETE on `storage.objects` from SQL, so the RPC
+    // can't do this itself — it must happen over the Storage API with
+    // the user's own JWT. Media paths follow `${uid}/${incidentId}/...`
+    // (see uploadIncidentMedia in lib/incidents/api.ts), so one prefix
+    // list + bulk remove per bucket is enough.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const bucket = 'incident-media';
+      const { data: folders } = await supabase
+        .storage.from(bucket)
+        .list(user.id, { limit: 1000 });
+      const paths: string[] = [];
+      for (const folder of folders ?? []) {
+        const { data: files } = await supabase
+          .storage.from(bucket)
+          .list(`${user.id}/${folder.name}`, { limit: 1000 });
+        for (const f of files ?? []) {
+          paths.push(`${user.id}/${folder.name}/${f.name}`);
+        }
+      }
+      if (paths.length > 0) {
+        await supabase.storage.from(bucket).remove(paths);
+      }
+    }
+
+    // 2) Now drop the DB rows and the auth.users entry.
     const { error: rpcError } = await supabase.rpc('delete_my_account');
     if (rpcError) {
       setError(rpcError.message);
       setLoading(null);
       return;
     }
-    // Clear any local artefacts (consent, offline queue) and sign out.
+
+    // 3) Clear any local artefacts (consent, offline queue) and sign out.
     try {
       localStorage.removeItem('montana.consent');
       localStorage.removeItem('montana.notice.v1');
