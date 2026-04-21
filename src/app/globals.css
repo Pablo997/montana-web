@@ -23,6 +23,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Universal keyboard-focus ring. Applies to every interactive element
+   that doesn't opt out explicitly (auth inputs keep their green hint).
+   Uses the dynamic-pseudo `:focus-visible` so mouse users don't see it. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* BEM components                                                             */
 /* -------------------------------------------------------------------------- */
@@ -703,6 +722,55 @@ body {
 }
 .badge--status-pending {
   background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+}
+.badge--expiry {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+  border-color: rgba(255, 255, 255, 0.1);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.badge--expiry-soon {
+  background: rgba(242, 139, 48, 0.18);
+  color: #f5b170;
+  border-color: rgba(242, 139, 48, 0.55);
+}
+
+/* --------------------------- Map expiring marker ------------------------- */
+.map-marker--expiring {
+  animation: map-marker-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes map-marker-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+/* ------------------------------ Empty state ------------------------------ */
+.map-empty {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(15, 20, 18, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  max-width: min(90vw, 420px);
+  z-index: 5;
+}
+
+.map-empty__text {
+  margin: 0;
   color: var(--color-text-muted);
 }
 

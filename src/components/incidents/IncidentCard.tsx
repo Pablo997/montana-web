@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { INCIDENT_TYPE_LABELS, SEVERITY_LABELS, type Incident } from '@/types/incident';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useClock } from '@/hooks/useClock';
+import { getExpiryInfo } from '@/lib/incidents/expiry';
 import { IncidentAuthorActions } from './IncidentAuthorActions';
 import { IncidentMediaGrid } from './IncidentMediaGrid';
 import { VoteButtons } from './VoteButtons';
@@ -19,6 +21,8 @@ interface Props {
  */
 export function IncidentCard({ incident }: Props) {
   const { userId } = useCurrentUser();
+  const now = useClock(60_000);
+  const expiry = getExpiryInfo(incident, now);
   const isAuthor = userId !== null && userId === incident.userId;
   const [copied, setCopied] = useState(false);
 
@@ -69,6 +73,16 @@ export function IncidentCard({ incident }: Props) {
           </span>
           <span className="badge badge--type">{INCIDENT_TYPE_LABELS[incident.type]}</span>
           <span className={`badge badge--status-${incident.status}`}>{incident.status}</span>
+          {expiry.humanRemaining ? (
+            <span
+              className={`badge badge--expiry${
+                expiry.isExpiringSoon ? ' badge--expiry-soon' : ''
+              }`}
+              title={`Expires ${new Date(incident.expiresAt!).toLocaleString()}`}
+            >
+              Expires in {expiry.humanRemaining}
+            </span>
+          ) : null}
         </div>
         <button
           type="button"

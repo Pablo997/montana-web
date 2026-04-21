@@ -18,6 +18,7 @@ import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { IncidentMarkers } from './IncidentMarkers';
 import { FilterPanel } from './FilterPanel';
+import { MapEmptyState } from './MapEmptyState';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
 import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
@@ -190,6 +191,8 @@ export function MapView() {
       <div className="map__overlay map__overlay--bottom-right">
         <ReportIncidentButton fallbackLocation={fallbackLocation} />
       </div>
+
+      {mapReady ? <MapEmptyState /> : null}
 
       {pickingLocation ? (
         <div className="map__pick-banner" role="status">

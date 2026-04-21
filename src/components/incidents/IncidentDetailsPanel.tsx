@@ -13,10 +13,22 @@ export function IncidentDetailsPanel() {
   if (!incident) return null;
 
   return (
-    <aside className="panel" aria-label="Incident details">
+    <aside
+      className="panel"
+      aria-labelledby="incident-details-title"
+      aria-live="polite"
+      role="complementary"
+    >
       <div className="panel__header">
-        <h2 className="panel__title">Incident details</h2>
-        <button className="button" onClick={() => close(null)} aria-label="Close panel">
+        <h2 className="panel__title" id="incident-details-title">
+          Incident details
+        </h2>
+        <button
+          type="button"
+          className="button"
+          onClick={() => close(null)}
+          aria-label="Close incident details"
+        >
           Close
         </button>
       </div>
