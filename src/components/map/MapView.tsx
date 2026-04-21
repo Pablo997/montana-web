@@ -15,7 +15,6 @@ import { fetchIncidentsInBbox, type BBox } from '@/lib/incidents/api';
 import { bboxForTiles, tilesForBbox } from '@/lib/incidents/tile-cache';
 import { useMapStore } from '@/store/useMapStore';
 import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import { IncidentMarkers } from './IncidentMarkers';
 import { FilterPanel } from './FilterPanel';
 import { MapEmptyState } from './MapEmptyState';
@@ -36,7 +35,14 @@ export function MapView() {
   const cancelPickingLocation = useMapStore((s) => s.cancelPickingLocation);
   const selectedId = useMapStore((s) => s.selectedId);
   const incidents = useMapStore((s) => s.incidents);
-  const { position } = useGeolocation();
+  // Mobile-friendly geolocation flow: the browser Geolocation API
+  // refuses to re-prompt for permission on iOS Safari once it's been
+  // denied, so we avoid firing it on mount (silent failure) and only
+  // resolve a fix when the user explicitly taps the GeolocateControl.
+  // This variable surfaces the resulting error to the UI so the user
+  // understands why the map didn't move. It auto-clears after a few
+  // seconds to avoid clutter.
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   // Deep-link / programmatic selection: whenever the selection changes
   // to a known incident, pan to it. Skip if the marker is already
@@ -69,13 +75,32 @@ export function MapView() {
     // Built-in controls go on the top-right so our own FAB (bottom-right)
     // and filter panel (top-left) don't fight them for tap targets.
     map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'top-right');
-    map.addControl(
-      new maptilersdk.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-      }),
-      'top-right',
-    );
+
+    // Surface geolocation failures (permission denied, signal lost,
+    // timeout) so mobile users get a clear reason when pressing the
+    // locate button does nothing. Without this listener the control
+    // fails silently and it looks like the button is broken.
+    const geolocate = new maptilersdk.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+        timeout: 10_000,
+        maximumAge: 30_000,
+      },
+      trackUserLocation: true,
+      showUserLocation: true,
+      showAccuracyCircle: true,
+    });
+    geolocate.on('error', (err: GeolocationPositionError) => {
+      const msg =
+        err.code === 1
+          ? 'Location blocked. Enable it for this site in your browser settings.'
+          : err.code === 2
+            ? 'Location unavailable. Move outdoors or enable Wi-Fi / GPS.'
+            : 'Could not get your location. Try again in a moment.';
+      setGeoError(msg);
+    });
+    geolocate.on('geolocate', () => setGeoError(null));
+    map.addControl(geolocate, 'top-right');
 
     // Tile IDs whose incidents have already been hydrated. Realtime keeps
     // these consistent with the DB, so we never need to refetch them.
@@ -134,11 +159,13 @@ export function MapView() {
     };
   }, []);
 
+  // Auto-dismiss the geolocation error banner after a few seconds so
+  // it doesn't linger on top of the map once the user has read it.
   useEffect(() => {
-    if (!position) return;
-    // Viewport fetch will re-run automatically via `moveend` after flyTo.
-    mapRef.current?.flyTo({ center: [position.lng, position.lat], zoom: 12 });
-  }, [position]);
+    if (!geoError) return;
+    const id = setTimeout(() => setGeoError(null), 6000);
+    return () => clearTimeout(id);
+  }, [geoError]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -175,8 +202,15 @@ export function MapView() {
     };
   }, [pickingLocation, setReportLocation]);
 
-  const fallbackLocation: LatLng = position
-    ? { lat: position.lat, lng: position.lng }
+  // Default incident location when the user hits Report without
+  // picking a spot on the map. We use the current map centre (which
+  // will match the user's location if they pressed the GeolocateControl
+  // first) instead of forcing a browser permission prompt up front.
+  const fallbackLocation: LatLng = mapRef.current
+    ? (() => {
+        const c = mapRef.current.getCenter();
+        return { lat: c.lat, lng: c.lng };
+      })()
     : { lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] };
 
   return (
@@ -199,6 +233,20 @@ export function MapView() {
           <span>Tap the map to pick the incident location</span>
           <button type="button" className="button" onClick={cancelPickingLocation}>
             Cancel
+          </button>
+        </div>
+      ) : null}
+
+      {geoError ? (
+        <div className="map__geo-error" role="alert">
+          <span>{geoError}</span>
+          <button
+            type="button"
+            className="map__geo-error-close"
+            aria-label="Dismiss"
+            onClick={() => setGeoError(null)}
+          >
+            ×
           </button>
         </div>
       ) : null}
