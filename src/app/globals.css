@@ -160,6 +160,50 @@ body {
   top: 3.75rem !important;
 }
 
+/* ---------------------------- Locate button ------------------------------ */
+/* Custom geolocate button. Replaces MapTiler's GeolocateControl because
+   iOS Safari was swallowing the permission prompt when the
+   `navigator.geolocation` call happened from inside the SDK's event
+   chain — calling it directly from this button's onClick fixes it. */
+.map__locate {
+  position: absolute;
+  top: calc(3.75rem + 72px);
+  right: 10px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  transition: background-color 120ms ease;
+}
+
+.map__locate:hover {
+  background: #f4f4f4;
+}
+
+.map__locate:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.map__locate-spinner {
+  animation: map-locate-spin 0.9s linear infinite;
+}
+
+@keyframes map-locate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* -------------------------------- Header --------------------------------- */
 .site-header {
   position: relative;

@@ -13,8 +13,13 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
+    // `geolocation=*` intentionally allows all origins. Some iOS Safari
+    // versions misparse the `(self)` syntax and silently block the
+    // permission prompt even though the origin matches. The app is
+    // never embedded in a third-party frame (X-Frame-Options: DENY),
+    // so a permissive policy here has no real-world attack surface.
     key: 'Permissions-Policy',
-    value: 'camera=(self), geolocation=(self), microphone=(), payment=(), usb=()',
+    value: 'camera=(self), geolocation=*, microphone=(), payment=(), usb=()',
   },
 ];
 

@@ -72,35 +72,13 @@ export function MapView() {
       geolocateControl: false,
     });
 
-    // Built-in controls go on the top-right so our own FAB (bottom-right)
-    // and filter panel (top-left) don't fight them for tap targets.
+    // Only zoom / compass go through MapTiler's control layer. The
+    // geolocate button is rendered as a regular React element below
+    // so we can call `navigator.geolocation` directly inside its
+    // onClick handler — iOS Safari refuses to raise the permission
+    // prompt when the call is buried inside the SDK's internal event
+    // wiring, even though it's technically a user gesture.
     map.addControl(new maptilersdk.NavigationControl({ visualizePitch: true }), 'top-right');
-
-    // Surface geolocation failures (permission denied, signal lost,
-    // timeout) so mobile users get a clear reason when pressing the
-    // locate button does nothing. Without this listener the control
-    // fails silently and it looks like the button is broken.
-    const geolocate = new maptilersdk.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-        timeout: 10_000,
-        maximumAge: 30_000,
-      },
-      trackUserLocation: true,
-      showUserLocation: true,
-      showAccuracyCircle: true,
-    });
-    geolocate.on('error', (err: GeolocationPositionError) => {
-      const msg =
-        err.code === 1
-          ? 'Location blocked. Enable it for this site in your browser settings.'
-          : err.code === 2
-            ? 'Location unavailable. Move outdoors or enable Wi-Fi / GPS.'
-            : 'Could not get your location. Try again in a moment.';
-      setGeoError(msg);
-    });
-    geolocate.on('geolocate', () => setGeoError(null));
-    map.addControl(geolocate, 'top-right');
 
     // Tile IDs whose incidents have already been hydrated. Realtime keeps
     // these consistent with the DB, so we never need to refetch them.
@@ -167,6 +145,63 @@ export function MapView() {
     return () => clearTimeout(id);
   }, [geoError]);
 
+  const [locating, setLocating] = useState(false);
+  const userMarkerRef = useRef<maptilersdk.Marker | null>(null);
+
+  const handleLocate = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoError('Your browser does not expose the location API.');
+      return;
+    }
+
+    setGeoError(null);
+    setLocating(true);
+
+    // Direct call, synchronous with the click → keeps iOS Safari happy
+    // about the user-gesture requirement.
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const { latitude: lat, longitude: lng } = pos.coords;
+
+        map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 13) });
+
+        // Simple dot marker; re-used across subsequent presses instead
+        // of stacking new DOM elements on the map.
+        if (userMarkerRef.current) {
+          userMarkerRef.current.setLngLat([lng, lat]);
+        } else {
+          const el = document.createElement('div');
+          el.style.width = '16px';
+          el.style.height = '16px';
+          el.style.borderRadius = '50%';
+          el.style.background = '#2f8f6f';
+          el.style.border = '3px solid #fff';
+          el.style.boxShadow = '0 0 0 2px rgba(47, 143, 111, 0.35)';
+          userMarkerRef.current = new maptilersdk.Marker({
+            element: el,
+            anchor: 'center',
+          })
+            .setLngLat([lng, lat])
+            .addTo(map);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        const msg =
+          err.code === 1
+            ? 'Location blocked. Enable it for this site in your browser settings.'
+            : err.code === 2
+              ? 'Location unavailable. Move outdoors or enable Wi-Fi / GPS.'
+              : 'Could not get your location. Try again in a moment.';
+        setGeoError(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 },
+    );
+  };
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || selectedLng == null || selectedLat == null) return;
@@ -225,6 +260,47 @@ export function MapView() {
       <div className="map__overlay map__overlay--bottom-right">
         <ReportIncidentButton fallbackLocation={fallbackLocation} />
       </div>
+
+      <button
+        type="button"
+        className="map__locate"
+        onClick={handleLocate}
+        disabled={locating}
+        aria-label="Center map on my location"
+        title="Center map on my location"
+      >
+        {locating ? (
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="map__locate-spinner"
+            aria-hidden
+          >
+            <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+          </svg>
+        ) : (
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          </svg>
+        )}
+      </button>
 
       {mapReady ? <MapEmptyState /> : null}
 
