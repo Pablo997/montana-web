@@ -172,12 +172,35 @@ export async function resolveIncident(incidentId: string): Promise<void> {
 }
 
 /**
- * Hard-delete an incident. RLS only lets the author hit their own rows.
- * The cascade on `incident_votes` / `incident_media` is defined in the
- * initial schema, so this also cleans up related rows and storage
- * objects via the existing triggers.
+ * Hard-delete an incident and its media. RLS only lets the author hit
+ * their own rows.
+ *
+ * Storage objects are cleaned *before* the DB delete via the Storage
+ * API because Supabase now blocks direct SQL deletes on
+ * `storage.objects` (see migration 00017). If the DB delete later
+ * fails we've orphaned the media, but the inverse order would leave
+ * dangling rows pointing to missing files, which is worse for the UI
+ * (broken image placeholders).
  */
 export async function deleteIncident(incidentId: string): Promise<void> {
+  const { data: mediaRows } = await supabase()
+    .from('incident_media')
+    .select('storage_path')
+    .eq('incident_id', incidentId);
+
+  const paths = (mediaRows ?? [])
+    .map((r) => r.storage_path)
+    .filter((p): p is string => typeof p === 'string' && p.length > 0);
+  if (paths.length > 0) {
+    await supabase()
+      .storage.from(MEDIA_BUCKET)
+      .remove(paths)
+      .catch((err) => {
+        // Log but keep going — DB delete is still desirable.
+        console.warn('[deleteIncident] storage cleanup partial', err);
+      });
+  }
+
   const { error } = await supabase()
     .from('incidents')
     .delete()
