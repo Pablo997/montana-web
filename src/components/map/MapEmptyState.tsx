@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useMapStore } from '@/store/useMapStore';
 import { incidentMatchesFilters } from './FilterPanel';
 
@@ -11,12 +12,33 @@ import { incidentMatchesFilters } from './FilterPanel';
  *
  * We intentionally keep it as an overlay (not a modal) so the user can
  * still pan the map, report a new incident, or relax filters without
- * dismissing anything.
+ * dismissing anything. The "empty area" variant is dismissible — once
+ * the user gets the hint we shouldn't keep cluttering the map on every
+ * new viewport that happens to be empty.
  */
+
+// Bumping the version forces the banner to reappear for users who had
+// already dismissed the previous copy.
+const DISMISS_STORAGE_KEY = 'montana.map-empty.dismissed.v1';
+
 export function MapEmptyState() {
   const incidents = useMapStore((s) => s.incidents);
   const filters = useMapStore((s) => s.filters);
   const setFilters = useMapStore((s) => s.setFilters);
+
+  const [dismissed, setDismissed] = useState(false);
+
+  // Read the persisted dismissal on mount so the banner doesn't flash
+  // on every page reload once the user has closed it.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DISMISS_STORAGE_KEY) === '1') {
+        setDismissed(true);
+      }
+    } catch {
+      /* private mode or storage disabled: treat as not dismissed */
+    }
+  }, []);
 
   const totalLoaded = incidents.size;
   let visibleAfterFilters = 0;
@@ -29,6 +51,9 @@ export function MapEmptyState() {
   const filtersActive =
     filters.types !== null || filters.minSeverity !== null || filters.onlyValidated;
 
+  // Filter-mismatch variant is always shown: it carries an actionable
+  // "Reset filters" button and disappears the moment the filters are
+  // relaxed, so dismissing it doesn't add much.
   if (totalLoaded > 0 && filtersActive) {
     return (
       <div className="map-empty" role="status">
@@ -46,12 +71,31 @@ export function MapEmptyState() {
     );
   }
 
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_STORAGE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <div className="map-empty" role="status">
       <p className="map-empty__text">
         No incidents in this area yet. Tap the <strong>Report</strong> button to
         add the first one.
       </p>
+      <button
+        type="button"
+        className="map-empty__close"
+        aria-label="Dismiss"
+        onClick={handleDismiss}
+      >
+        ×
+      </button>
     </div>
   );
 }

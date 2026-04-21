@@ -15,11 +15,21 @@ html,
 body,
 #__next {
   height: 100%;
+  /* Full-bleed map app: page itself should never scroll; the map owns
+     all pan/zoom gestures. Without this, iOS and Android browsers let
+     the address bar expand/collapse while the user pans, which shifts
+     the map viewport around and exposes a grey scroll strip. */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  /* Belt-and-braces: prevents the rubber-band bounce on iOS Safari
+     when the user flicks a marker panel past its edge. */
+  -webkit-overflow-scrolling: auto;
+  touch-action: manipulation;
   font-family:
     var(--font-sans),
     ui-sans-serif,
@@ -60,6 +70,10 @@ body {
 .app-shell {
   display: grid;
   grid-template-rows: auto 1fr;
+  /* Fallback for browsers without dvh support (iOS < 15.4). dvh is
+     preferred because it accounts for the collapsible mobile URL bar
+     without jank. */
+  height: 100vh;
   height: 100dvh;
 }
 
@@ -1267,6 +1281,31 @@ body {
 .map-empty__text {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.map-empty__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.map-empty__close:hover,
+.map-empty__close:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
 }
 
 /* ------------------------------ Vote buttons ----------------------------- */

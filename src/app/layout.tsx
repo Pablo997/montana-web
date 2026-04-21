@@ -21,6 +21,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#0f1412',
+  // Cover notches on iOS so the map reaches the edges instead of
+  // leaving white strips above/below.
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
