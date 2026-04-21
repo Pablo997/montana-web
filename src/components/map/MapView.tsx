@@ -148,7 +148,7 @@ export function MapView() {
   const [locating, setLocating] = useState(false);
   const userMarkerRef = useRef<maptilersdk.Marker | null>(null);
 
-  const handleLocate = () => {
+  const handleLocate = async () => {
     const map = mapRef.current;
     if (!map) return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -158,6 +158,36 @@ export function MapView() {
 
     setGeoError(null);
     setLocating(true);
+
+    // Read the current permission state so we can give the user an
+    // accurate explanation. iOS Safari ≥16 supports this; older
+    // versions (and some Android stock browsers) throw — silence the
+    // throw and fall back to calling getCurrentPosition directly so
+    // the normal error-code path still runs.
+    let permissionState: PermissionState | 'unknown' = 'unknown';
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (navigator.permissions as any)?.query?.({
+        name: 'geolocation',
+      });
+      if (res?.state) permissionState = res.state as PermissionState;
+    } catch {
+      /* older browsers: keep 'unknown', proceed to direct call */
+    }
+
+    if (permissionState === 'denied') {
+      setLocating(false);
+      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      setGeoError(
+        isIOS
+          ? 'Safari has this site marked as "Deny". Tap "aA" on the URL bar → Website Settings → Location → Ask. Then reload.'
+          : isAndroid
+            ? 'Chrome has this site marked as "Blocked". Tap the padlock on the URL bar → Permissions → Location → Allow.'
+            : 'Your browser has this site marked as blocked for location. Open the site settings (padlock icon) and allow it.',
+      );
+      return;
+    }
 
     // Direct call, synchronous with the click → keeps iOS Safari happy
     // about the user-gesture requirement.
@@ -190,9 +220,16 @@ export function MapView() {
       },
       (err) => {
         setLocating(false);
+        const ua = navigator.userAgent;
+        const isIOS = /iP(hone|ad|od)/.test(ua);
+        const isAndroid = /Android/.test(ua);
         const msg =
           err.code === 1
-            ? 'Location blocked. Enable it for this site in your browser settings.'
+            ? isIOS
+              ? 'Safari denied location for this site. Tap "aA" on the URL bar → Website Settings → Location → Ask.'
+              : isAndroid
+                ? 'Chrome denied location for this site. Tap the padlock on the URL bar → Permissions → Location → Allow.'
+                : 'Location blocked. Open the site settings (padlock icon) and allow location.'
             : err.code === 2
               ? 'Location unavailable. Move outdoors or enable Wi-Fi / GPS.'
               : 'Could not get your location. Try again in a moment.';
@@ -258,49 +295,49 @@ export function MapView() {
       </div>
 
       <div className="map__overlay map__overlay--bottom-right">
+        <button
+          type="button"
+          className="map__locate"
+          onClick={handleLocate}
+          disabled={locating}
+          aria-label="Center map on my location"
+          title="Center map on my location"
+        >
+          {locating ? (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="map__locate-spinner"
+              aria-hidden
+            >
+              <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+            </svg>
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+              <circle cx="12" cy="12" r="7" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+            </svg>
+          )}
+        </button>
         <ReportIncidentButton fallbackLocation={fallbackLocation} />
       </div>
-
-      <button
-        type="button"
-        className="map__locate"
-        onClick={handleLocate}
-        disabled={locating}
-        aria-label="Center map on my location"
-        title="Center map on my location"
-      >
-        {locating ? (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="map__locate-spinner"
-            aria-hidden
-          >
-            <path d="M21 12a9 9 0 1 1-6.2-8.55" />
-          </svg>
-        ) : (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-          </svg>
-        )}
-      </button>
 
       {mapReady ? <MapEmptyState /> : null}
 
