@@ -16,6 +16,21 @@ interface Props {
   onClose: () => void;
   /** Fallback center when the user hasn't granted geolocation yet. */
   defaultCenter: { lat: number; lng: number };
+  /**
+   * Invoked when the user wants to pick their alert center by
+   * clicking on the map. The parent is expected to close this modal,
+   * drive the map-picker flow, and reopen with `initialCenter` set to
+   * the picked coordinates. Optional: if omitted the "Pick on map"
+   * button is hidden.
+   */
+  onPickOnMap?: () => void;
+  /**
+   * Overrides the center loaded from the DB on mount. Used when the
+   * parent re-opens the modal after a successful map pick so the
+   * freshly-picked coords are reflected immediately instead of being
+   * stomped by the server-side preference load.
+   */
+  initialCenter?: { lat: number; lng: number } | null;
 }
 
 const DEFAULT_PREFS: Omit<PushPreferences, 'center'> = {
@@ -34,7 +49,13 @@ const DEFAULT_PREFS: Omit<PushPreferences, 'center'> = {
  * states × DB/network errors). A single state machine inside one
  * component is easier to reason about.
  */
-export function NotificationSettings({ open, onClose, defaultCenter }: Props) {
+export function NotificationSettings({
+  open,
+  onClose,
+  defaultCenter,
+  onPickOnMap,
+  initialCenter,
+}: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +81,15 @@ export function NotificationSettings({ open, onClose, defaultCenter }: Props) {
         ]);
         if (cancelled) return;
         setSubscribed(Boolean(saved?.enabled) && status.subscribedInBrowser);
-        if (saved) setPrefs(saved);
+        // `initialCenter` wins over both the stored prefs and the
+        // default: it represents a fresh map pick the user just made,
+        // and overwriting it would visibly "snap back" to the old
+        // point, which is the opposite of what the UX implies.
+        if (initialCenter) {
+          setPrefs((p) => ({ ...(saved ?? p), center: initialCenter }));
+        } else if (saved) {
+          setPrefs(saved);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load settings.');
@@ -72,7 +101,10 @@ export function NotificationSettings({ open, onClose, defaultCenter }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open]);
+    // `initialCenter` is a deliberate dep: when the parent reopens the
+    // modal after a map pick, the effect re-runs and applies the new
+    // coords without needing a full remount.
+  }, [open, initialCenter]);
 
   const useMyLocation = async () => {
     setError(null);
@@ -159,14 +191,26 @@ export function NotificationSettings({ open, onClose, defaultCenter }: Props) {
               <div className="notification-settings__coords">
                 {prefs.center.lat.toFixed(4)}, {prefs.center.lng.toFixed(4)}
               </div>
-              <button
-                type="button"
-                className="button"
-                onClick={useMyLocation}
-                disabled={saving}
-              >
-                Use my current location
-              </button>
+              <div className="notification-settings__center-actions">
+                <button
+                  type="button"
+                  className="button"
+                  onClick={useMyLocation}
+                  disabled={saving}
+                >
+                  Use my current location
+                </button>
+                {onPickOnMap ? (
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={onPickOnMap}
+                    disabled={saving}
+                  >
+                    Pick on map
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <label className="notification-settings__field">

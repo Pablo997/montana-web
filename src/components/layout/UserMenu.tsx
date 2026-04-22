@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { NotificationSettings } from '@/components/push/NotificationSettings';
+import { requestPick as requestPushCenterPick } from '@/lib/push/pickMode';
 import { DEFAULT_CENTER } from '@/lib/mapbox/config';
+import type { LatLng } from '@/types/incident';
 
 interface Props {
   email: string;
@@ -24,6 +26,11 @@ export function UserMenu({ email }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  // Holds the coords the user just picked on the map so that when we
+  // reopen the notifications modal after the pick flow, the newly
+  // picked point replaces the one loaded from the DB. Cleared as soon
+  // as the modal consumes it to avoid "stuck" overrides.
+  const [pickedCenter, setPickedCenter] = useState<LatLng | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,7 +98,28 @@ export function UserMenu({ email }: Props) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
+        // `aria-label` means the icon-only collapsed state on mobile
+        // still reads as "Account menu, logged in as <email>" in a
+        // screen reader. The visible text is hidden at narrow widths
+        // purely for layout, not for semantics.
+        aria-label={`Account menu (${email})`}
       >
+        <svg
+          aria-hidden="true"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          className="user-menu__avatar"
+        >
+          <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M4.5 19.2c1.5-3.4 4.4-5.2 7.5-5.2s6 1.8 7.5 5.2"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
         <span className="user-menu__email" title={email}>{email}</span>
         <svg
           aria-hidden="true"
@@ -189,8 +217,23 @@ export function UserMenu({ email }: Props) {
 
       <NotificationSettings
         open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
+        onClose={() => {
+          setNotificationsOpen(false);
+          setPickedCenter(null);
+        }}
         defaultCenter={{ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] }}
+        initialCenter={pickedCenter}
+        onPickOnMap={async () => {
+          // Temporarily close the modal so the map is fully visible,
+          // request a pick through the shared channel, then reopen
+          // with the new coords as the `initialCenter` override. If
+          // the user cancels (Esc / banner Cancel), `resolvePick` is
+          // called with null and we reopen the modal unchanged.
+          setNotificationsOpen(false);
+          const picked = await requestPushCenterPick();
+          if (picked) setPickedCenter(picked);
+          setNotificationsOpen(true);
+        }}
       />
     </div>
   );
