@@ -28,11 +28,11 @@ Sentry.init({
   sendDefaultPii: false,
 
   beforeSend(event) {
-    if (event.user) {
-      delete event.user.email;
-      delete event.user.ip_address;
-      delete event.user.username;
-    }
+    // See sentry.client.config.ts for the rationale behind the
+    // explicit null ip_address: it's an opt-out signal, not a
+    // deletion target. Deleting the key lets Sentry's ingest refill
+    // it from the request IP.
+    event.user = { ip_address: null as unknown as string };
     if (event.request) {
       // Request objects on server can include cookies, auth
       // headers and arbitrary JSON bodies.
@@ -43,7 +43,12 @@ Sentry.init({
         delete event.request.headers.cookie;
         delete event.request.headers.Authorization;
         delete event.request.headers.authorization;
+        delete event.request.headers['x-forwarded-for'];
+        delete event.request.headers['X-Forwarded-For'];
       }
+    }
+    if (event.contexts) {
+      delete event.contexts.geo;
     }
     return event;
   },

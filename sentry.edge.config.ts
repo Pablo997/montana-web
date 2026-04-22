@@ -18,16 +18,17 @@ Sentry.init({
   sendDefaultPii: false,
 
   beforeSend(event) {
-    if (event.user) {
-      delete event.user.email;
-      delete event.user.ip_address;
-      delete event.user.username;
-    }
+    event.user = { ip_address: null as unknown as string };
     if (event.request?.headers) {
       delete event.request.headers.Cookie;
       delete event.request.headers.cookie;
       delete event.request.headers.Authorization;
       delete event.request.headers.authorization;
+      delete event.request.headers['x-forwarded-for'];
+      delete event.request.headers['X-Forwarded-For'];
+    }
+    if (event.contexts) {
+      delete event.contexts.geo;
     }
     return event;
   },

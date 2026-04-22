@@ -18,6 +18,15 @@ Sentry.init({
   // back to NODE_ENV when not on Vercel (e.g. self-hosted tests).
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
 
+  // Explicitly opt out of "default PII": tells Sentry's ingest NOT to
+  // derive IP/geolocation from the request headers. Combined with the
+  // "Prevent Storing of IP Addresses" toggle in the Sentry project
+  // settings, this gives us the two independent layers the Privacy
+  // Policy requires. Without this flag the SDK's backend will enrich
+  // events with client IP + geolocation even if we scrub them in
+  // `beforeSend`.
+  sendDefaultPii: false,
+
   // Tracing: 10% sample in prod, 100% in dev. Performance data is a
   // lot cheaper than error data but Sentry's free tier still bills
   // it against the events quota, so we stay conservative.
@@ -48,18 +57,23 @@ Sentry.init({
 
   // Strip personally identifiable data before it leaves the browser.
   // The Privacy Policy promises we don't ship account-identifying
-  // fields to third parties, so we actively scrub here.
+  // fields to third parties, so we actively scrub here. We also set
+  // `user.ip_address = null` rather than deleting the key, because
+  // Sentry's ingest interprets a missing `ip_address` as "fill it in
+  // from the request headers" — the null is an explicit opt-out.
   beforeSend(event) {
-    if (event.user) {
-      delete event.user.email;
-      delete event.user.ip_address;
-      delete event.user.username;
-    }
+    event.user = { ip_address: null as unknown as string };
     if (event.request?.headers) {
       delete event.request.headers['User-Agent'];
       delete event.request.headers.Cookie;
       delete event.request.headers.cookie;
       delete event.request.headers.Authorization;
+    }
+    // The `geo` context is populated server-side by Sentry from the
+    // client IP. It survives `sendDefaultPii: false` in some SDK
+    // versions, so we strip it defensively.
+    if (event.contexts) {
+      delete event.contexts.geo;
     }
     return event;
   },
