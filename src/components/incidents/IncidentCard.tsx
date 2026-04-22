@@ -5,6 +5,7 @@ import { INCIDENT_TYPE_LABELS, SEVERITY_LABELS, type Incident } from '@/types/in
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useClock } from '@/hooks/useClock';
 import { getExpiryInfo } from '@/lib/incidents/expiry';
+import { FlagIncidentDialog } from './FlagIncidentDialog';
 import { IncidentAuthorActions } from './IncidentAuthorActions';
 import { IncidentMediaGrid } from './IncidentMediaGrid';
 import { VoteButtons } from './VoteButtons';
@@ -25,6 +26,7 @@ export function IncidentCard({ incident }: Props) {
   const expiry = getExpiryInfo(incident, now);
   const isAuthor = userId !== null && userId === incident.userId;
   const [copied, setCopied] = useState(false);
+  const [flagOpen, setFlagOpen] = useState(false);
 
   const handleShare = async () => {
     // Built from window.location rather than a hardcoded domain so it
@@ -109,7 +111,29 @@ export function IncidentCard({ incident }: Props) {
         </time>
       </footer>
 
-      {isAuthor ? <IncidentAuthorActions incident={incident} /> : null}
+      {isAuthor ? (
+        <IncidentAuthorActions incident={incident} />
+      ) : userId ? (
+        // Only offered to signed-in, non-author viewers. Signed-out
+        // users don't see it at all (instead of seeing a button that
+        // immediately errors) — they discover the feature once they
+        // authenticate.
+        <div className="incident-card__moderation">
+          <button
+            type="button"
+            className="incident-card__flag"
+            onClick={() => setFlagOpen(true)}
+          >
+            Report this incident
+          </button>
+        </div>
+      ) : null}
+
+      <FlagIncidentDialog
+        incidentId={incident.id}
+        open={flagOpen}
+        onClose={() => setFlagOpen(false)}
+      />
     </article>
   );
 }

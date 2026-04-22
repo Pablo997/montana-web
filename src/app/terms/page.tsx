@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPageLayout title="Terms of Service" lastUpdated="April 2026">
+    <LegalPageLayout title="Terms of Service" lastUpdated="April 2026 (moderation & EXIF added)">
       <section>
         <h2>What Montana is</h2>
         <p>
@@ -50,8 +50,44 @@ export default function TermsPage() {
           <li>Does not spam, advertise commercial services, or abuse the system.</li>
         </ul>
         <p>
-          We apply automatic moderation (rate limits, community-vote thresholds)
-          and may remove content or accounts that violate these rules.
+          We apply automatic moderation (rate limits, community-vote thresholds,
+          report-count auto-hide) and may remove content or accounts that
+          violate these rules.
+        </p>
+      </section>
+
+      <section>
+        <h2>Reporting abuse</h2>
+        <p>
+          Any signed-in user can report an incident that violates these rules
+          using the <em>Report this incident</em> link on the incident panel.
+          Reports are capped at 10 per user per 24 hours to deter brigading.
+          When an incident accumulates several independent reports it is
+          automatically hidden from the map pending human review; if our
+          review confirms the violation the content is permanently removed
+          and, depending on severity, the author&apos;s account may be
+          restricted or terminated.
+        </p>
+        <p>
+          You cannot report your own incidents — use the delete button on
+          your own posts instead. Reports are confidential: the reported
+          author never sees who submitted the report.
+        </p>
+      </section>
+
+      <section>
+        <h2>Photo uploads and privacy</h2>
+        <p>
+          When you attach photos to an incident, your browser automatically
+          re-encodes them before upload, which strips all EXIF metadata
+          (GPS coordinates, camera model, timestamps). This protects you
+          from accidentally disclosing the location of your home or other
+          private places. Only the map pin you placed yourself is shared.
+        </p>
+        <p>
+          By uploading a photo you confirm it does not depict identifiable
+          people without their consent and does not include copyrighted
+          material you do not own.
         </p>
       </section>
 

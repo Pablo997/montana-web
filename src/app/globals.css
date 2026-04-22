@@ -306,20 +306,29 @@ body {
   align-items: center;
   gap: 0.4rem;
   max-width: 220px;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--color-text);
+  padding: 0.4rem 0.8rem;
+  /* Dark-glass pill matching the locate button and brand wordmark
+     outline. The previous 3%-white fill was nearly invisible the
+     moment the trigger started floating over bright map tiles
+     (snow, sand, water). `backdrop-filter` softens anything still
+     showing through so the email text stays readable. */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(15, 20, 18, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
   font-size: 0.82rem;
   font-weight: 500;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   transition: background 120ms ease, border-color 120ms ease;
 }
 
-.user-menu__trigger:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.16);
+.user-menu__trigger:hover,
+.user-menu__trigger:focus-visible {
+  background: rgba(15, 20, 18, 0.92);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .user-menu__email {
@@ -633,7 +642,11 @@ body {
   top: auto;
   left: auto;
   right: 1rem;
-  bottom: 1rem;
+  /* Lifted above the MapLibre attribution strip ("© OpenStreetMap
+     contributors") which lives at the very bottom of the canvas and
+     was colliding with the Report button. 2.5rem clears the default
+     24-26px attribution row on both mobile and desktop. */
+  bottom: 2.5rem;
   /* Stack the locate + report buttons vertically so they form a
      single action column instead of sitting on the same row. */
   flex-direction: column;
@@ -1069,6 +1082,35 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+/* Moderation row: a single discreet text-link-style button below the
+   footer. Kept intentionally low-visibility so it doesn't compete with
+   vote/share CTAs but remains findable. Uses an underlined text link
+   pattern instead of a pill to signal "meta action". */
+.incident-card__moderation {
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.incident-card__flag {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.incident-card__flag:hover,
+.incident-card__flag:focus-visible {
+  color: #d93025;
 }
 
 /* ------------------------------ Media grid ------------------------------- */
@@ -1655,7 +1697,11 @@ body {
 .panel {
   position: absolute;
   right: 1rem;
-  top: 1rem;
+  /* Drop below the floating header (brand + user menu) so the panel
+     no longer collides with the UserMenu pill. The header sits at
+     0.75rem top + ~2rem tall + padding, so 4.25rem clears it and
+     leaves a visible gap. */
+  top: 4.25rem;
   bottom: 1rem;
   width: min(380px, 92vw);
   background: var(--color-surface);
@@ -1664,6 +1710,28 @@ body {
   padding: 1rem;
   overflow-y: auto;
   z-index: 5;
+}
+
+/* Mobile: full-width bottom sheet. The centered brand wordmark plus
+   the top-right user menu consume the whole top row on narrow
+   viewports, so docking the panel at the bottom is the only layout
+   that doesn't overlap anything. Max-height keeps the map partially
+   visible so users retain spatial context while reading the
+   incident details. */
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 70dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 0;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
+  }
 }
 
 .panel__header {

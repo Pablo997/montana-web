@@ -8,8 +8,20 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * Compress an image file on the client before upload. Keeps storage usage
- * low enough to stay inside the Supabase free tier on the MVP.
+ * Compress an image file on the client before upload. Keeps storage
+ * usage low enough to stay inside the Supabase free tier on the MVP.
+ *
+ * PRIVACY NOTE — this step also strips ALL EXIF metadata (including the
+ * GPS tags iPhones and Android cameras embed by default), because
+ * `browser-image-compression` decodes the original to a `<canvas>` and
+ * re-encodes it to WebP. Canvas re-encoding cannot carry EXIF through,
+ * so the file that leaves the browser is metadata-free by construction.
+ *
+ * This is the guarantee we advertise in the Privacy Policy: uploaded
+ * photos never carry the user's home coordinates. Do NOT replace this
+ * pipeline with a path that preserves the original bytes (e.g. direct
+ * upload of `file` without compression) without also adding an explicit
+ * EXIF scrubber (e.g. `piexifjs` or an `image/jpeg` → canvas re-encode).
  */
 export async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file;

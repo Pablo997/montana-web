@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPageLayout title="Privacy Policy" lastUpdated="April 2026">
+    <LegalPageLayout title="Privacy Policy" lastUpdated="April 2026 (moderation & EXIF added)">
       <section>
         <h2>TL;DR</h2>
         <p>
@@ -77,6 +77,14 @@ export default function PrivacyPage() {
           <li>Contacts, calendar, microphone, or any other device-level permission.</li>
           <li>Cross-site tracking. We use no third-party advertising cookies or fingerprinting.</li>
           <li>Special categories of data under art. 9 GDPR (health, religion, ethnicity, etc.).</li>
+          <li>
+            <strong>Photo EXIF metadata.</strong> When you attach a photo to an
+            incident, your browser re-encodes it before upload. The re-encoded
+            file we receive has <strong>no EXIF metadata</strong> — the GPS
+            coordinates, camera model, date and other fields your phone embeds
+            by default are stripped client-side and never reach our servers.
+            The only location data we store is the map pin you placed yourself.
+          </li>
         </ul>
       </section>
 
@@ -134,7 +142,22 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>7. Cookies</h2>
+        <h2>7. Community reporting and moderation</h2>
+        <p>
+          When you submit a report on another user&apos;s incident, we store
+          the target incident id, the reason you selected and any free-text
+          detail you typed, linked to your account. This data is used solely
+          to moderate the service (remove abusive or false content) and is
+          processed on the legal basis of <strong>legitimate interest</strong>{' '}
+          (art. 6(1)(f) GDPR) — keeping the community safe. Reports are
+          retained for up to 12 months and then deleted. Only the reporter
+          and our moderation team can read them; reported users do not see
+          who reported them.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Cookies</h2>
         <p>
           Montana uses only strictly necessary cookies (authentication
           session). No advertising or tracking cookies. See our{' '}
@@ -143,7 +166,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>8. Children</h2>
+        <h2>9. Children</h2>
         <p>
           Montana is not directed to children under 14. We do not
           knowingly collect personal data from anyone under 14 without
@@ -152,7 +175,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>9. Changes</h2>
+        <h2>10. Changes</h2>
         <p>
           We notify material changes via in-app notice and update the
           &quot;Last updated&quot; date above. Continued use after a
