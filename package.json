@@ -18,7 +18,8 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "db:types:linked": "supabase gen types typescript --linked > src/types/database.ts"
+    "db:types:linked": "supabase gen types typescript --linked > src/types/database.ts",
+    "vapid:generate": "node --import tsx scripts/generate-vapid-keys.ts"
   },
   "dependencies": {
     "@maptiler/sdk": "^3.4.0",
@@ -43,6 +44,7 @@
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/ui": "^4.1.5",
     "autoprefixer": "^10.4.20",
@@ -53,7 +55,9 @@
     "prettier": "^3.3.3",
     "supabase": "^2.92.1",
     "tailwindcss": "^3.4.15",
+    "tsx": "^4.21.0",
     "typescript": "^5.6.3",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "web-push": "^3.6.7"
   }
 }

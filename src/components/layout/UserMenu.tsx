@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { NotificationSettings } from '@/components/push/NotificationSettings';
+import { DEFAULT_CENTER } from '@/lib/mapbox/config';
 
 interface Props {
   email: string;
@@ -21,6 +23,7 @@ export function UserMenu({ email }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,6 +112,19 @@ export function UserMenu({ email }: Props) {
                 type="button"
                 className="user-menu__item"
                 role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  setNotificationsOpen(true);
+                }}
+                disabled={loading !== null}
+              >
+                Nearby alerts…
+              </button>
+              <div className="user-menu__divider" />
+              <button
+                type="button"
+                className="user-menu__item"
+                role="menuitem"
                 onClick={handleSignOut}
                 disabled={loading !== null}
               >
@@ -170,6 +186,12 @@ export function UserMenu({ email }: Props) {
           )}
         </div>
       ) : null}
+
+      <NotificationSettings
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        defaultCenter={{ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] }}
+      />
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SiteHeader } from '@/components/layout/SiteHeader';
+import { FloatingHeader } from '@/components/layout/FloatingHeader';
+import { AppFooterLinks } from '@/components/layout/AppFooterLinks';
+import { LegalNotice } from '@/components/layout/LegalNotice';
+import { ConsentSync } from '@/components/layout/ConsentSync';
 import { MapView } from '@/components/map/MapView';
 import { IncidentDeepLinkBootstrap } from '@/components/incidents/IncidentDeepLinkBootstrap';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -87,13 +90,19 @@ export default async function IncidentDeepLinkPage({ params }: PageProps) {
   const incident = await loadIncident(params.id);
   if (!incident) notFound();
 
+  // Deep-link route: shares the same floating-header shell as the home
+  // page so opening an incident from a push notification feels native
+  // instead of dropping the user on a visually distinct sub-page.
+  // `IncidentDeepLinkBootstrap` is what actually opens the detail panel
+  // after the map mounts, keyed off `incident.id`.
   return (
-    <div className="app-shell">
-      <SiteHeader />
-      <main className="app-shell__main">
-        <IncidentDeepLinkBootstrap incident={incident} />
-        <MapView />
-      </main>
+    <div className="map-shell">
+      <MapView />
+      <FloatingHeader />
+      <AppFooterLinks />
+      <LegalNotice />
+      <ConsentSync />
+      <IncidentDeepLinkBootstrap incident={incident} />
     </div>
   );
 }

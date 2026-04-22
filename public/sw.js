@@ -24,7 +24,7 @@
 // client). The `activate` handler below deletes every cache whose
 // name doesn't end in this suffix, so a version bump is a hard
 // reset across the whole bucket.
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE = `montana-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `montana-assets-${CACHE_VERSION}`;
 const TILE_CACHE = `montana-tiles-${CACHE_VERSION}`;
@@ -128,6 +128,85 @@ self.addEventListener('activate', (event) => {
       await Promise.all(deleted.map((k) => caches.delete(k)));
       log('activate: deleted old caches', deleted);
       await self.clients.claim();
+    })(),
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Web Push
+// ---------------------------------------------------------------------------
+// The edge function encrypts notification payloads with the per-subscription
+// p256dh/auth keys and POSTs them to the push service. The browser delivers
+// the plaintext to us as a `push` event, where we MUST show a user-visible
+// notification (a "silent" push will burn the permission token).
+//
+// Payload shape (kept in sync with the edge function):
+//   {
+//     title: string,
+//     body: string,
+//     tag: string,       // incident id, so repeated updates collapse
+//     url: string,       // deep link to the incident detail
+//     type?: string,     // incident type, used to pick an icon if we add one
+//     severity?: string,
+//   }
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    // `event.data` can be empty on Safari's "wake-up" pings; we still
+    // have to show a notification or the permission gets revoked, so
+    // fall back to a generic one rather than bail out.
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title || 'Nearby incident';
+  const options = {
+    body: data.body || 'Open Montana to see the latest reports.',
+    // `tag` collapses notifications with the same id so a rapidly
+    // updated incident doesn't spam the shade.
+    tag: data.tag || 'montana-incident',
+    // Renotify only matters when `tag` matches a previously shown
+    // notification; forcing true means the user sees an update
+    // (haptic, sound) instead of a silent replace.
+    renotify: Boolean(data.tag),
+    icon: '/icons/icon.svg',
+    badge: '/icons/icon.svg',
+    // Carry the URL through so `notificationclick` knows where to go
+    // without re-parsing anything from the body.
+    data: { url: data.url || '/' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  // Try to focus an already-open tab on the same origin instead of
+  // opening a new one every time — matches the behaviour users expect
+  // from chat apps and keeps tab sprawl down.
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      for (const client of all) {
+        const clientUrl = new URL(client.url);
+        const targetParsed = new URL(targetUrl, self.location.origin);
+        if (clientUrl.origin === targetParsed.origin && 'focus' in client) {
+          await client.focus();
+          // Same-origin navigation without a reload; smoother than
+          // openWindow because the SPA stays mounted.
+          if ('navigate' in client) {
+            await client.navigate(targetUrl);
+          }
+          return;
+        }
+      }
+      await self.clients.openWindow(targetUrl);
     })(),
   );
 });
