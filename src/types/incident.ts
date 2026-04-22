@@ -11,7 +11,12 @@ export type IncidentType =
 
 export type SeverityLevel = 'mild' | 'moderate' | 'severe';
 
-export type IncidentStatus = 'pending' | 'validated' | 'resolved' | 'dismissed';
+export type IncidentStatus =
+  | 'pending'
+  | 'validated'
+  | 'resolved'
+  | 'dismissed'
+  | 'expired';
 
 export interface LatLng {
   lat: number;

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { isCurrentUserAdmin } from '@/lib/admin/auth';
 import { Logo } from '@/components/brand/Logo';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { UserMenu } from './UserMenu';
@@ -19,6 +20,10 @@ export async function FloatingHeader() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Only pay for the admin lookup when we know we'll show a menu to begin
+  // with. Anonymous users skip the RPC entirely.
+  const isAdmin = user ? await isCurrentUserAdmin() : false;
+
   return (
     <>
       <Link
@@ -32,7 +37,7 @@ export async function FloatingHeader() {
 
       <div className="floating-header__actions">
         {user ? (
-          <UserMenu email={user.email ?? 'Account'} />
+          <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />
         ) : (
           <Link href="/auth/sign-in" className="button button--primary">
             Sign in

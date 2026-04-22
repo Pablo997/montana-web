@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { NotificationSettings } from '@/components/push/NotificationSettings';
@@ -10,6 +11,12 @@ import type { LatLng } from '@/types/incident';
 
 interface Props {
   email: string;
+  /**
+   * When true the menu shows a direct link to `/admin`. The flag is resolved
+   * server-side (via `isCurrentUserAdmin()`) so anonymous users pay nothing
+   * and non-admins never receive the markup.
+   */
+  isAdmin?: boolean;
 }
 
 /**
@@ -18,7 +25,7 @@ interface Props {
  * previous plain "Sign out" button so we can fit the GDPR art. 17
  * erasure control without adding header clutter.
  */
-export function UserMenu({ email }: Props) {
+export function UserMenu({ email, isAdmin = false }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<'signout' | 'delete' | null>(null);
@@ -148,6 +155,19 @@ export function UserMenu({ email }: Props) {
               >
                 Nearby alerts…
               </button>
+              {isAdmin ? (
+                <>
+                  <div className="user-menu__divider" />
+                  <Link
+                    href="/admin"
+                    className="user-menu__item user-menu__item--admin"
+                    role="menuitem"
+                    onClick={() => setOpen(false)}
+                  >
+                    Moderation panel
+                  </Link>
+                </>
+              ) : null}
               <div className="user-menu__divider" />
               <button
                 type="button"
