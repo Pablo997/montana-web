@@ -1968,3 +1968,126 @@ body {
   width: 100%;
   accent-color: #10b981;
 }
+
+/* -------------------------- Push onboarding ----------------------------- */
+/* A small, non-modal floating card shown once to a signed-in user who
+   has never interacted with Web Push. Visually a cousin of the pick
+   banner so the vocabulary of "floating pill + primary action" stays
+   consistent across the map overlays. */
+.push-onboarding {
+  position: absolute;
+  left: 50%;
+  bottom: 2.25rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: min(94vw, 560px);
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color: var(--color-text);
+  z-index: 6;
+}
+
+.push-onboarding__icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(40, 140, 110, 0.15);
+  color: var(--color-brand);
+}
+
+.push-onboarding__copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.push-onboarding__heading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.push-onboarding__body {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.push-onboarding__error {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: #ff9c9c;
+}
+
+.push-onboarding__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* Tiny "x" in the top-right corner for the "never ask again" affordance.
+   Kept separate from the "Not now" button so the low-commitment default
+   is the visible one and the permanent opt-out is deliberate. */
+.push-onboarding__dismiss {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.push-onboarding__dismiss:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.push-onboarding__dismiss:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* On phones the desktop pill is too wide for a horizontal layout and
+   would collide with the Report FAB at bottom-right. Switch to a
+   full-width card raised above the FAB, with the actions wrapped onto
+   their own row. */
+@media (max-width: 640px) {
+  .push-onboarding {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 5.25rem;
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    padding: 0.75rem 2rem 0.75rem 0.85rem;
+  }
+
+  .push-onboarding__copy {
+    flex: 1 1 180px;
+  }
+
+  .push-onboarding__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin-top: 0.35rem;
+  }
+}
