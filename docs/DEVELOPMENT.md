@@ -148,7 +148,7 @@ tests/
 | `incident_media`            | `incident_id`, `storage_path`, `mime_type`, `width`, `height`               |
 | `incident_votes`            | PK (`incident_id`, `user_id`), `vote` ∈ {−1, 1}                              |
 | `incident_reports`          | Abuse reports raised by users against incidents (moderation)                |
-| `push_subscriptions`        | One row per (user, browser/device): endpoint, crypto keys, `center` (`geography`), `radius_km`, `min_severity`, `enabled`, `last_push_at` |
+| `push_subscriptions`        | One row per (user, browser/device): endpoint, crypto keys, `center` (`geography`), `radius_km`, `min_severity`, `enabled`, `last_push_at`, `min_push_interval_seconds` |
 | `push_cron_state`           | Cursor the push cron has advanced to                                        |
 | `private.push_cron_config`  | Runtime URL + shared secret the cron reads (service-role only)              |
 
@@ -163,7 +163,7 @@ tests/
 - `get_my_push_preferences()` — flat read with lat/lng split out (avoids decoding WKB on the client).
 - `delete_my_push_subscriptions()` — erase everything this user has subscribed from.
 - `pick_new_incidents_for_push()` — cron cursor advancer: returns incident IDs since last scan and bumps the cursor atomically.
-- `push_fanout_for_incidents(incident_ids)` — joins incidents with matching subscriptions spatially; returns the rows the Edge Function needs to send push payloads.
+- `push_fanout_for_incidents(incident_ids)` — joins incidents with matching subscriptions spatially; applies the per-subscription cooldown (`min_push_interval_seconds`) and coalesces down to at most one push per subscription per tick (most severe, tie-broken by newest).
 - `mark_push_sent(subscription_ids)` / `disable_push_subscription(subscription_id)` — bookkeeping after delivery.
 - `pg_cron` job `push-notify-tick` — runs every minute, POSTs to the Edge Function using the config stored in `private.push_cron_config`.
 
@@ -292,15 +292,15 @@ Repository structure, Next.js + TS + Tailwind, Supabase migrations, base compone
 
 Prioritise based on real user signal. Current candidates in rough priority order:
 
-1. **Onboarding prompt for alerts** (first-login banner offering to enable push) — biggest activation lift.
-2. **Per-user push rate limit** (e.g. ≥ 10 min between pushes to the same endpoint). Filter added to `push_fanout_for_incidents` via `last_push_at`.
-3. **Share button** on incident detail (uses `navigator.share` on mobile, clipboard fallback).
-4. **Public landing page** for logged-out visitors (currently the map loads for everyone).
-5. **i18n** with `next-intl` (ES/EN).
-6. **Google OAuth** as a second auth option alongside magic link.
-7. **Comments + mentions**, **reputation-weighted votes**, **moderation dashboard** — only once volume justifies them.
-8. **Video uploads** via Cloudflare Stream — out of scope until storage becomes a bottleneck.
-9. **Migrate tiles** to MapLibre + OpenFreeMap if MapTiler pricing bites.
+1. **Share button** on incident detail (uses `navigator.share` on mobile, clipboard fallback).
+2. **Public landing page** for logged-out visitors (currently the map loads for everyone).
+3. **i18n** with `next-intl` (ES/EN).
+4. **Google OAuth** as a second auth option alongside magic link.
+5. **Comments + mentions**, **reputation-weighted votes**, **moderation dashboard** — only once volume justifies them.
+6. **Video uploads** via Cloudflare Stream — out of scope until storage becomes a bottleneck.
+7. **Migrate tiles** to MapLibre + OpenFreeMap if MapTiler pricing bites.
+
+Shipped in this phase so far: onboarding banner for alerts, per-subscription push rate limit (cooldown + per-tick coalescing).
 
 ---
 

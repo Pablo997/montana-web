@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  DEFAULT_INTERVAL_SECONDS,
   loadPreferences,
   refreshSubscriptionStatus,
   subscribe,
@@ -37,7 +38,23 @@ const DEFAULT_PREFS: Omit<PushPreferences, 'center'> = {
   radiusKm: 25,
   minSeverity: 'moderate',
   enabled: true,
+  minIntervalSeconds: DEFAULT_INTERVAL_SECONDS,
 };
+
+/**
+ * Preset cooldown options exposed in the UI. Picking a small set of
+ * human-meaningful intervals is more useful than a slider here: nobody
+ * wants to fine-tune "every 7 minutes" vs "every 8 minutes", but they
+ * do care about the distinction between "as fast as possible" and
+ * "maybe hourly". Keep in sync with the CHECK range (60–86400).
+ */
+const INTERVAL_PRESETS: ReadonlyArray<{ value: number; label: string }> = [
+  { value: 60, label: 'No cooldown (every alert)' },
+  { value: 10 * 60, label: 'At most one every 10 minutes' },
+  { value: 30 * 60, label: 'At most one every 30 minutes' },
+  { value: 60 * 60, label: 'At most one per hour' },
+  { value: 6 * 60 * 60, label: 'At most one every 6 hours' },
+];
 
 /**
  * Modal that owns the full "nearby alerts" flow: permission prompt,
@@ -250,6 +267,31 @@ export function NotificationSettings({
                 </label>
               ))}
             </fieldset>
+
+            <label className="notification-settings__field">
+              <span className="notification-settings__label">Cooldown</span>
+              <select
+                className="notification-settings__select"
+                value={prefs.minIntervalSeconds}
+                onChange={(e) =>
+                  setPrefs((p) => ({
+                    ...p,
+                    minIntervalSeconds: Number(e.target.value),
+                  }))
+                }
+                disabled={saving}
+              >
+                {INTERVAL_PRESETS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <p className="notification-settings__hint">
+                When several incidents land close together, you'll only
+                get one notification — the most severe.
+              </p>
+            </label>
 
             {error ? (
               <p className="notification-settings__error" role="alert">

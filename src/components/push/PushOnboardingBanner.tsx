@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { DEFAULT_CENTER } from '@/lib/mapbox/config';
-import { subscribe } from '@/lib/push/client';
+import { DEFAULT_INTERVAL_SECONDS, subscribe } from '@/lib/push/client';
 import { getCurrentPosition } from '@/lib/utils/geolocation';
 import { usePushOnboarding } from '@/hooks/usePushOnboarding';
 
@@ -53,6 +53,7 @@ export function PushOnboardingBanner() {
         radiusKm: DEFAULT_RADIUS_KM,
         minSeverity: DEFAULT_MIN_SEVERITY,
         enabled: true,
+        minIntervalSeconds: DEFAULT_INTERVAL_SECONDS,
       });
       markAccepted();
     } catch (err) {

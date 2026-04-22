@@ -19,11 +19,51 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export type MinSeverity = 'mild' | 'moderate' | 'severe';
 
+/**
+ * Allowed range for the per-subscription push rate limit, mirroring the
+ * CHECK constraint on `push_subscriptions.min_push_interval_seconds`.
+ * Exposed so the UI and tests can import the same bounds instead of
+ * hard-coding magic numbers.
+ */
+export const MIN_INTERVAL_SECONDS = 60; // 1 minute — effectively "no cooldown"
+export const MAX_INTERVAL_SECONDS = 24 * 60 * 60; // 24h hard cap
+export const DEFAULT_INTERVAL_SECONDS = 10 * 60; // 10 minutes
+
+/**
+ * Clamps an incoming interval into the allowed window and falls back to
+ * the default when the value is missing or non-numeric. Centralised so
+ * every entry point (loaded prefs from DB, UI control, onboarding
+ * banner) agrees on the same policy — a mis-clamped value would either
+ * fail the RPC CHECK (user-facing error) or silently bypass the rate
+ * limit on the backend.
+ */
+export function normalizeIntervalSeconds(input: unknown): number {
+  // "Missing" is different from "out of range": a user with no stored
+  // preference should get the team-picked default, not the minimum
+  // (which would effectively disable their rate limit). Only a real
+  // in-band number gets clamped.
+  if (input === null || input === undefined) return DEFAULT_INTERVAL_SECONDS;
+  const n = typeof input === 'number' ? input : Number(input);
+  if (Number.isNaN(n)) return DEFAULT_INTERVAL_SECONDS;
+  if (n === Number.POSITIVE_INFINITY) return MAX_INTERVAL_SECONDS;
+  if (n === Number.NEGATIVE_INFINITY) return MIN_INTERVAL_SECONDS;
+  const rounded = Math.round(n);
+  if (rounded < MIN_INTERVAL_SECONDS) return MIN_INTERVAL_SECONDS;
+  if (rounded > MAX_INTERVAL_SECONDS) return MAX_INTERVAL_SECONDS;
+  return rounded;
+}
+
 export interface PushPreferences {
   center: { lat: number; lng: number };
   radiusKm: number;
   minSeverity: MinSeverity;
   enabled: boolean;
+  /**
+   * Cooldown in seconds. The server will skip this subscription if less
+   * time than this has elapsed since `last_push_at`. Always normalised
+   * via `normalizeIntervalSeconds` on its way in.
+   */
+  minIntervalSeconds: number;
 }
 
 export interface PushStatus {
@@ -143,6 +183,7 @@ export async function subscribe(prefs: PushPreferences): Promise<void> {
     p_radius_km: prefs.radiusKm,
     p_min_severity: prefs.minSeverity,
     p_enabled: prefs.enabled,
+    p_min_push_interval_seconds: normalizeIntervalSeconds(prefs.minIntervalSeconds),
   });
 
   if (error) throw new Error(error.message);
@@ -175,6 +216,10 @@ export async function loadPreferences(): Promise<PushPreferences | null> {
     radiusKm: row.radius_km,
     minSeverity: row.min_severity as MinSeverity,
     enabled: row.enabled,
+    // Older rows predating the rate-limit column come back as null
+    // through the migration's default; normalise so the UI always has
+    // a valid number to render.
+    minIntervalSeconds: normalizeIntervalSeconds(row.min_push_interval_seconds),
   };
 }
 
