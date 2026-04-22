@@ -152,6 +152,49 @@ body {
   gap: 0.5rem;
 }
 
+/* Offline banner. Sits below the centred brand so it doesn't fight
+   for attention with the logo. Uses a warning orange rather than
+   red because going offline is not an error — it's a degraded mode
+   we still expect the user to be able to operate in. */
+.offline-indicator {
+  position: absolute;
+  top: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(180, 83, 9, 0.92);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.offline-indicator__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+  animation: offline-indicator-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes offline-indicator-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 /* Push MapTiler's built-in top-right controls (nav + geolocate) down so
    they don't collide with our floating user-menu pill on the right.
    !important is needed because MapLibre inlines `top: 10px` via its

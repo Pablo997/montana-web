@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { Logo } from '@/components/brand/Logo';
+import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { UserMenu } from './UserMenu';
 
 /**
@@ -38,6 +39,8 @@ export async function FloatingHeader() {
           </Link>
         )}
       </div>
+
+      <OfflineIndicator />
     </>
   );
 }
