@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { isCurrentUserAdmin } from '@/lib/admin/auth';
 import { Logo } from '@/components/brand/Logo';
 import { UserMenu } from './UserMenu';
 
@@ -8,6 +9,7 @@ export async function SiteHeader() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAdmin = user ? await isCurrentUserAdmin() : false;
 
   return (
     <header className="site-header">
@@ -18,7 +20,7 @@ export async function SiteHeader() {
 
       <div className="site-header__actions">
         {user ? (
-          <UserMenu email={user.email ?? 'Account'} />
+          <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />
         ) : (
           <Link href="/auth/sign-in" className="button button--primary">
             Sign in
