@@ -8,6 +8,18 @@ import {
   type IncidentType,
   type SeverityLevel,
 } from '@/types/incident';
+import {
+  DEFAULT_FILTERS,
+  countVisible,
+  filtersAreActive,
+  type MapFilters,
+  type MaxAgeHours,
+} from '@/lib/incidents/filters';
+
+// Re-export for callers that used to import from here. The actual
+// implementation lives in `@/lib/incidents/filters` now so it can be
+// unit-tested without a React tree.
+export { incidentMatchesFilters } from '@/lib/incidents/filters';
 
 const ALL_TYPES = Object.keys(INCIDENT_TYPE_LABELS) as IncidentType[];
 
@@ -18,6 +30,14 @@ const SEVERITY_OPTIONS: { value: SeverityFilter; label: string }[] = [
   { value: 'mild', label: SEVERITY_LABELS.mild },
   { value: 'moderate', label: `${SEVERITY_LABELS.moderate}+` },
   { value: 'severe', label: `${SEVERITY_LABELS.severe} only` },
+];
+
+const AGE_OPTIONS: { value: MaxAgeHours; label: string }[] = [
+  { value: null, label: 'Any time' },
+  { value: 24, label: '24h' },
+  { value: 72, label: '3d' },
+  { value: 168, label: '7d' },
+  { value: 720, label: '30d' },
 ];
 
 /**
@@ -35,7 +55,26 @@ export function FilterPanel() {
   const totalCount = useMapStore((s) => s.incidents.size);
 
   const [open, setOpen] = useState(false);
+  // Local draft so typing doesn't re-filter on every keystroke while the
+  // user is still composing the query. Committed to the store on a
+  // 200ms debounce (fast enough to feel live, slow enough to avoid
+  // re-rendering hundreds of markers per keypress).
+  const [queryDraft, setQueryDraft] = useState(filters.query);
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep the draft in sync if the store gets reset from somewhere else
+  // (e.g. "Reset" button or an external handler).
+  useEffect(() => {
+    setQueryDraft(filters.query);
+  }, [filters.query]);
+
+  useEffect(() => {
+    if (queryDraft === filters.query) return;
+    const id = setTimeout(() => {
+      setFilters({ query: queryDraft });
+    }, 200);
+    return () => clearTimeout(id);
+  }, [queryDraft, filters.query, setFilters]);
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -73,15 +112,16 @@ export function FilterPanel() {
     setFilters({ minSeverity: value === 'any' ? null : value });
   };
 
-  const reset = () => {
-    setFilters({ types: null, minSeverity: null, onlyValidated: false });
+  const setAge = (value: MaxAgeHours) => {
+    setFilters({ maxAgeHours: value });
   };
 
-  const activeCount =
-    (filters.types ? 1 : 0) +
-    (filters.minSeverity ? 1 : 0) +
-    (filters.onlyValidated ? 1 : 0);
+  const reset = () => {
+    setQueryDraft('');
+    setFilters({ ...DEFAULT_FILTERS });
+  };
 
+  const activeCount = computeActiveCount(filters);
   const severityValue: SeverityFilter = filters.minSeverity ?? 'any';
 
   return (
@@ -101,6 +141,20 @@ export function FilterPanel() {
 
       {open ? (
         <div className="filter-panel__dropdown" role="dialog" aria-label="Map filters">
+          <section className="filter-panel__section">
+            <label className="filter-panel__search">
+              <span className="filter-panel__heading">Search</span>
+              <input
+                type="search"
+                className="filter-panel__search-input"
+                placeholder="Title or description…"
+                value={queryDraft}
+                onChange={(e) => setQueryDraft(e.target.value)}
+                autoComplete="off"
+              />
+            </label>
+          </section>
+
           <section className="filter-panel__section">
             <h3 className="filter-panel__heading">Type</h3>
             <div className="filter-panel__chips">
@@ -140,6 +194,26 @@ export function FilterPanel() {
           </section>
 
           <section className="filter-panel__section">
+            <h3 className="filter-panel__heading">Reported in</h3>
+            <div className="filter-panel__chips">
+              {AGE_OPTIONS.map((opt) => {
+                const active = filters.maxAgeHours === opt.value;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    className={`chip${active ? ' chip--active' : ''}`}
+                    onClick={() => setAge(opt.value)}
+                    aria-pressed={active}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="filter-panel__section">
             <label className="filter-panel__check">
               <input
                 type="checkbox"
@@ -154,7 +228,12 @@ export function FilterPanel() {
             <span className="filter-panel__count">
               {visibleCount} of {totalCount} shown
             </span>
-            <button type="button" className="button" onClick={reset} disabled={activeCount === 0}>
+            <button
+              type="button"
+              className="button"
+              onClick={reset}
+              disabled={!filtersAreActive(filters)}
+            >
               Reset
             </button>
           </footer>
@@ -164,35 +243,13 @@ export function FilterPanel() {
   );
 }
 
-function countVisible(
-  incidents: Map<string, { type: IncidentType; severity: SeverityLevel; status: string }>,
-  filters: {
-    types: IncidentType[] | null;
-    minSeverity: SeverityLevel | null;
-    onlyValidated: boolean;
-  },
-): number {
-  let count = 0;
-  incidents.forEach((incident) => {
-    if (incidentMatchesFilters(incident, filters)) count += 1;
-  });
-  return count;
-}
-
-/** Exported for reuse by the map layer so we filter markers the same way. */
-export function incidentMatchesFilters(
-  incident: { type: IncidentType; severity: SeverityLevel; status: string },
-  filters: {
-    types: IncidentType[] | null;
-    minSeverity: SeverityLevel | null;
-    onlyValidated: boolean;
-  },
-): boolean {
-  if (filters.types && !filters.types.includes(incident.type)) return false;
-  if (filters.onlyValidated && incident.status !== 'validated') return false;
-  if (filters.minSeverity) {
-    const order: Record<SeverityLevel, number> = { mild: 0, moderate: 1, severe: 2 };
-    if (order[incident.severity] < order[filters.minSeverity]) return false;
-  }
-  return true;
+/** Number of filter slots that differ from their default (for the badge). */
+function computeActiveCount(filters: MapFilters): number {
+  return (
+    (filters.types ? 1 : 0) +
+    (filters.minSeverity ? 1 : 0) +
+    (filters.onlyValidated ? 1 : 0) +
+    (filters.query.trim().length > 0 ? 1 : 0) +
+    (filters.maxAgeHours !== null ? 1 : 0)
+  );
 }

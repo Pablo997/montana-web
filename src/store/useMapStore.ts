@@ -1,11 +1,6 @@
 import { create } from 'zustand';
-import type { Incident, IncidentType, LatLng, SeverityLevel } from '@/types/incident';
-
-interface MapFilters {
-  types: IncidentType[] | null;
-  minSeverity: SeverityLevel | null;
-  onlyValidated: boolean;
-}
+import type { Incident, LatLng } from '@/types/incident';
+import { DEFAULT_FILTERS, type MapFilters } from '@/lib/incidents/filters';
 
 interface MapState {
   incidents: Map<string, Incident>;
@@ -33,11 +28,7 @@ interface MapState {
 export const useMapStore = create<MapState>((set) => ({
   incidents: new Map(),
   selectedId: null,
-  filters: {
-    types: null,
-    minSeverity: null,
-    onlyValidated: false,
-  },
+  filters: { ...DEFAULT_FILTERS },
   reportOpen: false,
   reportLocation: null,
   pickingLocation: false,
