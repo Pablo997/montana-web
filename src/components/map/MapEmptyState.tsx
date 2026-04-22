@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useMapStore } from '@/store/useMapStore';
-import { incidentMatchesFilters } from './FilterPanel';
+import {
+  DEFAULT_FILTERS,
+  filtersAreActive,
+  incidentMatchesFilters,
+} from '@/lib/incidents/filters';
 
 /**
  * Soft banner shown when the current viewport + active filters resolve
@@ -48,22 +52,17 @@ export function MapEmptyState() {
 
   if (visibleAfterFilters > 0) return null;
 
-  const filtersActive =
-    filters.types !== null || filters.minSeverity !== null || filters.onlyValidated;
-
   // Filter-mismatch variant is always shown: it carries an actionable
   // "Reset filters" button and disappears the moment the filters are
   // relaxed, so dismissing it doesn't add much.
-  if (totalLoaded > 0 && filtersActive) {
+  if (totalLoaded > 0 && filtersAreActive(filters)) {
     return (
       <div className="map-empty" role="status">
         <p className="map-empty__text">No incidents match your filters.</p>
         <button
           type="button"
           className="button"
-          onClick={() =>
-            setFilters({ types: null, minSeverity: null, onlyValidated: false })
-          }
+          onClick={() => setFilters({ ...DEFAULT_FILTERS })}
         >
           Reset filters
         </button>
