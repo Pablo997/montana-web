@@ -1969,6 +1969,51 @@ body {
   accent-color: #10b981;
 }
 
+/* Cooldown preset dropdown — matches the look of the other form
+   controls in the modal so the settings panel reads as a single card. */
+.notification-settings__select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  /* Hints to the UA that native controls spawned by this element
+     (popup list, scrollbar) should use a dark palette. Safari in
+     particular listens to this more reliably than to option styles. */
+  color-scheme: dark;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23aeb6c0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.notification-settings__select:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 2px rgba(40, 140, 110, 0.25);
+}
+
+/* The native dropdown menu that opens on click is drawn by the OS /
+   browser, not by the `<select>`, so it ignores the `color` we set on
+   the control and defaults to white-on-white in dark themes. Setting
+   these explicitly on `<option>` is the only cross-browser hook we
+   have (Chromium/Firefox honour it; Safari is limited but at least
+   doesn't invert on us). */
+.notification-settings__select option {
+  background-color: #1b2026;
+  color: #e7ebf0;
+}
+
+.notification-settings__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #8e98a3;
+}
+
 /* -------------------------- Push onboarding ----------------------------- */
 /* A small, non-modal floating card shown once to a signed-in user who
    has never interacted with Web Push. Visually a cousin of the pick
