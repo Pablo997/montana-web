@@ -874,6 +874,26 @@ body {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
   z-index: 6;
   font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Mobile: the pill-shaped banner squeezes between the Filters chip
+   and the user-menu icon and, when the copy is long ("Tap the map
+   to set your alert center"), wraps into an illegible block. Switch
+   to a full-width bar pinned just under the brand so the text fits
+   on a single line with the Cancel button on the right. */
+@media (max-width: 520px) {
+  .map__pick-banner {
+    left: 0.75rem;
+    right: 0.75rem;
+    transform: none;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    white-space: normal;
+    line-height: 1.25;
+  }
 }
 
 /* Inline error toast for geolocation failures. Pinned below the brand
