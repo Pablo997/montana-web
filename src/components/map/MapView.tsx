@@ -22,6 +22,10 @@ import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPane
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
 import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
 import { buildPermissionDeniedMessage } from '@/lib/geo/permissionMessage';
+import {
+  resolvePick as resolvePushCenterPick,
+  useIsPickingPushCenter,
+} from '@/lib/push/pickMode';
 import type { LatLng } from '@/types/incident';
 
 maptilersdk.config.apiKey = MAPTILER_KEY;
@@ -34,6 +38,7 @@ export function MapView() {
   const pickingLocation = useMapStore((s) => s.pickingLocation);
   const setReportLocation = useMapStore((s) => s.setReportLocation);
   const cancelPickingLocation = useMapStore((s) => s.cancelPickingLocation);
+  const pickingPushCenter = useIsPickingPushCenter();
   const selectedId = useMapStore((s) => s.selectedId);
   const incidents = useMapStore((s) => s.incidents);
   // Mobile-friendly geolocation flow: the browser Geolocation API
@@ -260,6 +265,35 @@ export function MapView() {
     };
   }, [pickingLocation, setReportLocation]);
 
+  // Push-notification center picking: mirrors the flow above but
+  // resolves a promise via the pickMode singleton instead of touching
+  // the report store. Separate effect so the two picks never collide;
+  // if both were active the first to fire would resolve the wrong one.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !pickingPushCenter) return;
+
+    const canvas = map.getCanvas();
+    const prevCursor = canvas.style.cursor;
+    canvas.style.cursor = 'crosshair';
+
+    const onClick = (e: maptilersdk.MapMouseEvent) => {
+      resolvePushCenterPick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') resolvePushCenterPick(null);
+    };
+
+    map.once('click', onClick);
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      canvas.style.cursor = prevCursor;
+      map.off('click', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [pickingPushCenter]);
+
   // Default incident location when the user hits Report without
   // picking a spot on the map. We use the current map centre (which
   // will match the user's location if they pressed the GeolocateControl
@@ -331,6 +365,19 @@ export function MapView() {
         <div className="map__pick-banner" role="status">
           <span>Tap the map to pick the incident location</span>
           <button type="button" className="button" onClick={cancelPickingLocation}>
+            Cancel
+          </button>
+        </div>
+      ) : null}
+
+      {pickingPushCenter ? (
+        <div className="map__pick-banner" role="status">
+          <span>Tap the map to set your alert center</span>
+          <button
+            type="button"
+            className="button"
+            onClick={() => resolvePushCenterPick(null)}
+          >
             Cancel
           </button>
         </div>

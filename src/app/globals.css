@@ -374,6 +374,15 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.user-menu__avatar {
+  flex-shrink: 0;
+  color: currentColor;
+  /* Slight translate keeps the stroke optically centred against the
+     rounded pill — pure icons read as higher than text-aligned stuff
+     without this. */
+  transform: translateY(-0.5px);
+}
+
 .user-menu__email {
   max-width: 180px;
   overflow: hidden;
@@ -502,9 +511,20 @@ body {
   gap: 0.4rem;
 }
 
-@media (max-width: 480px) {
-  .user-menu__email {
-    max-width: 120px;
+/* Mobile: collapse the trigger to a pure icon pill so it stops
+   fighting with the centred brand mark for horizontal space. The
+   full email + caret are still semantically there (screen readers
+   get it via aria-label on the trigger) and they come back on
+   wider screens. 520px is a touch above typical phone widths,
+   which leaves small tablets with the full label. */
+@media (max-width: 520px) {
+  .user-menu__trigger {
+    padding: 0.4rem;
+    gap: 0;
+  }
+  .user-menu__email,
+  .user-menu__caret {
+    display: none;
   }
 }
 
@@ -838,7 +858,10 @@ body {
 
 .map__pick-banner {
   position: absolute;
-  top: 1rem;
+  /* Below the floating brand (top 0.75rem + ~1.6rem wordmark + halo).
+     Both pick flows — incident report and push center — use this
+     class; keeping one rule avoids drifting styles. */
+  top: 3.75rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1886,6 +1909,12 @@ body {
   padding: 0.5rem 0.75rem;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
+}
+
+.notification-settings__center-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .notification-settings__radio {
