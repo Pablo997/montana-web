@@ -1788,3 +1788,134 @@ body {
   font-size: 1rem;
   font-weight: 600;
 }
+
+/* ============================================================
+ * Notification settings modal (nearby alerts)
+ * ============================================================ */
+
+.notification-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.notification-settings__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.notification-settings__panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  background: rgba(20, 22, 26, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  color: #e7ebf0;
+  padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+}
+
+.notification-settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.notification-settings__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.notification-settings__close {
+  background: transparent;
+  border: 0;
+  color: #9aa3ad;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+.notification-settings__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e7ebf0;
+}
+
+.notification-settings__intro {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #aeb6c0;
+  line-height: 1.5;
+}
+
+.notification-settings__status {
+  padding: 1rem 0;
+  color: #9aa3ad;
+}
+
+.notification-settings__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border: 0;
+  padding: 0;
+}
+
+.notification-settings__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #aeb6c0;
+}
+
+.notification-settings__coords {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  color: #e7ebf0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+}
+
+.notification-settings__radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.notification-settings__error {
+  margin: 0 0 1rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fecaca;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.notification-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.notification-settings input[type='range'] {
+  width: 100%;
+  accent-color: #10b981;
+}
