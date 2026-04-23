@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { setSentryUser } from '@/lib/observability/sentry';
 
 interface CurrentUser {
   userId: string | null;
@@ -30,11 +31,18 @@ export function useCurrentUser(): CurrentUser {
 
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
-      setState({ userId: data.session?.user.id ?? null, loading: false });
+      const id = data.session?.user.id ?? null;
+      // Tag every subsequent Sentry event with the anonymised user
+      // id so we can correlate errors across sessions without
+      // shipping email / username.
+      setSentryUser(id);
+      setState({ userId: id, loading: false });
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setState({ userId: session?.user.id ?? null, loading: false });
+      const id = session?.user.id ?? null;
+      setSentryUser(id);
+      setState({ userId: id, loading: false });
     });
 
     return () => {

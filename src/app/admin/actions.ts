@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/admin/auth';
+import { captureServerError } from '@/lib/observability/sentry';
 
 export interface AdminActionResult {
   ok: boolean;
@@ -10,13 +11,38 @@ export interface AdminActionResult {
 }
 
 /**
+ * Domain error codes that the DB raises on expected business-rule
+ * violations (e.g. trying to ban yourself). We want these visible in
+ * the UI but *silent* in Sentry — they aren't bugs, they're deliberate
+ * guard rails firing correctly.
+ */
+const DOMAIN_ERROR_TOKENS = [
+  'NOT_ADMIN',
+  'REPORT_NOT_FOUND',
+  'INCIDENT_NOT_FOUND',
+  'CANNOT_BAN_SELF',
+  'CANNOT_BAN_ADMIN',
+];
+
+function isDomainError(msg: string): boolean {
+  return DOMAIN_ERROR_TOKENS.some((t) => msg.includes(t));
+}
+
+/**
  * Normalises a Supabase error into a stable, user-friendly message.
  * The DB raises our domain errors (`NOT_ADMIN`, `CANNOT_BAN_SELF`, …)
  * as exception messages; we map them here so the UI can stay dumb.
+ *
+ * Any error that is NOT one of our domain codes is an *infrastructure*
+ * failure (network blip, broken RPC, misconfigured RLS) and gets
+ * reported to Sentry with the action tag so it shows up in the right
+ * bucket.
  */
-function explain(error: unknown): string {
-  const msg =
-    (error as { message?: string })?.message ?? 'Unexpected error';
+function explain(error: unknown, tag: string): string {
+  const msg = (error as { message?: string })?.message ?? 'Unexpected error';
+  if (!isDomainError(msg)) {
+    captureServerError(error, { tag, extras: { message: msg } });
+  }
   if (msg.includes('NOT_ADMIN')) return 'You are not an administrator.';
   if (msg.includes('REPORT_NOT_FOUND')) return 'Report no longer exists.';
   if (msg.includes('INCIDENT_NOT_FOUND')) return 'Incident no longer exists.';
@@ -36,7 +62,7 @@ export async function dismissReport(
     p_report_id: reportId,
     p_reason: reason,
   });
-  if (error) return { ok: false, error: explain(error) };
+  if (error) return { ok: false, error: explain(error, 'admin.dismissReport') };
   revalidatePath('/admin');
   revalidatePath('/admin/incidents');
   revalidatePath('/admin/activity');
@@ -53,7 +79,7 @@ export async function removeIncident(
     p_incident_id: incidentId,
     p_reason: reason,
   });
-  if (error) return { ok: false, error: explain(error) };
+  if (error) return { ok: false, error: explain(error, 'admin.removeIncident') };
   revalidatePath('/admin');
   revalidatePath('/admin/incidents');
   revalidatePath('/admin/activity');
@@ -70,7 +96,7 @@ export async function restoreIncident(
     p_incident_id: incidentId,
     p_reason: reason,
   });
-  if (error) return { ok: false, error: explain(error) };
+  if (error) return { ok: false, error: explain(error, 'admin.restoreIncident') };
   revalidatePath('/admin');
   revalidatePath('/admin/incidents');
   revalidatePath('/admin/activity');
@@ -90,7 +116,7 @@ export async function banUser(
     p_reason: reason,
     p_duration: duration,
   });
-  if (error) return { ok: false, error: explain(error) };
+  if (error) return { ok: false, error: explain(error, 'admin.banUser') };
   revalidatePath('/admin');
   revalidatePath('/admin/bans');
   revalidatePath('/admin/activity');
@@ -107,7 +133,7 @@ export async function unbanUser(
     p_user_id: userId,
     p_reason: reason,
   });
-  if (error) return { ok: false, error: explain(error) };
+  if (error) return { ok: false, error: explain(error, 'admin.unbanUser') };
   revalidatePath('/admin/bans');
   revalidatePath('/admin/activity');
   return { ok: true };

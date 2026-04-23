@@ -69,11 +69,16 @@ async function loadData(
 }> {
   const supabase = createSupabaseServerClient();
 
+  // `getUser()` instead of `getSession()` because this is server-side
+  // and the cookie we'd read the id from is not authoritative on its
+  // own — only GoTrue's `/auth/v1/user` round-trip validates the JWT
+  // signature. The extra latency is hidden by the parallel fan-out
+  // below.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) redirect('/login?next=/me');
+  if (!user) redirect('/login?next=/me');
 
   // Three round-trips in parallel: profile row, stats, page of incidents.
   // Each is fast; firing them concurrently hides their latency behind the
@@ -82,7 +87,7 @@ async function loadData(
     supabase
       .from('profiles')
       .select('username, created_at')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single(),
     supabase.rpc('my_stats'),
     supabase.rpc('my_incidents', {
@@ -98,7 +103,7 @@ async function loadData(
       : [];
 
   return {
-    email: session.user.email ?? '',
+    email: user.email ?? '',
     username: profileRes.data?.username ?? null,
     createdAt: profileRes.data?.created_at ?? null,
     stats: mapStats(statsRes.data),

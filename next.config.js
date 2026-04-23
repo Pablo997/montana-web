@@ -64,6 +64,17 @@ const nextConfig = {
 // before you've pasted the env vars into Vercel.
 const { withSentryConfig } = require('@sentry/nextjs');
 
+// Release name used for source-map upload AND tagged onto every
+// Sentry event. We prefer the explicit `SENTRY_RELEASE` env var (set
+// this in CI for non-Vercel deploys), then Vercel's commit SHA,
+// then nothing — which makes withSentryConfig fall back to its own
+// heuristic. Sharing the same value across builds is what lets
+// "Releases" in the Sentry UI correlate deploys with error spikes.
+const sentryRelease =
+  process.env.SENTRY_RELEASE ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  undefined;
+
 module.exports = withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
@@ -71,6 +82,8 @@ module.exports = withSentryConfig(nextConfig, {
 
   // Suppresses the verbose "uploading source maps" spam in CI logs.
   silent: !process.env.CI,
+
+  release: sentryRelease ? { name: sentryRelease } : undefined,
 
   // /monitoring is an internal route that proxies events to Sentry
   // so ad-blockers don't strip them. Small runtime cost, big gain
