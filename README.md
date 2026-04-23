@@ -77,6 +77,8 @@ Required:
 Optional:
 
 - `NEXT_PUBLIC_SENTRY_DSN` — enables error reporting. Leave empty in dev.
+- `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` — required only on the build host (CI / Vercel) if you want uploaded source maps so stack traces point at original TS lines. Without them builds still succeed, they just ship minified frames to Sentry.
+- `SENTRY_RELEASE` — overrides the auto-detected release name. Defaults to `VERCEL_GIT_COMMIT_SHA` when absent. Same value is reflected by `/api/health` so you can tell which deploy a probe hit.
 - `NEXT_PUBLIC_VALIDATION_THRESHOLD`, `NEXT_PUBLIC_DISMISSAL_THRESHOLD` — UI overrides of the DB defaults (5 / 5).
 
 ### 4. Set up the database
@@ -213,6 +215,13 @@ montana/
 - **Edge Function**: `supabase functions deploy push-notify --no-verify-jwt` (auth is handled by the `PUSH_CRON_SECRET` bearer).
 - **Cron**: `pg_cron` job created by the migrations runs every minute and pulls its target URL + secret from `private.push_cron_config`.
 - **Media**: the `incident-media` bucket is public-read but write-restricted via RLS to the authenticated author.
+
+## Observability
+
+- **Error reporting**: `@sentry/nextjs` is wired on client, server and edge runtimes. PII is scrubbed (`sendDefaultPii: false`, `beforeSend` strips IP, headers, geo). The current user's id is attached as anonymous user context via `useCurrentUser` so Sentry can dedup issues per user without storing email / username.
+- **Server-side helpers**: reach for `captureServerError(err, { tag, extras })` from `src/lib/observability/sentry.ts` in API routes and server actions instead of `console.error`. It never throws and tags events so Issues can be filtered by `op:admin.banUser`, `op:api.me.delete`, etc. Admin server actions already route infrastructure failures through it while keeping domain errors (`NOT_ADMIN`, `CANNOT_BAN_SELF`, ...) silent.
+- **Release tracking**: on Vercel, `VERCEL_GIT_COMMIT_SHA` is auto-picked up and tagged on every event + upload target for source maps. Set `SENTRY_RELEASE` manually for non-Vercel hosts. Source map uploads require `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` during `next build`.
+- **Uptime probe**: `GET /api/health` round-trips a cheap RPC (`health_ping()`) so external monitors (BetterUptime, Uptime Kuma, Pingdom) get a 200 only when Next.js *and* Supabase are both reachable. `/api/ping` stays as a pure Next.js-only probe used by the offline indicator.
 
 ## Contributing
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { captureServerError } from '@/lib/observability/sentry';
 
 const MEDIA_BUCKET = 'incident-media';
 
@@ -56,7 +57,10 @@ export async function POST() {
       if (removeError) throw removeError;
     }
   } catch (err) {
-    console.error('[account-delete] storage cleanup failed', err);
+    captureServerError(err, {
+      tag: 'api.me.delete',
+      extras: { step: 'storage-cleanup', userId: user.id },
+    });
     return NextResponse.json(
       { error: 'Could not remove uploaded media. Try again.' },
       { status: 500 },
@@ -67,7 +71,10 @@ export async function POST() {
   // consents / etc. via existing ON DELETE CASCADE FKs.
   const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
   if (deleteError) {
-    console.error('[account-delete] auth.admin.deleteUser failed', deleteError);
+    captureServerError(deleteError, {
+      tag: 'api.me.delete',
+      extras: { step: 'auth-delete', userId: user.id },
+    });
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
   }
 

@@ -14,17 +14,21 @@ export interface AdminSession {
  *   2. 404 (rather than 403) authenticated non-admins — we don't want to
  *      leak the existence of an admin surface.
  *
- * The admin check runs inside the DB via `public.is_admin()`, so this
- * function is a thin wrapper; the real policy lives with the data.
+ * Uses `getUser()` rather than `getSession()` because we're server-side
+ * and reading the user id off a potentially-tampered cookie is the
+ * exact footgun Supabase's own warning points at. `getUser()` hits
+ * `/auth/v1/user` to verify the JWT signature against GoTrue; the
+ * latency is irrelevant compared to the downstream RPC round-trip
+ * we're about to make anyway.
  */
 export async function requireAdmin(nextPath = '/admin'): Promise<AdminSession> {
   const supabase = createSupabaseServerClient();
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
@@ -34,8 +38,8 @@ export async function requireAdmin(nextPath = '/admin'): Promise<AdminSession> {
   }
 
   return {
-    userId: session.user.id,
-    email: session.user.email ?? '',
+    userId: user.id,
+    email: user.email ?? '',
   };
 }
 
@@ -47,9 +51,9 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   try {
     const supabase = createSupabaseServerClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return false;
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
 
     const { data, error } = await supabase.rpc('is_admin');
     if (error) return false;
