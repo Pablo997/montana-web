@@ -9,6 +9,13 @@
   --color-text: #e8efea;
   --color-text-muted: #93a29a;
   --color-brand: #2f8f6f;
+  /* WCAG AA requires a 4.5:1 contrast ratio against white for normal
+     text. The --color-brand sits at 3.97:1 — close but below the bar.
+     --color-brand-strong is a darker shade we use ONLY as a background
+     for buttons / pills that carry white text. It reaches 5.1:1 on
+     white and matches the hover colour we already had for
+     `.button--primary`, so the visual identity stays intact. */
+  --color-brand-strong: #247657;
 }
 
 html,
@@ -994,7 +1001,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1rem;
-  background: var(--color-brand);
+  background: var(--color-brand-strong);
   color: #fff;
   border: none;
   border-radius: 999px;
@@ -1006,7 +1013,7 @@ body {
 }
 
 .report-button:hover {
-  background: #24755a;
+  background: #1c5f46;
 }
 
 .report-button:active {
@@ -1929,14 +1936,14 @@ body {
 }
 
 .button--primary {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--color-brand-strong);
+  border-color: var(--color-brand-strong);
   color: #fff;
 }
 
 .button--primary:hover {
-  background: #24755a;
-  border-color: #24755a;
+  background: #1c5f46;
+  border-color: #1c5f46;
 }
 
 .button--danger {
