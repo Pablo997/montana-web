@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   REPORT_REASONS,
@@ -27,6 +28,7 @@ interface Props {
  * a confusing conditional tree.
  */
 export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
+  const t = useTranslations('incident.flag');
   const { userId } = useCurrentUser();
   const [reason, setReason] = useState<ReportReason>('spam');
   const [details, setDetails] = useState('');
@@ -50,25 +52,23 @@ export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
 
   if (!open) return null;
 
-  // Guard on the client too: the server is authoritative but a signed-out
-  // user should never even see the submit button firing.
   if (!userId) {
     return (
-      <div className="modal" role="dialog" aria-modal="true" aria-label="Report incident">
+      <div className="modal" role="dialog" aria-modal="true" aria-label={t('dialogLabel')}>
         <button
           type="button"
           className="modal__backdrop"
           onClick={onClose}
-          aria-label="Close dialog"
+          aria-label={t('closeDialogAria')}
         />
         <div className="modal__content">
           <header className="modal__header">
-            <h2 className="modal__title">Report this incident</h2>
-            <button type="button" className="button" onClick={onClose} aria-label="Close">
+            <h2 className="modal__title">{t('title')}</h2>
+            <button type="button" className="button" onClick={onClose} aria-label={t('closeAria')}>
               ✕
             </button>
           </header>
-          <p className="incident-form__hint">Sign in to report incidents.</p>
+          <p className="incident-form__hint">{t('signInPrompt')}</p>
         </div>
       </div>
     );
@@ -81,43 +81,42 @@ export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
     try {
       await reportIncident(incidentId, reason, details);
       setSuccess(true);
-      // Auto-close after a short confirmation so the user gets visible
-      // feedback without an extra click.
       setTimeout(() => onClose(), 1200);
     } catch (err) {
-      const msg =
-        err instanceof ReportError
-          ? err.message
-          : 'Could not submit the report. Please try again.';
+      // ReportError carries a stable `code` we translate locally — the
+      // server message is English-only and not user-friendly for other
+      // locales. Unknown errors fall back to the generic copy.
+      let msg = t('genericError');
+      if (err instanceof ReportError && err.code !== 'unknown') {
+        msg = t(`errors.${err.code}`);
+      }
       setError(msg);
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="modal" role="dialog" aria-modal="true" aria-label="Report incident">
+    <div className="modal" role="dialog" aria-modal="true" aria-label={t('dialogLabel')}>
       <button
         type="button"
         className="modal__backdrop"
         onClick={onClose}
-        aria-label="Close dialog"
+        aria-label={t('closeDialogAria')}
       />
       <div className="modal__content">
         <header className="modal__header">
-          <h2 className="modal__title">Report this incident</h2>
-          <button type="button" className="button" onClick={onClose} aria-label="Close">
+          <h2 className="modal__title">{t('title')}</h2>
+          <button type="button" className="button" onClick={onClose} aria-label={t('closeAria')}>
             ✕
           </button>
         </header>
 
         {success ? (
-          <p className="incident-form__hint">
-            Thanks — your report has been submitted and will be reviewed.
-          </p>
+          <p className="incident-form__hint">{t('thanks')}</p>
         ) : (
           <form className="incident-form" onSubmit={handleSubmit}>
             <label className="incident-form__field">
-              <span>Reason</span>
+              <span>{t('reasonLabel')}</span>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value as ReportReason)}
@@ -125,26 +124,23 @@ export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
               >
                 {REPORT_REASONS.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {r.label}
+                    {t(`reasons.${r.value}`)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="incident-form__field">
-              <span>Details (optional)</span>
+              <span>{t('detailsLabel')}</span>
               <textarea
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 maxLength={1000}
                 rows={4}
-                placeholder="Anything a reviewer should know…"
+                placeholder={t('detailsPlaceholder')}
                 disabled={submitting}
               />
-              <small className="incident-form__hint">
-                We share reports only with our moderation team. Do not include
-                personal data.
-              </small>
+              <small className="incident-form__hint">{t('detailsHint')}</small>
             </label>
 
             {error ? <p className="incident-form__error">{error}</p> : null}
@@ -156,14 +152,14 @@ export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
                 onClick={onClose}
                 disabled={submitting}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="submit"
                 className="button button--primary"
                 disabled={submitting}
               >
-                {submitting ? 'Sending…' : 'Submit report'}
+                {submitting ? t('submitting') : t('submit')}
               </button>
             </div>
           </form>

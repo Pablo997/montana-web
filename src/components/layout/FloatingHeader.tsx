@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { isCurrentUserAdmin } from '@/lib/admin/auth';
 import { Logo } from '@/components/brand/Logo';
@@ -16,9 +17,12 @@ import { UserMenu } from './UserMenu';
  */
 export async function FloatingHeader() {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [
+    {
+      data: { user },
+    },
+    t,
+  ] = await Promise.all([supabase.auth.getUser(), getTranslations('header')]);
 
   // Only pay for the admin lookup when we know we'll show a menu to begin
   // with. Anonymous users skip the RPC entirely.
@@ -29,7 +33,7 @@ export async function FloatingHeader() {
       <Link
         href="/"
         className="floating-header__brand"
-        aria-label="Montana home"
+        aria-label={t('brandAriaLabel')}
       >
         <Logo size={42} className="floating-header__logo" />
         <span className="floating-header__wordmark">Montana</span>
@@ -40,7 +44,7 @@ export async function FloatingHeader() {
           <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />
         ) : (
           <Link href="/auth/sign-in" className="button button--primary">
-            Sign in
+            {t('signIn')}
           </Link>
         )}
       </div>

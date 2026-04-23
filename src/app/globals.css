@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 :root {
+  /* Tell the browser our whole document is a dark-mode surface.
+     This single declaration makes native form controls (<select>
+     dropdowns, scrollbars, date pickers, <option> lists) flip to
+     their dark UA palette instead of the light default. Without
+     it, a styled <select> looks dark closed but opens into a
+     white-on-white list because option styling is largely owned
+     by the OS, not CSS. Applied at :root so every control in the
+     app benefits — there's no light-mode variant anyway. */
+  color-scheme: dark;
+
   --color-bg: #0f1412;
   --color-surface: #17201c;
   --color-border: #24302a;
@@ -478,6 +488,83 @@ body {
 .user-menu__item--admin:hover:not(:disabled) {
   background: rgba(255, 214, 107, 0.12);
   color: #ffe49a;
+}
+
+/* Locale switcher entry inside the user menu. It's not a clickable
+   row (clicks go to the <select>) so it doesn't hover like the
+   others; we keep the same spacing / padding so the menu reads as
+   a coherent list. */
+.user-menu__item--locale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: default;
+}
+
+.user-menu__item--locale:hover {
+  background: transparent;
+}
+
+.user-menu__locale-label {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.user-menu__locale-select {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.4rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  /* Forces the native <option> dropdown to use the dark UA palette
+     (black-on-white → white-on-dark) on every engine that respects
+     `color-scheme`. Without this, the <select> box is dark but the
+     open list is white-on-white because `<option>` styling is
+     largely controlled by the OS, not our CSS. */
+  color-scheme: dark;
+}
+
+/* Explicit option styles — Chromium honours these, Firefox partially,
+   Safari ignores them but picks up `color-scheme` above. Together the
+   two rules cover every realistic browser. */
+.user-menu__locale-select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.user-menu__locale-select:focus-visible {
+  outline: 2px solid var(--color-brand-strong);
+  outline-offset: 1px;
+}
+
+/* Standalone locale-switcher used outside the user menu (e.g. when an
+   anonymous visitor needs to change language before signing in). Kept
+   visually consistent with the other glass controls. */
+.locale-switcher {
+  background: rgba(23, 32, 28, 0.8);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  color-scheme: dark;
+}
+
+.locale-switcher option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.locale-switcher:focus-visible {
+  outline: 2px solid var(--color-brand-strong);
+  outline-offset: 1px;
 }
 
 .user-menu__divider {

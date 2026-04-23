@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   createIncidentUpdate,
@@ -34,6 +35,8 @@ const MAX_BODY = 500;
  *     reasoning. Add comments locally if the scope grows.
  */
 export function IncidentUpdates({ incidentId }: Props) {
+  const t = useTranslations('incident.details.updates');
+  const locale = useLocale();
   const { userId, loading: authLoading } = useCurrentUser();
 
   const [updates, setUpdates] = useState<IncidentUpdate[]>([]);
@@ -51,13 +54,11 @@ export function IncidentUpdates({ incidentId }: Props) {
       setUpdates(rows);
     } catch (err) {
       console.error('[IncidentUpdates] load failed', err);
-      setLoadError(
-        err instanceof Error ? err.message : 'Could not load follow-ups.',
-      );
+      setLoadError(err instanceof Error ? err.message : t('loadError'));
     } finally {
       setLoading(false);
     }
-  }, [incidentId]);
+  }, [incidentId, t]);
 
   useEffect(() => {
     void load();
@@ -69,11 +70,11 @@ export function IncidentUpdates({ incidentId }: Props) {
 
     const parsed = CreateIncidentUpdateSchema.safeParse({ body: draft });
     if (!parsed.success) {
-      setSubmitError(parsed.error.issues[0]?.message ?? 'Invalid input.');
+      setSubmitError(parsed.error.issues[0]?.message ?? t('invalid'));
       return;
     }
     if (!userId) {
-      setSubmitError('You need to sign in to post follow-ups.');
+      setSubmitError(t('needSignIn'));
       return;
     }
 
@@ -94,11 +95,6 @@ export function IncidentUpdates({ incidentId }: Props) {
     startSubmit(async () => {
       try {
         await createIncidentUpdate(incidentId, parsed.data);
-        // Refetch the thread so we pick up the real username from the
-        // `profiles` join in `list_incident_updates`. The INSERT path
-        // can't resolve usernames without an extra round-trip anyway,
-        // so one GET here keeps the code simple and shows accurate
-        // attribution immediately.
         await load();
       } catch (err) {
         console.error('[IncidentUpdates] submit failed', err);
@@ -109,7 +105,7 @@ export function IncidentUpdates({ incidentId }: Props) {
             ? err.message
             : err instanceof Error
               ? err.message
-              : 'Could not post the update.',
+              : t('postError'),
         );
       }
     });
@@ -127,32 +123,28 @@ export function IncidentUpdates({ incidentId }: Props) {
       } catch (err) {
         console.error('[IncidentUpdates] delete failed', err);
         setUpdates(snapshot);
-        setSubmitError(
-          err instanceof Error ? err.message : 'Could not delete the update.',
-        );
+        setSubmitError(err instanceof Error ? err.message : t('deleteError'));
       }
     });
   };
 
   return (
-    <section className="incident-updates" aria-label="Incident follow-ups">
+    <section className="incident-updates" aria-label={t('regionLabel')}>
       <header className="incident-updates__head">
-        <h4 className="incident-updates__title">Follow-ups</h4>
+        <h4 className="incident-updates__title">{t('title')}</h4>
         <span className="incident-updates__count">
           {updates.length > 0 ? `${updates.length}` : ''}
         </span>
       </header>
 
       {loading ? (
-        <p className="incident-updates__status">Loading…</p>
+        <p className="incident-updates__status">{t('loading')}</p>
       ) : loadError ? (
         <p role="alert" className="incident-updates__error">
           {loadError}
         </p>
       ) : updates.length === 0 ? (
-        <p className="incident-updates__status">
-          No follow-ups yet. Be the first to post a status check.
-        </p>
+        <p className="incident-updates__status">{t('empty')}</p>
       ) : (
         <ol className="incident-updates__list">
           {updates.map((u) => {
@@ -160,7 +152,8 @@ export function IncidentUpdates({ incidentId }: Props) {
             // Show "You" while the optimistic row hasn't been reconciled
             // yet (the INSERT doesn't resolve usernames; we refetch
             // right after) to avoid a jarring "Unknown" flash.
-            const authorLabel = u.username ?? (isMine ? 'You' : 'Unknown');
+            const authorLabel =
+              u.username ?? (isMine ? t('authorYou') : t('authorUnknown'));
             const canDelete = isMine && !u.id.startsWith('temp-');
             return (
               <li key={u.id} className="incident-updates__item">
@@ -171,7 +164,7 @@ export function IncidentUpdates({ incidentId }: Props) {
                     className="incident-updates__time"
                     title={u.createdAt}
                   >
-                    {formatRelative(u.createdAt)}
+                    {formatRelative(u.createdAt, locale, t)}
                   </time>
                 </div>
                 <p className="incident-updates__body">{u.body}</p>
@@ -182,9 +175,9 @@ export function IncidentUpdates({ incidentId }: Props) {
                       className="incident-updates__delete"
                       onClick={() => remove(u.id)}
                       disabled={isSubmitting}
-                      aria-label="Delete this follow-up"
+                      aria-label={t('deleteAriaLabel')}
                     >
-                      Delete
+                      {t('delete')}
                     </button>
                   </div>
                 ) : null}
@@ -197,27 +190,27 @@ export function IncidentUpdates({ incidentId }: Props) {
       {authLoading ? null : userId ? (
         <form className="incident-updates__form" onSubmit={submit}>
           <label className="incident-updates__field">
-            <span className="sr-only">New follow-up</span>
+            <span className="sr-only">{t('composeLabel')}</span>
             <textarea
               className="incident-updates__textarea"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               maxLength={MAX_BODY}
               rows={2}
-              placeholder="Add a status check, correction, or update…"
+              placeholder={t('placeholder')}
               disabled={isSubmitting}
             />
           </label>
           <div className="incident-updates__form-foot">
             <span className="incident-updates__counter">
-              {draft.length}/{MAX_BODY}
+              {t('counter', { count: draft.length, max: MAX_BODY })}
             </span>
             <button
               type="submit"
               className="button button--primary"
               disabled={isSubmitting || draft.trim().length === 0}
             >
-              {isSubmitting ? 'Posting…' : 'Post'}
+              {isSubmitting ? t('submitting') : t('submit')}
             </button>
           </div>
           {submitError ? (
@@ -228,7 +221,7 @@ export function IncidentUpdates({ incidentId }: Props) {
         </form>
       ) : (
         <p className="incident-updates__status incident-updates__status--muted">
-          Sign in to post a follow-up.
+          {t('signInPrompt')}
         </p>
       )}
     </section>
@@ -237,18 +230,25 @@ export function IncidentUpdates({ incidentId }: Props) {
 
 /**
  * Human-readable relative time ("3 min ago", "2 h ago") that degrades
- * to an absolute datetime once the event is older than 24h. Kept inline
- * because we only use it here — promote to a util if another surface
- * needs the same rules.
+ * to a locale-aware absolute datetime once the event is older than 24h.
+ * Pulls the template strings from the `updates` namespace so we don't
+ * double up translations across this component.
  */
-function formatRelative(iso: string): string {
+function formatRelative(
+  iso: string,
+  locale: string,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
   const then = new Date(iso).getTime();
   const now = Date.now();
   const diffSec = Math.max(0, Math.round((now - then) / 1000));
-  if (diffSec < 60) return 'just now';
+  if (diffSec < 60) return t('relativeJustNow');
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffMin < 60) return t('relativeMinAgo', { count: diffMin });
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} h ago`;
-  return new Date(iso).toLocaleString();
+  if (diffHr < 24) return t('relativeHoursAgo', { count: diffHr });
+  // > 24h: absolute date in the active locale. `toLocaleString` reads
+  // the browser's formatter for the passed locale, which respects
+  // day-month ordering and 12/24h conventions automatically.
+  return new Date(iso).toLocaleString(locale);
 }

@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { castVote, removeVote } from '@/lib/incidents/api';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useMapStore } from '@/store/useMapStore';
@@ -30,6 +31,7 @@ type Vote = 1 | -1;
  *     state on first paint — no hydration flicker.
  */
 export function VoteButtons({ incident }: Props) {
+  const t = useTranslations('incident.vote');
   const router = useRouter();
   const { userId } = useCurrentUser();
   const upsertIncident = useMapStore((s) => s.upsertIncident);
@@ -40,7 +42,7 @@ export function VoteButtons({ incident }: Props) {
 
   if (isAuthor) {
     return (
-      <div className="vote vote--readonly" aria-label="Incident score">
+      <div className="vote vote--readonly" aria-label={t('scoreLabel')}>
         <span className="vote__count vote__count--up">▲ {incident.upvotes}</span>
         <span className="vote__count vote__count--down">▼ {incident.downvotes}</span>
       </div>
@@ -77,7 +79,7 @@ export function VoteButtons({ incident }: Props) {
         className={`vote__button vote__button--up${
           userVote === 1 ? ' vote__button--active' : ''
         }`}
-        aria-label="Confirm incident"
+        aria-label={t('confirm')}
         aria-pressed={userVote === 1}
         disabled={isPending}
       >
@@ -90,7 +92,7 @@ export function VoteButtons({ incident }: Props) {
         className={`vote__button vote__button--down${
           userVote === -1 ? ' vote__button--active' : ''
         }`}
-        aria-label="Flag as resolved or incorrect"
+        aria-label={t('flag')}
         aria-pressed={userVote === -1}
         disabled={isPending}
       >

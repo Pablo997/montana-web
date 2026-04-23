@@ -2,11 +2,14 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 export default function SignInPage() {
+  const t = useTranslations('auth.signIn');
+  const tCommon = useTranslations('common');
   const [email, setEmail] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
@@ -15,7 +18,7 @@ export default function SignInPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!accepted) {
-      setError('You must accept the Terms and Privacy Policy to continue.');
+      setError(t('consentRequired'));
       setStatus('error');
       return;
     }
@@ -54,26 +57,49 @@ export default function SignInPage() {
     setStatus('sent');
   }
 
+  // `t.rich` renders ICU-style tag placeholders (<terms>, <privacy>,
+  // <cookies>) as real React elements so we can wrap them in <Link>
+  // without string concatenation and without losing translation
+  // correctness on the interpolated bits.
+  const consent = t.rich('consent', {
+    terms: (chunks) => (
+      <Link href="/terms" target="_blank">
+        {chunks}
+      </Link>
+    ),
+    privacy: (chunks) => (
+      <Link href="/privacy" target="_blank">
+        {chunks}
+      </Link>
+    ),
+    cookies: (chunks) => (
+      <Link href="/cookies" target="_blank">
+        {chunks}
+      </Link>
+    ),
+  });
+
+  const sentMessage = t.rich('sent', {
+    email,
+    strong: (chunks) => <strong>{chunks}</strong>,
+  });
+
   return (
     <div className="auth">
       <div className="auth__card">
         <Link href="/" className="auth__back">
-          ← Back to map
+          ← {tCommon('backToMap')}
         </Link>
 
-        <h1 className="auth__title">Sign in to Montana</h1>
-        <p className="auth__subtitle">
-          We&apos;ll email you a magic link. No password, no hassle.
-        </p>
+        <h1 className="auth__title">{t('title')}</h1>
+        <p className="auth__subtitle">{t('subtitle')}</p>
 
         {status === 'sent' ? (
-          <div className="auth__notice auth__notice--success">
-            Check <strong>{email}</strong> for a sign-in link.
-          </div>
+          <div className="auth__notice auth__notice--success">{sentMessage}</div>
         ) : (
           <form className="auth__form" onSubmit={handleSubmit}>
             <label className="auth__label" htmlFor="email">
-              Email
+              {t('emailLabel')}
             </label>
             <input
               id="email"
@@ -81,7 +107,7 @@ export default function SignInPage() {
               required
               autoComplete="email"
               className="auth__input"
-              placeholder="you@example.com"
+              placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === 'sending'}
@@ -95,12 +121,7 @@ export default function SignInPage() {
                 disabled={status === 'sending'}
                 required
               />
-              <span>
-                I have read and accept the{' '}
-                <Link href="/terms" target="_blank">Terms</Link>,{' '}
-                <Link href="/privacy" target="_blank">Privacy Policy</Link>{' '}
-                and <Link href="/cookies" target="_blank">Cookie Policy</Link>.
-              </span>
+              <span>{consent}</span>
             </label>
 
             <button
@@ -108,7 +129,7 @@ export default function SignInPage() {
               className="button button--primary auth__submit"
               disabled={status === 'sending' || email.length === 0 || !accepted}
             >
-              {status === 'sending' ? 'Sending...' : 'Send magic link'}
+              {status === 'sending' ? t('sending') : t('submit')}
             </button>
 
             {status === 'error' && error ? (

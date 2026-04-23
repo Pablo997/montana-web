@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import { IncidentForm } from './IncidentForm';
 import type { Incident } from '@/types/incident';
 
 export function ReportIncidentDialog() {
+  const t = useTranslations('incident.reportDialog');
   const reportOpen = useMapStore((s) => s.reportOpen);
   const reportLocation = useMapStore((s) => s.reportLocation);
   const closeReport = useMapStore((s) => s.closeReport);
@@ -30,17 +32,17 @@ export function ReportIncidentDialog() {
   };
 
   return (
-    <div className="modal" role="dialog" aria-modal="true" aria-label="Report incident">
+    <div className="modal" role="dialog" aria-modal="true" aria-label={t('dialogLabel')}>
       <button
         type="button"
         className="modal__backdrop"
         onClick={closeReport}
-        aria-label="Close dialog"
+        aria-label={t('closeDialogAria')}
       />
       <div className="modal__content">
         <header className="modal__header">
-          <h2 className="modal__title">Report an incident</h2>
-          <button type="button" className="button" onClick={closeReport} aria-label="Close">
+          <h2 className="modal__title">{t('title')}</h2>
+          <button type="button" className="button" onClick={closeReport} aria-label={t('closeAria')}>
             ✕
           </button>
         </header>
