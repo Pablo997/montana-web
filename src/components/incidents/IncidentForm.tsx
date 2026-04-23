@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { RateLimitError, createIncident, uploadIncidentMedia } from '@/lib/incidents/api';
 import { CreateIncidentSchema, type CreateIncidentInput } from '@/lib/incidents/schemas';
 import { compressImage } from '@/lib/utils/image-compression';
 import { offlineQueue } from '@/lib/utils/offline-queue';
 import { watchBestFix } from '@/lib/utils/geolocation';
+import { useIncidentLabels } from '@/lib/incidents/useIncidentLabels';
 import {
   INCIDENT_TYPE_LABELS,
   SEVERITY_LABELS,
@@ -32,6 +34,8 @@ export function IncidentForm({
   onPickLocation,
   onLocationChange,
 }: Props) {
+  const t = useTranslations('incident.form');
+  const labels = useIncidentLabels();
   const [type, setType] = useState<IncidentType>('trail_blocked');
   const [severity, setSeverity] = useState<SeverityLevel>('moderate');
   const [title, setTitle] = useState('');
@@ -61,7 +65,6 @@ export function IncidentForm({
         windowMs: 6000,
         targetAccuracy: 10,
         onProgress: (fix) => {
-          // Update the map in real-time as GPS refines its solution.
           onLocationChange({ lat: fix.lat, lng: fix.lng });
           setGeoAccuracy(fix.accuracy);
         },
@@ -69,7 +72,7 @@ export function IncidentForm({
       onLocationChange({ lat: best.lat, lng: best.lng });
       setGeoAccuracy(best.accuracy);
     } catch {
-      setError('Could not read your location. Try picking on the map.');
+      setError(t('locationError'));
     } finally {
       setGeoLoading(false);
     }
@@ -90,8 +93,12 @@ export function IncidentForm({
     if (!result.success) {
       // Show the first field error; tiny form so we don't need per-field
       // wiring yet. Upgrade to react-hook-form + zodResolver if this grows.
+      //
+      // Zod error messages themselves still come from the schemas and
+      // may be English — translating those is a follow-up (would need
+      // a zod error-map at the schema boundary, not free).
       const first = result.error.issues[0];
-      setError(first?.message ?? 'Invalid form.');
+      setError(first?.message ?? t('invalid'));
       return;
     }
 
@@ -107,19 +114,14 @@ export function IncidentForm({
         const created = await createIncident(payload);
         let uploadedCount = 0;
 
-        // Photos are uploaded after the row exists so we can scope them to
-        // `<user_id>/<incident_id>/…` (required by the Storage RLS policy)
-        // and insert matching `incident_media` rows. Failures here do not
-        // roll back the incident itself — a text-only report is still
-        // valuable in the field.
         if (photos.length > 0) {
-          setUploadStatus(`Uploading 0/${photos.length} photo${photos.length > 1 ? 's' : ''}…`);
+          setUploadStatus(t('uploading', { done: 0, total: photos.length }));
           let done = 0;
           const results = await Promise.allSettled(
             photos.map((file) =>
               uploadIncidentMedia(created, file).finally(() => {
                 done += 1;
-                setUploadStatus(`Uploading ${done}/${photos.length}…`);
+                setUploadStatus(t('uploading', { done, total: photos.length }));
               }),
             ),
           );
@@ -130,29 +132,20 @@ export function IncidentForm({
               'Some photos failed to upload',
               results.filter((r) => r.status === 'rejected'),
             );
-            setError(
-              `Incident saved, but ${failed} photo${failed > 1 ? 's' : ''} failed to upload.`,
-            );
+            setError(t('photosPartialFail', { failed }));
           }
           setUploadStatus(null);
         }
 
-        // Optimistic media counter. The `on_incident_media_change` trigger
-        // will also bump it server-side and realtime will reconcile, but
-        // updating locally avoids a round-trip flash in the details panel.
         onCreated?.({ ...created, mediaCount: uploadedCount });
       } catch (err) {
         console.error(err);
-        // Rate-limit errors are user-facing and deterministic: surface the
-        // quota message directly and do NOT queue for retry (it'd just be
-        // rejected again). Everything else is treated as a transient
-        // network/server failure and buffered offline.
         if (err instanceof RateLimitError) {
           setError(err.message);
           return;
         }
         offlineQueue.enqueue(payload);
-        setError('Could not reach the server. Saved locally and will retry when online.');
+        setError(t('offlineQueued'));
       }
     });
   };
@@ -161,13 +154,13 @@ export function IncidentForm({
     <form className="incident-form" onSubmit={handleSubmit}>
       <div className="incident-form__location">
         <div>
-          <span className="incident-form__label">Location</span>
+          <span className="incident-form__label">{t('locationLabel')}</span>
           <span className="incident-form__coords">
             {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
           </span>
           {geoAccuracy !== null ? (
             <small className="incident-form__hint">
-              {geoLoading ? 'Refining…' : 'Accuracy'}: ±{Math.round(geoAccuracy)} m
+              {geoLoading ? t('refining') : t('accuracy')}: ±{Math.round(geoAccuracy)} m
             </small>
           ) : null}
         </div>
@@ -179,44 +172,44 @@ export function IncidentForm({
               onClick={handleUseMyLocation}
               disabled={geoLoading}
             >
-              {geoLoading ? 'Locating…' : 'Use my location'}
+              {geoLoading ? t('locating') : t('useMyLocation')}
             </button>
           ) : null}
           {onPickLocation ? (
             <button type="button" className="button" onClick={onPickLocation}>
-              Pick on map
+              {t('pickOnMap')}
             </button>
           ) : null}
         </div>
       </div>
 
       <label className="incident-form__field">
-        <span>Type</span>
+        <span>{t('typeLabel')}</span>
         <select value={type} onChange={(e) => setType(e.target.value as IncidentType)}>
-          {Object.entries(INCIDENT_TYPE_LABELS).map(([value, label]) => (
+          {(Object.keys(INCIDENT_TYPE_LABELS) as IncidentType[]).map((value) => (
             <option key={value} value={value}>
-              {label}
+              {labels.type(value)}
             </option>
           ))}
         </select>
       </label>
 
       <label className="incident-form__field">
-        <span>Severity</span>
+        <span>{t('severityLabel')}</span>
         <select
           value={severity}
           onChange={(e) => setSeverity(e.target.value as SeverityLevel)}
         >
-          {Object.entries(SEVERITY_LABELS).map(([value, label]) => (
+          {(Object.keys(SEVERITY_LABELS) as SeverityLevel[]).map((value) => (
             <option key={value} value={value}>
-              {label}
+              {labels.severity(value)}
             </option>
           ))}
         </select>
       </label>
 
       <label className="incident-form__field">
-        <span>Title</span>
+        <span>{t('titleLabel')}</span>
         <input
           type="text"
           value={title}
@@ -228,7 +221,7 @@ export function IncidentForm({
       </label>
 
       <label className="incident-form__field">
-        <span>Description</span>
+        <span>{t('descriptionLabel')}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -238,7 +231,7 @@ export function IncidentForm({
       </label>
 
       <label className="incident-form__field">
-        <span>Photos (up to {MAX_PHOTOS})</span>
+        <span>{t('photosLabel', { max: MAX_PHOTOS })}</span>
         <input
           type="file"
           accept="image/*"
@@ -247,7 +240,7 @@ export function IncidentForm({
         />
         {photos.length > 0 ? (
           <small className="incident-form__hint">
-            {uploadStatus ?? `${photos.length} photo${photos.length > 1 ? 's' : ''} ready.`}
+            {uploadStatus ?? t('photosReady', { count: photos.length })}
           </small>
         ) : null}
       </label>
@@ -257,11 +250,11 @@ export function IncidentForm({
       <div className="incident-form__actions">
         {onCancel ? (
           <button type="button" className="button" onClick={onCancel}>
-            Cancel
+            {t('cancel')}
           </button>
         ) : null}
         <button type="submit" className="button button--primary" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Report incident'}
+          {isPending ? t('submitting') : t('submit')}
         </button>
       </div>
     </form>

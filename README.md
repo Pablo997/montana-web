@@ -27,6 +27,7 @@ Montana lets hikers, trail runners and climbers report hazards (blocked trails, 
 | Layer        | Choice                                                |
 | ------------ | ----------------------------------------------------- |
 | Framework    | Next.js 14 (App Router) + TypeScript                  |
+| i18n         | `next-intl` (cookie-based, ES default + EN)           |
 | Map          | MapTiler SDK + MapTiler Terrain DEM                   |
 | Database     | PostgreSQL + PostGIS (Supabase)                       |
 | Auth         | Supabase Auth (magic link; Google OAuth optional)     |
@@ -233,6 +234,22 @@ montana/
 - **Canonical URLs + metadataBase**: `NEXT_PUBLIC_SITE_URL` drives the canonical and absolute OG URLs. Per-page metadata (e.g. `/me`, `/admin/*`, `/auth/*`) opts out of indexing via `robots: { index: false }`.
 - **Open Graph image**: `app/opengraph-image.tsx` renders the default 1200×630 card at the edge using `next/og`. Per-incident pages fall back to the first attached photo.
 - **Structured data**: each incident page embeds a JSON-LD `Event` (`schema.org`) with coordinates, elevation, status and photos so search engines can render a rich card. The helper (`src/lib/seo/jsonld.ts`) escapes any `</script>` sequence in user-supplied fields before injection.
+
+## Internationalization
+
+Montana ships in **Spanish (default)** and **English**, powered by [`next-intl`](https://next-intl.dev) in its "without i18n routing" mode. URLs are locale-agnostic — `/incidents/123` resolves to whichever language the viewer prefers — so our canonical URLs, sitemap and OG tags stay identical across locales and we don't duplicate the crawlable tree.
+
+How it works:
+
+- **Locale resolution** happens in `src/i18n/request.ts`. Order of precedence: explicit `NEXT_LOCALE` cookie → browser `Accept-Language` header → `es` as the fallback. The cookie wins so a user who manually switches never silently reverts because their browser defaults to a different language.
+- **Message bundles** live in `messages/es.json` and `messages/en.json`, grouped by feature namespace (`header`, `auth`, `map`, `incident`, `admin`, `profile`, `push`, `pwa`, `legal`, `error`, `locale`). New strings go in both files at the same key path.
+- **In components**, call `useTranslations('namespace')` (client) or `getTranslations('namespace')` (RSC). For strings with inline markup use `t.rich('key', { tag: (chunks) => <Tag>{chunks}</Tag> })`.
+- **Switching locales at runtime**: the `<LocaleSwitcher />` component lives inside the user menu. It calls the `setLocale` server action (`src/i18n/actions.ts`) which writes the cookie and revalidates the root layout so the whole tree re-renders in the new language without a hard reload.
+- **Metadata** (title, description, `<html lang>`, OG locale) is locale-aware via `siteSeo(locale)` in `src/lib/seo/config.ts`.
+
+Known follow-up scope: `/admin/*` and `/me` still carry English strings inline — they're only shown to logged-in users and were deliberately deferred to keep this PR reviewable. Same for the body copy of `/privacy`, `/terms`, `/cookies` (legal text often has to be reviewed by counsel before translating). All three are tracked and safe to ship as-is.
+
+Migration path if we ever need crawlable multi-locale URLs (`/en/...` indexed separately): only `src/i18n/request.ts`, the middleware and the folder layout need to change; every `useTranslations` call site stays identical. The message bundles are the investment, not the routing.
 
 ## Accessibility & performance budgets
 

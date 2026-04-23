@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   deleteIncident,
   resolveIncident,
@@ -15,6 +16,8 @@ interface Props {
 }
 
 type Mode = 'idle' | 'editing' | 'confirming-delete';
+
+const DESCRIPTION_MAX = 2000;
 
 /**
  * Author-only actions rendered in the details panel.
@@ -37,6 +40,7 @@ type Mode = 'idle' | 'editing' | 'confirming-delete';
  * the server acknowledges.
  */
 export function IncidentAuthorActions({ incident }: Props) {
+  const t = useTranslations('incident.details.authorActions');
   const removeIncident = useMapStore((s) => s.removeIncident);
   const upsertIncident = useMapStore((s) => s.upsertIncident);
   const closePanel = useMapStore((s) => s.select);
@@ -77,9 +81,11 @@ export function IncidentAuthorActions({ incident }: Props) {
         console.error(`Failed to ${action} incident`, err);
         upsertIncident(snapshot);
         closePanel(snapshot.id);
-        setError(
-          err instanceof Error ? err.message : `Could not ${action} the incident.`,
-        );
+        // Server errors (RLS violations, rate limits) may already
+        // be localised-enough for the user. If not, we fall back to
+        // a generic translated message per action.
+        const fallback = action === 'resolve' ? t('resolveError') : t('deleteError');
+        setError(err instanceof Error ? err.message : fallback);
       }
     });
   };
@@ -94,7 +100,7 @@ export function IncidentAuthorActions({ incident }: Props) {
     });
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Invalid input.');
+      setError(parsed.error.issues[0]?.message ?? t('invalidInput'));
       return;
     }
 
@@ -114,9 +120,7 @@ export function IncidentAuthorActions({ incident }: Props) {
         setMode('idle');
       } catch (err) {
         console.error('Failed to update incident', err);
-        setError(
-          err instanceof Error ? err.message : 'Could not save the changes.',
-        );
+        setError(err instanceof Error ? err.message : t('saveError'));
       }
     });
   };
@@ -125,7 +129,7 @@ export function IncidentAuthorActions({ incident }: Props) {
     return (
       <form className="author-actions author-actions--edit" onSubmit={submitEdit}>
         <label className="author-actions__field">
-          <span className="author-actions__label">Title</span>
+          <span className="author-actions__label">{t('titleLabel')}</span>
           <input
             type="text"
             className="author-actions__input"
@@ -140,18 +144,18 @@ export function IncidentAuthorActions({ incident }: Props) {
         </label>
 
         <label className="author-actions__field">
-          <span className="author-actions__label">Description</span>
+          <span className="author-actions__label">{t('descriptionLabel')}</span>
           <textarea
             className="author-actions__textarea"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            maxLength={2000}
+            maxLength={DESCRIPTION_MAX}
             rows={4}
             disabled={isPending}
-            placeholder="Describe the hazard, trail conditions, what you saw…"
+            placeholder={t('descriptionPlaceholder')}
           />
           <span className="author-actions__hint">
-            {description.length}/2000
+            {t('counter', { count: description.length, max: DESCRIPTION_MAX })}
           </span>
         </label>
 
@@ -161,7 +165,7 @@ export function IncidentAuthorActions({ incident }: Props) {
             className="button button--primary"
             disabled={isPending}
           >
-            {isPending ? 'Saving…' : 'Save changes'}
+            {isPending ? t('saving') : t('saveChanges')}
           </button>
           <button
             type="button"
@@ -169,7 +173,7 @@ export function IncidentAuthorActions({ incident }: Props) {
             onClick={cancelEdit}
             disabled={isPending}
           >
-            Cancel
+            {t('cancel')}
           </button>
         </div>
 
@@ -186,9 +190,7 @@ export function IncidentAuthorActions({ incident }: Props) {
     <div className="author-actions">
       {mode === 'confirming-delete' ? (
         <div className="author-actions__confirm" role="alertdialog">
-          <p className="author-actions__confirm-text">
-            Delete this incident permanently? Votes and photos will also be removed.
-          </p>
+          <p className="author-actions__confirm-text">{t('deleteConfirm')}</p>
           <div className="author-actions__confirm-buttons">
             <button
               type="button"
@@ -196,7 +198,7 @@ export function IncidentAuthorActions({ incident }: Props) {
               disabled={isPending}
               onClick={() => run('delete')}
             >
-              Delete
+              {t('delete')}
             </button>
             <button
               type="button"
@@ -204,7 +206,7 @@ export function IncidentAuthorActions({ incident }: Props) {
               disabled={isPending}
               onClick={() => setMode('idle')}
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -220,7 +222,7 @@ export function IncidentAuthorActions({ incident }: Props) {
             }
             onClick={openEdit}
           >
-            Edit
+            {t('edit')}
           </button>
           <button
             type="button"
@@ -228,7 +230,7 @@ export function IncidentAuthorActions({ incident }: Props) {
             disabled={isPending || incident.status === 'resolved'}
             onClick={() => run('resolve')}
           >
-            {incident.status === 'resolved' ? 'Resolved' : 'Mark as resolved'}
+            {incident.status === 'resolved' ? t('resolved') : t('resolve')}
           </button>
           <button
             type="button"
@@ -236,7 +238,7 @@ export function IncidentAuthorActions({ incident }: Props) {
             disabled={isPending}
             onClick={() => setMode('confirming-delete')}
           >
-            Delete
+            {t('delete')}
           </button>
         </div>
       )}

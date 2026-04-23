@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import { IncidentCard } from './IncidentCard';
 
 export function IncidentDetailsPanel() {
+  const t = useTranslations('incident.panel');
   const selectedId = useMapStore((s) => s.selectedId);
   const incidents = useMapStore((s) => s.incidents);
   const close = useMapStore((s) => s.select);
@@ -21,15 +23,15 @@ export function IncidentDetailsPanel() {
     >
       <div className="panel__header">
         <h2 className="panel__title" id="incident-details-title">
-          Incident details
+          {t('title')}
         </h2>
         <button
           type="button"
           className="button"
           onClick={() => close(null)}
-          aria-label="Close incident details"
+          aria-label={t('closeAriaLabel')}
         >
-          Close
+          {t('close')}
         </button>
       </div>
       <IncidentCard incident={incident} />

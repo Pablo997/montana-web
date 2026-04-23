@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Incident } from '@/types/incident';
 import { buildIncidentSharePayload } from '@/lib/share/shareUrl';
 
@@ -30,6 +31,7 @@ const RESET_DELAY_MS = 1500;
  * handler so SSR and the first client render produce identical HTML.
  */
 export function ShareIncidentButton({ incident, className }: Props) {
+  const t = useTranslations('incident.details');
   const [state, setState] = useState<ShareState>('idle');
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -84,17 +86,17 @@ export function ShareIncidentButton({ incident, className }: Props) {
 
   const label =
     state === 'copied'
-      ? 'Link copied!'
+      ? t('shareCopied')
       : state === 'error'
-        ? 'Copy failed'
-        : 'Share';
+        ? t('shareError')
+        : t('share');
 
   return (
     <button
       type="button"
       className={className ?? 'incident-card__share'}
       onClick={handleClick}
-      aria-label="Share incident"
+      aria-label={t('shareAriaLabel')}
     >
       {label}
     </button>

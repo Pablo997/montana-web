@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { NotificationSettings } from '@/components/push/NotificationSettings';
 import { requestPick as requestPushCenterPick } from '@/lib/push/pickMode';
 import { DEFAULT_CENTER } from '@/lib/mapbox/config';
 import type { LatLng } from '@/types/incident';
+import { LocaleSwitcher } from './LocaleSwitcher';
 
 interface Props {
   email: string;
@@ -27,6 +29,7 @@ interface Props {
  * everyday shortcuts.
  */
 export function UserMenu({ email, isAdmin = false }: Props) {
+  const t = useTranslations('header.userMenu');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<'signout' | null>(null);
@@ -71,7 +74,7 @@ export function UserMenu({ email, isAdmin = false }: Props) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`Account menu (${email})`}
+        aria-label={t('triggerAriaLabel', { email })}
       >
         <svg
           aria-hidden="true"
@@ -109,7 +112,7 @@ export function UserMenu({ email, isAdmin = false }: Props) {
             role="menuitem"
             onClick={() => setOpen(false)}
           >
-            My profile
+            {t('myProfile')}
           </Link>
           <div className="user-menu__divider" />
           <button
@@ -122,7 +125,7 @@ export function UserMenu({ email, isAdmin = false }: Props) {
             }}
             disabled={loading !== null}
           >
-            Nearby alerts…
+            {t('nearbyAlerts')}
           </button>
           {isAdmin ? (
             <>
@@ -133,10 +136,18 @@ export function UserMenu({ email, isAdmin = false }: Props) {
                 role="menuitem"
                 onClick={() => setOpen(false)}
               >
-                Moderation panel
+                {t('moderationPanel')}
               </Link>
             </>
           ) : null}
+          <div className="user-menu__divider" />
+          <div
+            className="user-menu__item user-menu__item--locale"
+            role="menuitem"
+          >
+            <span className="user-menu__locale-label">{t('language')}</span>
+            <LocaleSwitcher className="user-menu__locale-select" />
+          </div>
           <div className="user-menu__divider" />
           <button
             type="button"
@@ -145,7 +156,7 @@ export function UserMenu({ email, isAdmin = false }: Props) {
             onClick={handleSignOut}
             disabled={loading !== null}
           >
-            {loading === 'signout' ? 'Signing out...' : 'Sign out'}
+            {loading === 'signout' ? t('signingOut') : t('signOut')}
           </button>
         </div>
       ) : null}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 /**
  * Small floating pill that appears when the browser reports the
@@ -18,6 +19,7 @@ import { useEffect, useState } from 'react';
  * to "online" during SSR and then flicker on hydration.
  */
 export function OfflineIndicator() {
+  const t = useTranslations('pwa');
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export function OfflineIndicator() {
   return (
     <div className="offline-indicator" role="status" aria-live="polite">
       <span className="offline-indicator__dot" aria-hidden />
-      Offline — showing cached map only
+      {t('offlineIndicator')}
     </div>
   );
 }

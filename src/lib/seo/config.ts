@@ -12,29 +12,81 @@
 
 export const SITE_NAME = 'Montana';
 
-export const SITE_DESCRIPTION =
-  'Community-powered real-time map of mountain incidents, trail hazards and points of interest.';
+/**
+ * Language-specific SEO strings.
+ *
+ * We DO NOT pull these from `messages/*.json` even though they're
+ * user-facing. Reasons:
+ *   * The sitemap and `<html lang>` run in contexts where the
+ *     next-intl provider isn't mounted (static generation of
+ *     robots/sitemap, server-side metadata assembly).
+ *   * The string list is tiny (7 keywords + 1 description) and
+ *     rarely changes, so keeping it inline here avoids an async
+ *     message-load dance in every `generateMetadata`.
+ * Trade-off: translators have to touch two places when adding a
+ * locale. For a product with 2 locales that's fine.
+ */
+type SiteSeoStrings = {
+  description: string;
+  /** OpenGraph locale tag (e.g. `es_ES`, `en_US`). */
+  ogLocale: string;
+  /** HTML `lang` attribute value. */
+  htmlLang: string;
+  keywords: string[];
+};
 
-/** Two-letter locale tag used by OpenGraph and JSON-LD. */
-export const SITE_LOCALE = 'en_US';
-
-/** English lang code used on <html lang="..."> and JSON-LD. */
-export const SITE_LANG = 'en';
+const SITE_SEO_BY_LOCALE: Record<string, SiteSeoStrings> = {
+  es: {
+    description:
+      'Mapa comunitario en tiempo real de incidencias en montaña, peligros en rutas y puntos de interés.',
+    ogLocale: 'es_ES',
+    htmlLang: 'es',
+    keywords: [
+      'incidencias montaña',
+      'peligros ruta',
+      'senderismo seguro',
+      'mapa comunitario',
+      'rescate montaña',
+      'seguridad outdoor',
+      'rutas pirineos',
+    ],
+  },
+  en: {
+    description:
+      'Community-powered real-time map of mountain incidents, trail hazards and points of interest.',
+    ogLocale: 'en_US',
+    htmlLang: 'en',
+    keywords: [
+      'mountain incidents',
+      'trail hazards',
+      'hiking safety map',
+      'real-time incidents',
+      'community map',
+      'mountain rescue',
+      'outdoor safety',
+    ],
+  },
+};
 
 /**
- * Best-effort keyword list. Google ignores the `keywords` meta today
- * but several smaller engines (DuckDuckGo, Kagi, Ecosia's backend)
- * still use it as a hint. Cheap to ship.
+ * Resolve SEO strings for a given locale. Falls back to Spanish
+ * (our default) when the locale is unknown so the metadata is never
+ * empty — an empty description silently tanks rich-results preview.
  */
-export const SITE_KEYWORDS = [
-  'mountain incidents',
-  'trail hazards',
-  'hiking safety map',
-  'real-time incidents',
-  'community map',
-  'mountain rescue',
-  'outdoor safety',
-];
+export function siteSeo(locale: string | undefined): SiteSeoStrings {
+  if (!locale) return SITE_SEO_BY_LOCALE.es;
+  const short = locale.toLowerCase().split('-')[0];
+  return SITE_SEO_BY_LOCALE[short] ?? SITE_SEO_BY_LOCALE.es;
+}
+
+// Kept for BC with modules that imported the constants directly
+// (JSON-LD, sitemap, opengraph-image). They always want the neutral
+// default, not the request's locale — a crawler's Accept-Language
+// is unreliable anyway.
+export const SITE_DESCRIPTION = SITE_SEO_BY_LOCALE.es.description;
+export const SITE_LOCALE = SITE_SEO_BY_LOCALE.es.ogLocale;
+export const SITE_LANG = SITE_SEO_BY_LOCALE.es.htmlLang;
+export const SITE_KEYWORDS = SITE_SEO_BY_LOCALE.es.keywords;
 
 /**
  * Production host. Order of precedence:

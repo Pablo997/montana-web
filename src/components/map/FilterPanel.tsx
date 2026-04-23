@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import {
   INCIDENT_TYPE_LABELS,
-  SEVERITY_LABELS,
   type IncidentType,
   type SeverityLevel,
 } from '@/types/incident';
+import { useIncidentLabels } from '@/lib/incidents/useIncidentLabels';
 import {
   DEFAULT_FILTERS,
   countVisible,
@@ -25,20 +26,9 @@ const ALL_TYPES = Object.keys(INCIDENT_TYPE_LABELS) as IncidentType[];
 
 type SeverityFilter = 'any' | SeverityLevel;
 
-const SEVERITY_OPTIONS: { value: SeverityFilter; label: string }[] = [
-  { value: 'any', label: 'Any' },
-  { value: 'mild', label: SEVERITY_LABELS.mild },
-  { value: 'moderate', label: `${SEVERITY_LABELS.moderate}+` },
-  { value: 'severe', label: `${SEVERITY_LABELS.severe} only` },
-];
+const SEVERITY_VALUES: SeverityFilter[] = ['any', 'mild', 'moderate', 'severe'];
 
-const AGE_OPTIONS: { value: MaxAgeHours; label: string }[] = [
-  { value: null, label: 'Any time' },
-  { value: 24, label: '24h' },
-  { value: 72, label: '3d' },
-  { value: 168, label: '7d' },
-  { value: 720, label: '30d' },
-];
+const AGE_VALUES: MaxAgeHours[] = [null, 24, 72, 168, 720];
 
 /**
  * Collapsible filter panel rendered on top of the map.
@@ -49,6 +39,8 @@ const AGE_OPTIONS: { value: MaxAgeHours; label: string }[] = [
  * network when the user toggles a chip.
  */
 export function FilterPanel() {
+  const t = useTranslations('map.filters');
+  const labels = useIncidentLabels();
   const filters = useMapStore((s) => s.filters);
   const setFilters = useMapStore((s) => s.setFilters);
   const visibleCount = useMapStore((s) => countVisible(s.incidents, s.filters));
@@ -102,7 +94,6 @@ export function FilterPanel() {
     const next = new Set(activeTypeSet);
     if (next.has(type)) next.delete(type);
     else next.add(type);
-    // Null means "all types" → keeps the store lean.
     setFilters({
       types: next.size === ALL_TYPES.length ? null : (Array.from(next) as IncidentType[]),
     });
@@ -124,6 +115,27 @@ export function FilterPanel() {
   const activeCount = computeActiveCount(filters);
   const severityValue: SeverityFilter = filters.minSeverity ?? 'any';
 
+  const severityLabel = (value: SeverityFilter): string => {
+    switch (value) {
+      case 'any':
+        return t('severityAny');
+      case 'mild':
+        return t('severityMild');
+      case 'moderate':
+        return t('severityModeratePlus');
+      case 'severe':
+        return t('severitySevereOnly');
+    }
+  };
+
+  const ageLabel = (value: MaxAgeHours): string => {
+    if (value === null) return t('ageAny');
+    if (value === 24) return t('age24h');
+    if (value === 72) return t('age3d');
+    if (value === 168) return t('age7d');
+    return t('age30d');
+  };
+
   return (
     <div className="filter-panel" ref={panelRef}>
       <button
@@ -133,21 +145,25 @@ export function FilterPanel() {
         aria-expanded={open}
         aria-haspopup="dialog"
       >
-        <span>Filters</span>
+        <span>{t('open')}</span>
         {activeCount > 0 ? (
           <span className="filter-panel__badge">{activeCount}</span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="filter-panel__dropdown" role="dialog" aria-label="Map filters">
+        <div
+          className="filter-panel__dropdown"
+          role="dialog"
+          aria-label={t('dialogLabel')}
+        >
           <section className="filter-panel__section">
             <label className="filter-panel__search">
-              <span className="filter-panel__heading">Search</span>
+              <span className="filter-panel__heading">{t('search')}</span>
               <input
                 type="search"
                 className="filter-panel__search-input"
-                placeholder="Title or description…"
+                placeholder={t('searchPlaceholder')}
                 value={queryDraft}
                 onChange={(e) => setQueryDraft(e.target.value)}
                 autoComplete="off"
@@ -156,7 +172,7 @@ export function FilterPanel() {
           </section>
 
           <section className="filter-panel__section">
-            <h3 className="filter-panel__heading">Type</h3>
+            <h3 className="filter-panel__heading">{t('type')}</h3>
             <div className="filter-panel__chips">
               {ALL_TYPES.map((type) => {
                 const active = activeTypeSet.has(type);
@@ -168,7 +184,7 @@ export function FilterPanel() {
                     onClick={() => toggleType(type)}
                     aria-pressed={active}
                   >
-                    {INCIDENT_TYPE_LABELS[type]}
+                    {labels.type(type)}
                   </button>
                 );
               })}
@@ -176,37 +192,37 @@ export function FilterPanel() {
           </section>
 
           <section className="filter-panel__section">
-            <h3 className="filter-panel__heading">Severity</h3>
+            <h3 className="filter-panel__heading">{t('severity')}</h3>
             <div className="filter-panel__radio-row">
-              {SEVERITY_OPTIONS.map((opt) => (
-                <label key={opt.value} className="filter-panel__radio">
+              {SEVERITY_VALUES.map((value) => (
+                <label key={value} className="filter-panel__radio">
                   <input
                     type="radio"
                     name="severity"
-                    value={opt.value}
-                    checked={severityValue === opt.value}
-                    onChange={() => setSeverity(opt.value)}
+                    value={value}
+                    checked={severityValue === value}
+                    onChange={() => setSeverity(value)}
                   />
-                  <span>{opt.label}</span>
+                  <span>{severityLabel(value)}</span>
                 </label>
               ))}
             </div>
           </section>
 
           <section className="filter-panel__section">
-            <h3 className="filter-panel__heading">Reported in</h3>
+            <h3 className="filter-panel__heading">{t('reportedIn')}</h3>
             <div className="filter-panel__chips">
-              {AGE_OPTIONS.map((opt) => {
-                const active = filters.maxAgeHours === opt.value;
+              {AGE_VALUES.map((value) => {
+                const active = filters.maxAgeHours === value;
                 return (
                   <button
-                    key={opt.label}
+                    key={String(value)}
                     type="button"
                     className={`chip${active ? ' chip--active' : ''}`}
-                    onClick={() => setAge(opt.value)}
+                    onClick={() => setAge(value)}
                     aria-pressed={active}
                   >
-                    {opt.label}
+                    {ageLabel(value)}
                   </button>
                 );
               })}
@@ -220,13 +236,13 @@ export function FilterPanel() {
                 checked={filters.onlyValidated}
                 onChange={(e) => setFilters({ onlyValidated: e.target.checked })}
               />
-              <span>Validated only</span>
+              <span>{t('validatedOnly')}</span>
             </label>
           </section>
 
           <footer className="filter-panel__footer">
             <span className="filter-panel__count">
-              {visibleCount} of {totalCount} shown
+              {t('countShown', { visible: visibleCount, total: totalCount })}
             </span>
             <button
               type="button"
@@ -234,7 +250,7 @@ export function FilterPanel() {
               onClick={reset}
               disabled={!filtersAreActive(filters)}
             >
-              Reset
+              {t('reset')}
             </button>
           </footer>
         </div>

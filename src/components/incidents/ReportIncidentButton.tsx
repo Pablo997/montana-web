@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { LatLng } from '@/types/incident';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ReportIncidentButton({ fallbackLocation }: Props) {
+  const t = useTranslations('incident.form');
   const router = useRouter();
   const openReport = useMapStore((s) => s.openReport);
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -37,11 +39,11 @@ export function ReportIncidentButton({ fallbackLocation }: Props) {
       type="button"
       className="report-button"
       onClick={handleClick}
-      aria-label="Report an incident"
-      title="Report an incident"
+      aria-label={t('title')}
+      title={t('title')}
     >
       <span aria-hidden>＋</span>
-      <span className="report-button__label">Report</span>
+      <span className="report-button__label">{t('shortCta')}</span>
     </button>
   );
 }

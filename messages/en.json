@@ -1,0 +1,385 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "retry": "Retry",
+    "back": "Back",
+    "backToMap": "Back to map",
+    "yes": "Yes",
+    "no": "No",
+    "error": "Something went wrong",
+    "dismiss": "Dismiss",
+    "optional": "Optional",
+    "required": "Required",
+    "unknown": "Unknown",
+    "now": "just now",
+    "minutesAgo": "{count, plural, one {# minute ago} other {# minutes ago}}",
+    "hoursAgo": "{count, plural, one {# hour ago} other {# hours ago}}",
+    "daysAgo": "{count, plural, one {# day ago} other {# days ago}}"
+  },
+  "header": {
+    "brandAriaLabel": "Montana home",
+    "signIn": "Sign in",
+    "userMenu": {
+      "triggerAriaLabel": "Account menu ({email})",
+      "myProfile": "My profile",
+      "nearbyAlerts": "Nearby alerts…",
+      "moderationPanel": "Moderation panel",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…",
+      "language": "Language"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign in to Montana",
+      "subtitle": "We'll email you a magic link. No password, no hassle.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "consent": "I have read and accept the <terms>Terms</terms>, <privacy>Privacy Policy</privacy> and <cookies>Cookie Policy</cookies>.",
+      "consentRequired": "You must accept the Terms and Privacy Policy to continue.",
+      "submit": "Send magic link",
+      "sending": "Sending…",
+      "sent": "Check <strong>{email}</strong> for a sign-in link."
+    }
+  },
+  "map": {
+    "emptyState": {
+      "areaEmpty": "No incidents in this area yet. Tap the <strong>Report</strong> button to add the first one.",
+      "filtersMismatch": "No incident matches the current filters.",
+      "resetFilters": "Reset filters",
+      "dismiss": "Dismiss"
+    },
+    "filters": {
+      "title": "Map filters",
+      "open": "Filters",
+      "search": "Search",
+      "searchPlaceholder": "Title or description…",
+      "type": "Type",
+      "severity": "Severity",
+      "severityAny": "Any",
+      "severityMild": "Mild",
+      "severityModeratePlus": "Moderate+",
+      "severitySevereOnly": "Severe only",
+      "reportedIn": "Reported in",
+      "ageAny": "Any time",
+      "age24h": "24h",
+      "age3d": "3d",
+      "age7d": "7d",
+      "age30d": "30d",
+      "validatedOnly": "Validated only",
+      "countShown": "{visible} of {total} shown",
+      "reset": "Reset",
+      "dialogLabel": "Map filters"
+    },
+    "pickBanner": {
+      "title": "Tap the map to set your alert center",
+      "cancel": "Cancel",
+      "help": "Or long-press to pinpoint the exact spot."
+    }
+  },
+  "incident": {
+    "type": {
+      "accident": "Accident",
+      "trail_blocked": "Trail blocked",
+      "detour": "Detour",
+      "water_source": "Water source",
+      "shelter": "Shelter",
+      "point_of_interest": "Point of interest",
+      "wildlife": "Wildlife",
+      "weather_hazard": "Weather hazard",
+      "other": "Other"
+    },
+    "severity": {
+      "mild": "Mild",
+      "moderate": "Moderate",
+      "severe": "Severe"
+    },
+    "status": {
+      "pending": "Pending",
+      "validated": "Validated",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed",
+      "expired": "Expired"
+    },
+    "form": {
+      "title": "Report an incident",
+      "shortCta": "Report",
+      "titleLabel": "Title",
+      "descriptionLabel": "Description",
+      "typeLabel": "Type",
+      "severityLabel": "Severity",
+      "locationLabel": "Location",
+      "useMyLocation": "Use my location",
+      "locating": "Locating…",
+      "pickOnMap": "Pick on map",
+      "refining": "Refining…",
+      "accuracy": "Accuracy",
+      "photosLabel": "Photos (up to {max})",
+      "photosReady": "{count, plural, one {# photo ready} other {# photos ready}}.",
+      "uploading": "Uploading {done}/{total}…",
+      "cancel": "Cancel",
+      "submit": "Report incident",
+      "submitting": "Saving…",
+      "invalid": "Invalid form.",
+      "locationError": "Couldn't read your location. Try picking it on the map.",
+      "photosPartialFail": "Incident saved, but {failed, plural, one {# photo failed to upload} other {# photos failed to upload}}.",
+      "offlineQueued": "Could not reach the server. Saved locally and will retry when online."
+    },
+    "panel": {
+      "title": "Incident details",
+      "close": "Close",
+      "closeAriaLabel": "Close incident details"
+    },
+    "reportDialog": {
+      "title": "Report an incident",
+      "dialogLabel": "Report incident",
+      "closeAria": "Close",
+      "closeDialogAria": "Close dialog"
+    },
+    "details": {
+      "votesTitle": "Votes",
+      "reportedBy": "Reported by",
+      "anonymous": "Anonymous",
+      "openDetail": "Open detail",
+      "share": "Share",
+      "shareAriaLabel": "Share incident",
+      "shareCopied": "Link copied!",
+      "shareError": "Copy failed",
+      "flag": "Report content",
+      "flagCta": "Report this incident",
+      "expiresIn": "Expires in {remaining}",
+      "expiresTitle": "Expires {date}",
+      "resolve": "Mark as resolved",
+      "markPending": "Reopen",
+      "delete": "Delete incident",
+      "deleteConfirm": "Delete this incident? This cannot be undone.",
+      "updates": {
+        "regionLabel": "Incident follow-ups",
+        "title": "Follow-ups",
+        "loading": "Loading…",
+        "loadError": "Could not load follow-ups.",
+        "empty": "No follow-ups yet. Be the first to post a status check.",
+        "placeholder": "Add a status check, correction, or update…",
+        "composeLabel": "New follow-up",
+        "counter": "{count}/{max}",
+        "submit": "Post",
+        "submitting": "Posting…",
+        "postError": "Could not post the update.",
+        "needSignIn": "You need to sign in to post follow-ups.",
+        "signInPrompt": "Sign in to post a follow-up.",
+        "invalid": "Invalid input.",
+        "authorYou": "You",
+        "authorUnknown": "Unknown",
+        "delete": "Delete",
+        "deleteAriaLabel": "Delete this follow-up",
+        "deleteError": "Could not delete the update.",
+        "relativeJustNow": "just now",
+        "relativeMinAgo": "{count} min ago",
+        "relativeHoursAgo": "{count} h ago"
+      },
+      "authorActions": {
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Describe the hazard, trail conditions, what you saw…",
+        "counter": "{count}/{max}",
+        "saveChanges": "Save changes",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "resolve": "Mark as resolved",
+        "resolved": "Resolved",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this incident permanently? Votes and photos will also be removed.",
+        "invalidInput": "Invalid input.",
+        "resolveError": "Could not resolve the incident.",
+        "deleteError": "Could not delete the incident.",
+        "saveError": "Could not save the changes."
+      }
+    },
+    "flag": {
+      "title": "Report this incident",
+      "dialogLabel": "Report incident",
+      "closeAria": "Close",
+      "closeDialogAria": "Close dialog",
+      "signInPrompt": "Sign in to report incidents.",
+      "reasonLabel": "Reason",
+      "detailsLabel": "Details (optional)",
+      "detailsPlaceholder": "Anything a reviewer should know…",
+      "detailsHint": "We share reports only with our moderation team. Do not include personal data.",
+      "cancel": "Cancel",
+      "submit": "Submit report",
+      "submitting": "Sending…",
+      "thanks": "Thanks — your report has been submitted and will be reviewed.",
+      "genericError": "Could not submit the report. Please try again.",
+      "reasons": {
+        "spam": "Spam or advertising",
+        "harassment": "Harassment or hate speech",
+        "false_info": "False or dangerously misleading information",
+        "inappropriate": "Inappropriate or NSFW content",
+        "personal_data": "Contains personal data of third parties",
+        "other": "Other"
+      },
+      "errors": {
+        "not_authenticated": "Sign in to report incidents.",
+        "incident_not_found": "This incident no longer exists.",
+        "cannot_report_own": "You cannot report your own incident.",
+        "rate_limit": "You have submitted too many reports recently. Try again in 24 hours."
+      }
+    },
+    "vote": {
+      "confirm": "Confirm incident",
+      "flag": "Flag as resolved or incorrect",
+      "scoreLabel": "Incident score"
+    },
+    "expiresSoon": "Expiring soon"
+  },
+  "admin": {
+    "nav": {
+      "reports": "Reports",
+      "incidents": "Incidents",
+      "bans": "Bans",
+      "activity": "Activity"
+    },
+    "stats": {
+      "pending": "Pending",
+      "validated": "Validated",
+      "flags": "Open reports",
+      "bans": "Active bans"
+    },
+    "tabsHelp": {
+      "reports": "Queue of reports submitted by users.",
+      "incidents": "Browse any incident even if it hasn't been reported."
+    },
+    "reports": {
+      "empty": "No pending reports.",
+      "validate": "Validate",
+      "dismiss": "Dismiss",
+      "ban": "Ban author"
+    },
+    "bans": {
+      "title": "Banned users",
+      "empty": "No active bans.",
+      "unban": "Lift ban",
+      "reason": "Reason",
+      "until": "Until"
+    },
+    "banDialog": {
+      "title": "Ban user",
+      "reason": "Reason",
+      "reasonPlaceholder": "Repeated spam, offensive content…",
+      "duration": "Duration",
+      "durationOptions": {
+        "24h": "24 hours",
+        "7d": "7 days",
+        "30d": "30 days",
+        "permanent": "Permanent"
+      },
+      "submit": "Confirm ban",
+      "cancel": "Cancel"
+    },
+    "activity": {
+      "title": "Activity log",
+      "empty": "No actions logged yet."
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "signedInAs": "Signed in as",
+    "memberSince": "Member since",
+    "stats": {
+      "total": "Incidents",
+      "validated": "Validated",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "incidents": {
+      "title": "My incidents",
+      "empty": "You haven't reported any incidents yet.",
+      "loadMore": "Load more"
+    },
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Permanently delete your account and all your data.",
+      "delete": "Delete my account",
+      "confirmTitle": "Delete your account?",
+      "confirmBody": "Your profile, votes and reports will be erased. Incidents you've posted will be anonymised. This cannot be undone.",
+      "confirmCta": "Yes, delete my account",
+      "deleting": "Deleting…"
+    }
+  },
+  "pwa": {
+    "offlineIndicator": "Offline — showing cached map only",
+    "offlinePage": {
+      "title": "You're offline",
+      "body": "Montana needs the internet to show the map and real-time incidents. Try again once you're back online.",
+      "retry": "Retry"
+    }
+  },
+  "push": {
+    "onboardingBanner": {
+      "title": "Enable nearby alerts",
+      "body": "Get a notification when someone reports an incident near your usual trails.",
+      "enable": "Enable",
+      "dismiss": "Not now"
+    },
+    "settings": {
+      "title": "Nearby alerts",
+      "subtitle": "Get notifications when incidents appear near a point of your choice.",
+      "enable": "Enable notifications",
+      "disable": "Disable notifications",
+      "enabling": "Enabling…",
+      "disabling": "Disabling…",
+      "centerLabel": "Alert center",
+      "centerDefault": "Using your current location",
+      "centerCustom": "Custom point",
+      "pickOnMap": "Pick on map",
+      "radiusLabel": "Radius",
+      "radiusValue": "{km} km",
+      "cooldownLabel": "Minimum time between alerts",
+      "cooldownOptions": {
+        "5m": "5 minutes",
+        "30m": "30 minutes",
+        "1h": "1 hour",
+        "6h": "6 hours",
+        "24h": "1 day"
+      },
+      "save": "Save preferences",
+      "saving": "Saving…",
+      "permissionDenied": "You've blocked notifications in your browser. Change it from the site settings to enable them.",
+      "unsupported": "Your browser doesn't support push notifications."
+    }
+  },
+  "legal": {
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms and Conditions",
+    "cookiesTitle": "Cookie Policy",
+    "lastUpdated": "Last updated: {date}",
+    "notice": {
+      "regionLabel": "Legal notice",
+      "body": "<strong>Montana uses only strictly necessary cookies.</strong> No tracking, no ads. See our <privacy>Privacy Policy</privacy>, <terms>Terms</terms> and <cookies>Cookie Policy</cookies>.",
+      "dismiss": "Got it",
+      "dismissAriaLabel": "Dismiss notice"
+    }
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you're looking for doesn't exist or has moved.",
+    "notFoundCta": "Back to map",
+    "globalTitle": "Something broke",
+    "globalBody": "We've notified the team. Try reloading the page.",
+    "globalRetry": "Reload"
+  },
+  "locale": {
+    "switcher": "Language",
+    "es": "Español",
+    "en": "English"
+  }
+}

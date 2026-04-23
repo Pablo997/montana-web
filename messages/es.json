@@ -1,0 +1,385 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "submit": "Enviar",
+    "loading": "Cargando…",
+    "saving": "Guardando…",
+    "retry": "Reintentar",
+    "back": "Volver",
+    "backToMap": "Volver al mapa",
+    "yes": "Sí",
+    "no": "No",
+    "error": "Algo salió mal",
+    "dismiss": "Descartar",
+    "optional": "Opcional",
+    "required": "Obligatorio",
+    "unknown": "Desconocido",
+    "now": "ahora mismo",
+    "minutesAgo": "hace {count, plural, one {# minuto} other {# minutos}}",
+    "hoursAgo": "hace {count, plural, one {# hora} other {# horas}}",
+    "daysAgo": "hace {count, plural, one {# día} other {# días}}"
+  },
+  "header": {
+    "brandAriaLabel": "Ir al inicio de Montana",
+    "signIn": "Iniciar sesión",
+    "userMenu": {
+      "triggerAriaLabel": "Menú de cuenta ({email})",
+      "myProfile": "Mi perfil",
+      "nearbyAlerts": "Alertas cercanas…",
+      "moderationPanel": "Panel de moderación",
+      "signOut": "Cerrar sesión",
+      "signingOut": "Cerrando sesión…",
+      "language": "Idioma"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Inicia sesión en Montana",
+      "subtitle": "Te enviaremos un enlace mágico por email. Sin contraseñas ni complicaciones.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "consent": "He leído y acepto los <terms>Términos</terms>, la <privacy>Política de Privacidad</privacy> y la <cookies>Política de Cookies</cookies>.",
+      "consentRequired": "Debes aceptar los Términos y la Política de Privacidad para continuar.",
+      "submit": "Enviar enlace mágico",
+      "sending": "Enviando…",
+      "sent": "Revisa <strong>{email}</strong> para encontrar el enlace de acceso."
+    }
+  },
+  "map": {
+    "emptyState": {
+      "areaEmpty": "Aún no hay incidencias en esta zona. Pulsa el botón <strong>Reportar</strong> para añadir la primera.",
+      "filtersMismatch": "Ninguna incidencia coincide con tus filtros.",
+      "resetFilters": "Restablecer filtros",
+      "dismiss": "Descartar"
+    },
+    "filters": {
+      "title": "Filtros del mapa",
+      "open": "Filtros",
+      "search": "Buscar",
+      "searchPlaceholder": "Título o descripción…",
+      "type": "Tipo",
+      "severity": "Gravedad",
+      "severityAny": "Cualquiera",
+      "severityMild": "Leve",
+      "severityModeratePlus": "Moderada o más",
+      "severitySevereOnly": "Solo graves",
+      "reportedIn": "Reportado en",
+      "ageAny": "Cualquier momento",
+      "age24h": "24h",
+      "age3d": "3d",
+      "age7d": "7d",
+      "age30d": "30d",
+      "validatedOnly": "Solo validadas",
+      "countShown": "{visible} de {total} visibles",
+      "reset": "Restablecer",
+      "dialogLabel": "Filtros del mapa"
+    },
+    "pickBanner": {
+      "title": "Toca el mapa para fijar tu centro de alertas",
+      "cancel": "Cancelar",
+      "help": "O mantén pulsado sobre el punto exacto para mayor precisión."
+    }
+  },
+  "incident": {
+    "type": {
+      "accident": "Accidente",
+      "trail_blocked": "Camino cortado",
+      "detour": "Desvío",
+      "water_source": "Fuente de agua",
+      "shelter": "Refugio",
+      "point_of_interest": "Punto de interés",
+      "wildlife": "Fauna",
+      "weather_hazard": "Peligro meteorológico",
+      "other": "Otro"
+    },
+    "severity": {
+      "mild": "Leve",
+      "moderate": "Moderada",
+      "severe": "Grave"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "validated": "Validada",
+      "resolved": "Resuelta",
+      "dismissed": "Descartada",
+      "expired": "Expirada"
+    },
+    "form": {
+      "title": "Reportar una incidencia",
+      "shortCta": "Reportar",
+      "titleLabel": "Título",
+      "descriptionLabel": "Descripción",
+      "typeLabel": "Tipo",
+      "severityLabel": "Gravedad",
+      "locationLabel": "Ubicación",
+      "useMyLocation": "Usar mi ubicación",
+      "locating": "Localizando…",
+      "pickOnMap": "Elegir en el mapa",
+      "refining": "Refinando…",
+      "accuracy": "Precisión",
+      "photosLabel": "Fotos (hasta {max})",
+      "photosReady": "{count, plural, one {# foto lista} other {# fotos listas}}.",
+      "uploading": "Subiendo {done}/{total}…",
+      "cancel": "Cancelar",
+      "submit": "Publicar reporte",
+      "submitting": "Guardando…",
+      "invalid": "Formulario inválido.",
+      "locationError": "No se pudo leer tu ubicación. Prueba a elegirla en el mapa.",
+      "photosPartialFail": "Incidencia guardada, pero {failed, plural, one {# foto falló al subir} other {# fotos fallaron al subir}}.",
+      "offlineQueued": "No se pudo contactar con el servidor. Guardada localmente, se reintentará al reconectar."
+    },
+    "panel": {
+      "title": "Detalles de la incidencia",
+      "close": "Cerrar",
+      "closeAriaLabel": "Cerrar detalles de la incidencia"
+    },
+    "reportDialog": {
+      "title": "Reportar una incidencia",
+      "dialogLabel": "Reportar incidencia",
+      "closeAria": "Cerrar",
+      "closeDialogAria": "Cerrar diálogo"
+    },
+    "details": {
+      "votesTitle": "Votos",
+      "reportedBy": "Reportado por",
+      "anonymous": "Anónimo",
+      "openDetail": "Abrir detalle",
+      "share": "Compartir",
+      "shareAriaLabel": "Compartir incidencia",
+      "shareCopied": "¡Enlace copiado!",
+      "shareError": "No se pudo copiar",
+      "flag": "Reportar contenido",
+      "flagCta": "Reportar esta incidencia",
+      "expiresIn": "Caduca en {remaining}",
+      "expiresTitle": "Caduca {date}",
+      "resolve": "Marcar como resuelto",
+      "markPending": "Reabrir",
+      "delete": "Eliminar incidencia",
+      "deleteConfirm": "¿Eliminar esta incidencia? Esta acción no se puede deshacer.",
+      "updates": {
+        "regionLabel": "Seguimientos de la incidencia",
+        "title": "Seguimientos",
+        "loading": "Cargando…",
+        "loadError": "No se pudieron cargar los seguimientos.",
+        "empty": "Aún no hay seguimientos. Sé el primero en confirmar el estado.",
+        "placeholder": "Añade una confirmación, corrección o actualización…",
+        "composeLabel": "Nuevo seguimiento",
+        "counter": "{count}/{max}",
+        "submit": "Publicar",
+        "submitting": "Publicando…",
+        "postError": "No se pudo publicar la actualización.",
+        "needSignIn": "Necesitas iniciar sesión para publicar seguimientos.",
+        "signInPrompt": "Inicia sesión para publicar un seguimiento.",
+        "invalid": "Entrada no válida.",
+        "authorYou": "Tú",
+        "authorUnknown": "Desconocido",
+        "delete": "Eliminar",
+        "deleteAriaLabel": "Eliminar este seguimiento",
+        "deleteError": "No se pudo eliminar el seguimiento.",
+        "relativeJustNow": "ahora mismo",
+        "relativeMinAgo": "hace {count} min",
+        "relativeHoursAgo": "hace {count} h"
+      },
+      "authorActions": {
+        "titleLabel": "Título",
+        "descriptionLabel": "Descripción",
+        "descriptionPlaceholder": "Describe el peligro, estado del sendero, lo que viste…",
+        "counter": "{count}/{max}",
+        "saveChanges": "Guardar cambios",
+        "saving": "Guardando…",
+        "cancel": "Cancelar",
+        "edit": "Editar",
+        "resolve": "Marcar como resuelta",
+        "resolved": "Resuelta",
+        "delete": "Eliminar",
+        "deleteConfirm": "¿Eliminar esta incidencia de forma permanente? También se borrarán los votos y las fotos.",
+        "invalidInput": "Entrada no válida.",
+        "resolveError": "No se pudo marcar como resuelta la incidencia.",
+        "deleteError": "No se pudo eliminar la incidencia.",
+        "saveError": "No se pudieron guardar los cambios."
+      }
+    },
+    "flag": {
+      "title": "Reportar esta incidencia",
+      "dialogLabel": "Reportar incidencia",
+      "closeAria": "Cerrar",
+      "closeDialogAria": "Cerrar diálogo",
+      "signInPrompt": "Inicia sesión para reportar incidencias.",
+      "reasonLabel": "Motivo",
+      "detailsLabel": "Detalles (opcional)",
+      "detailsPlaceholder": "Cualquier información útil para quien revise…",
+      "detailsHint": "Los reportes solo se comparten con nuestro equipo de moderación. No incluyas datos personales.",
+      "cancel": "Cancelar",
+      "submit": "Enviar reporte",
+      "submitting": "Enviando…",
+      "thanks": "Gracias — tu reporte se ha enviado y se revisará.",
+      "genericError": "No se pudo enviar el reporte. Inténtalo de nuevo.",
+      "reasons": {
+        "spam": "Spam o publicidad",
+        "harassment": "Acoso o discurso de odio",
+        "false_info": "Información falsa o peligrosamente engañosa",
+        "inappropriate": "Contenido inapropiado o NSFW",
+        "personal_data": "Incluye datos personales de terceros",
+        "other": "Otro"
+      },
+      "errors": {
+        "not_authenticated": "Inicia sesión para reportar incidencias.",
+        "incident_not_found": "Esta incidencia ya no existe.",
+        "cannot_report_own": "No puedes reportar tu propia incidencia.",
+        "rate_limit": "Has enviado demasiados reportes recientemente. Inténtalo de nuevo en 24 horas."
+      }
+    },
+    "vote": {
+      "confirm": "Confirmar incidencia",
+      "flag": "Marcar como resuelta o incorrecta",
+      "scoreLabel": "Votos de la incidencia"
+    },
+    "expiresSoon": "Expira pronto"
+  },
+  "admin": {
+    "nav": {
+      "reports": "Reportes",
+      "incidents": "Incidencias",
+      "bans": "Baneos",
+      "activity": "Actividad"
+    },
+    "stats": {
+      "pending": "Pendientes",
+      "validated": "Validadas",
+      "flags": "Reportes abiertos",
+      "bans": "Baneos activos"
+    },
+    "tabsHelp": {
+      "reports": "Cola de reportes enviados por usuarios.",
+      "incidents": "Explora cualquier incidencia aunque no haya sido reportada."
+    },
+    "reports": {
+      "empty": "No hay reportes pendientes.",
+      "validate": "Validar",
+      "dismiss": "Descartar",
+      "ban": "Banear al autor"
+    },
+    "bans": {
+      "title": "Usuarios baneados",
+      "empty": "No hay baneos activos.",
+      "unban": "Levantar baneo",
+      "reason": "Motivo",
+      "until": "Hasta"
+    },
+    "banDialog": {
+      "title": "Banear usuario",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Spam reiterado, contenido ofensivo…",
+      "duration": "Duración",
+      "durationOptions": {
+        "24h": "24 horas",
+        "7d": "7 días",
+        "30d": "30 días",
+        "permanent": "Permanente"
+      },
+      "submit": "Confirmar baneo",
+      "cancel": "Cancelar"
+    },
+    "activity": {
+      "title": "Registro de actividad",
+      "empty": "Aún no hay acciones registradas."
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "signedInAs": "Sesión iniciada como",
+    "memberSince": "Miembro desde",
+    "stats": {
+      "total": "Incidencias",
+      "validated": "Validadas",
+      "pending": "Pendientes",
+      "resolved": "Resueltas"
+    },
+    "incidents": {
+      "title": "Mis incidencias",
+      "empty": "Aún no has reportado ninguna incidencia.",
+      "loadMore": "Cargar más"
+    },
+    "dangerZone": {
+      "title": "Zona de peligro",
+      "description": "Elimina tu cuenta y todos tus datos de forma permanente.",
+      "delete": "Eliminar mi cuenta",
+      "confirmTitle": "¿Eliminar tu cuenta?",
+      "confirmBody": "Se borrarán tu perfil, votos y reportes. Las incidencias que has publicado se anonimizarán. Esta acción es irreversible.",
+      "confirmCta": "Sí, eliminar mi cuenta",
+      "deleting": "Eliminando…"
+    }
+  },
+  "pwa": {
+    "offlineIndicator": "Sin conexión — mostrando mapa en caché",
+    "offlinePage": {
+      "title": "Estás sin conexión",
+      "body": "Montana necesita internet para mostrar el mapa y los incidentes en tiempo real. Vuelve a intentarlo cuando recuperes la conexión.",
+      "retry": "Reintentar"
+    }
+  },
+  "push": {
+    "onboardingBanner": {
+      "title": "Activa las alertas cercanas",
+      "body": "Recibe una notificación cuando alguien reporte una incidencia cerca de tu ruta habitual.",
+      "enable": "Activar",
+      "dismiss": "Ahora no"
+    },
+    "settings": {
+      "title": "Alertas cercanas",
+      "subtitle": "Recibe notificaciones cuando haya incidencias cerca de un punto que elijas.",
+      "enable": "Activar notificaciones",
+      "disable": "Desactivar notificaciones",
+      "enabling": "Activando…",
+      "disabling": "Desactivando…",
+      "centerLabel": "Centro de alertas",
+      "centerDefault": "Usando tu ubicación actual",
+      "centerCustom": "Punto personalizado",
+      "pickOnMap": "Elegir en el mapa",
+      "radiusLabel": "Radio",
+      "radiusValue": "{km} km",
+      "cooldownLabel": "Intervalo mínimo entre avisos",
+      "cooldownOptions": {
+        "5m": "5 minutos",
+        "30m": "30 minutos",
+        "1h": "1 hora",
+        "6h": "6 horas",
+        "24h": "1 día"
+      },
+      "save": "Guardar preferencias",
+      "saving": "Guardando…",
+      "permissionDenied": "Has bloqueado las notificaciones en el navegador. Cámbialo desde los ajustes del sitio para activarlas.",
+      "unsupported": "Tu navegador no admite notificaciones push."
+    }
+  },
+  "legal": {
+    "privacyTitle": "Política de Privacidad",
+    "termsTitle": "Términos y Condiciones",
+    "cookiesTitle": "Política de Cookies",
+    "lastUpdated": "Última actualización: {date}",
+    "notice": {
+      "regionLabel": "Aviso legal",
+      "body": "<strong>Montana solo usa cookies estrictamente necesarias.</strong> Sin tracking ni anuncios. Consulta nuestra <privacy>Política de Privacidad</privacy>, <terms>Términos</terms> y <cookies>Política de Cookies</cookies>.",
+      "dismiss": "Entendido",
+      "dismissAriaLabel": "Descartar aviso"
+    }
+  },
+  "error": {
+    "notFoundTitle": "Página no encontrada",
+    "notFoundBody": "La página que buscas no existe o se ha movido.",
+    "notFoundCta": "Volver al mapa",
+    "globalTitle": "Algo se rompió",
+    "globalBody": "Hemos avisado al equipo. Intenta recargar la página.",
+    "globalRetry": "Recargar"
+  },
+  "locale": {
+    "switcher": "Idioma",
+    "es": "Español",
+    "en": "English"
+  }
+}

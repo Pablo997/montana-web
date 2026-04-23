@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { INCIDENT_TYPE_LABELS, SEVERITY_LABELS, type Incident } from '@/types/incident';
+import { useTranslations } from 'next-intl';
+import { type Incident } from '@/types/incident';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useClock } from '@/hooks/useClock';
 import { getExpiryInfo } from '@/lib/incidents/expiry';
+import { useIncidentLabels } from '@/lib/incidents/useIncidentLabels';
 import { FlagIncidentDialog } from './FlagIncidentDialog';
 import { IncidentAuthorActions } from './IncidentAuthorActions';
 import { IncidentMediaGrid } from './IncidentMediaGrid';
@@ -23,6 +25,8 @@ interface Props {
  * resolve / delete controls below the card.
  */
 export function IncidentCard({ incident }: Props) {
+  const t = useTranslations('incident.details');
+  const labels = useIncidentLabels();
   const { userId } = useCurrentUser();
   const now = useClock(60_000);
   const expiry = getExpiryInfo(incident, now);
@@ -35,18 +39,22 @@ export function IncidentCard({ incident }: Props) {
         <h3 className="incident-card__title">{incident.title}</h3>
         <div className="incident-card__badges">
           <span className={`badge badge--${incident.severity}`}>
-            {SEVERITY_LABELS[incident.severity]}
+            {labels.severity(incident.severity)}
           </span>
-          <span className="badge badge--type">{INCIDENT_TYPE_LABELS[incident.type]}</span>
-          <span className={`badge badge--status-${incident.status}`}>{incident.status}</span>
+          <span className="badge badge--type">{labels.type(incident.type)}</span>
+          <span className={`badge badge--status-${incident.status}`}>
+            {labels.status(incident.status)}
+          </span>
           {expiry.humanRemaining ? (
             <span
               className={`badge badge--expiry${
                 expiry.isExpiringSoon ? ' badge--expiry-soon' : ''
               }`}
-              title={`Expires ${new Date(incident.expiresAt!).toLocaleString()}`}
+              title={t('expiresTitle', {
+                date: new Date(incident.expiresAt!).toLocaleString(),
+              })}
             >
-              Expires in {expiry.humanRemaining}
+              {t('expiresIn', { remaining: expiry.humanRemaining })}
             </span>
           ) : null}
         </div>
@@ -83,7 +91,7 @@ export function IncidentCard({ incident }: Props) {
             className="incident-card__flag"
             onClick={() => setFlagOpen(true)}
           >
-            Report this incident
+            {t('flagCta')}
           </button>
         </div>
       ) : null}

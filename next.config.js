@@ -64,6 +64,16 @@ const nextConfig = {
 // before you've pasted the env vars into Vercel.
 const { withSentryConfig } = require('@sentry/nextjs');
 
+// next-intl wraps the config so the plugin can resolve the server-side
+// messages module (src/i18n/request.ts) at build time. We're using the
+// "without i18n routing" setup — the plugin just wires up the request
+// config; locale detection happens inside `getRequestConfig` from a
+// cookie / Accept-Language header rather than from the URL.
+//
+// See `src/i18n/request.ts` for the locale resolution logic.
+const createNextIntlPlugin = require('next-intl/plugin');
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
 // Release name used for source-map upload AND tagged onto every
 // Sentry event. We prefer the explicit `SENTRY_RELEASE` env var (set
 // this in CI for non-Vercel deploys), then Vercel's commit SHA,
@@ -75,7 +85,7 @@ const sentryRelease =
   process.env.VERCEL_GIT_COMMIT_SHA ||
   undefined;
 
-module.exports = withSentryConfig(nextConfig, {
+module.exports = withSentryConfig(withNextIntl(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,

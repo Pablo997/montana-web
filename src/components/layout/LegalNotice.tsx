@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 const STORAGE_KEY = 'montana.notice.v1';
 
@@ -17,6 +18,7 @@ const STORAGE_KEY = 'montana.notice.v1';
  * we can re-surface the notice if the policies materially change.
  */
 export function LegalNotice() {
+  const t = useTranslations('legal.notice');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -43,21 +45,22 @@ export function LegalNotice() {
   if (!visible) return null;
 
   return (
-    <div className="legal-notice" role="region" aria-label="Legal notice">
+    <div className="legal-notice" role="region" aria-label={t('regionLabel')}>
       <div className="legal-notice__body">
-        <strong>Montana uses only strictly necessary cookies.</strong>{' '}
-        No tracking, no ads. See our{' '}
-        <Link href="/privacy">Privacy Policy</Link>,{' '}
-        <Link href="/terms">Terms</Link> and{' '}
-        <Link href="/cookies">Cookie Policy</Link>.
+        {t.rich('body', {
+          strong: (chunks) => <strong>{chunks}</strong>,
+          privacy: (chunks) => <Link href="/privacy">{chunks}</Link>,
+          terms: (chunks) => <Link href="/terms">{chunks}</Link>,
+          cookies: (chunks) => <Link href="/cookies">{chunks}</Link>,
+        })}
       </div>
       <button
         type="button"
         className="legal-notice__dismiss"
         onClick={dismiss}
-        aria-label="Dismiss notice"
+        aria-label={t('dismissAriaLabel')}
       >
-        Got it
+        {t('dismiss')}
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import {
   DEFAULT_FILTERS,
@@ -26,6 +27,7 @@ import {
 const DISMISS_STORAGE_KEY = 'montana.map-empty.dismissed.v1';
 
 export function MapEmptyState() {
+  const t = useTranslations('map.emptyState');
   const incidents = useMapStore((s) => s.incidents);
   const filters = useMapStore((s) => s.filters);
   const setFilters = useMapStore((s) => s.setFilters);
@@ -58,13 +60,13 @@ export function MapEmptyState() {
   if (totalLoaded > 0 && filtersAreActive(filters)) {
     return (
       <div className="map-empty" role="status">
-        <p className="map-empty__text">No incidents match your filters.</p>
+        <p className="map-empty__text">{t('filtersMismatch')}</p>
         <button
           type="button"
           className="button"
           onClick={() => setFilters({ ...DEFAULT_FILTERS })}
         >
-          Reset filters
+          {t('resetFilters')}
         </button>
       </div>
     );
@@ -84,13 +86,14 @@ export function MapEmptyState() {
   return (
     <div className="map-empty" role="status">
       <p className="map-empty__text">
-        No incidents in this area yet. Tap the <strong>Report</strong> button to
-        add the first one.
+        {t.rich('areaEmpty', {
+          strong: (chunks) => <strong>{chunks}</strong>,
+        })}
       </p>
       <button
         type="button"
         className="map-empty__close"
-        aria-label="Dismiss"
+        aria-label={t('dismiss')}
         onClick={handleDismiss}
       >
         ×
