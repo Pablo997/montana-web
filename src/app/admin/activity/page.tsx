@@ -60,7 +60,11 @@ export default async function AdminActivityPage({
       <header className="admin-page__header">
         <h1 className="admin-page__title">Activity log</h1>
         <p className="admin-page__subtitle">
-          Every moderation action, newest first. Append-only.
+          A chronological audit trail of every moderation action taken
+          on the platform — who did what, on which target, and why.
+          Entries here are append-only: they cannot be edited or
+          deleted, which makes this the canonical record if you ever
+          need to review past decisions.
         </p>
       </header>
 

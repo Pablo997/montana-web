@@ -25,29 +25,31 @@ export default async function AdminLayout({
     <div className="admin-shell">
       <header className="admin-shell__header">
         <div className="admin-shell__brand">
-          <Link href="/" className="admin-shell__home" aria-label="Back to map">
-            <svg
-              aria-hidden="true"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-            >
-              <path
-                d="M10 3 L5 8 L10 13"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Map
-          </Link>
           <span className="admin-shell__title">Moderation</span>
         </div>
         <AdminNav />
       </header>
-      <main className="admin-shell__main">{children}</main>
+      <main className="admin-shell__main">
+        <Link href="/" className="page-back" prefetch={false}>
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M10 3 L5 8 L10 13"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Back to map
+        </Link>
+        {children}
+      </main>
     </div>
   );
 }

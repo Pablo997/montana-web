@@ -22,6 +22,16 @@ const STATUS_TABS: Array<{ id: ReportStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All' },
 ];
 
+// One-line explainer for each sub-tab, shown right below the tab bar.
+// The copy is deliberately generic so it still makes sense if the person
+// reading it is a non-technical moderator.
+const STATUS_HINTS: Record<string, string> = {
+  open: 'Fresh reports from users, waiting for your review.',
+  dismissed: 'Reports you marked as "no action" — filed for the record.',
+  actioned: 'Reports whose incident you removed — the user who flagged it got heard.',
+  all: 'Every report in the system, newest first.',
+};
+
 function parseStatus(raw: string | undefined): ReportStatus | null {
   const set: Array<ReportStatus | 'all'> = ['open', 'dismissed', 'actioned', 'all'];
   if (!raw || !set.includes(raw as ReportStatus | 'all')) return 'open';
@@ -59,8 +69,20 @@ export default async function AdminReportsPage({
   const { rows, total } = await fetchReports(statusFilter, page);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const hintKey = statusFilter === null ? 'all' : statusFilter;
+
   return (
     <div className="admin-page">
+      <header className="admin-page__header">
+        <h1 className="admin-page__title">Reports queue</h1>
+        <p className="admin-page__subtitle">
+          Incidents your users flagged as problematic (spam, harassment,
+          false info…). Review them here and choose whether to dismiss
+          the report or remove the incident. You can also ban the
+          reporter or the author from any row.
+        </p>
+      </header>
+
       <StatsHeader />
 
       <div className="admin-tabs" role="tablist" aria-label="Report status">
@@ -85,6 +107,8 @@ export default async function AdminReportsPage({
           );
         })}
       </div>
+
+      <p className="admin-hint">{STATUS_HINTS[hintKey]}</p>
 
       {rows.length === 0 ? (
         <p className="admin-empty">

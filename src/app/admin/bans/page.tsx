@@ -26,8 +26,11 @@ export default async function AdminBansPage() {
       <header className="admin-page__header">
         <h1 className="admin-page__title">Active bans</h1>
         <p className="admin-page__subtitle">
-          Banned users cannot post, vote or report. They can still read the
-          map so they know why their actions fail.
+          Users currently banned from interacting with the platform.
+          They cannot create incidents, vote or report anything. Reading
+          the map still works so they understand why their actions fail.
+          Expired bans disappear from this list automatically; use
+          "Unban" to lift an active one early.
         </p>
       </header>
 
