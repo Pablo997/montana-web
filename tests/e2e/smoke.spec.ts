@@ -13,12 +13,27 @@ import { test, expect } from '@playwright/test';
  * sanity check on the `es.json` message bundle — if a key is missing
  * or mistyped, the visible string won't match and the test fails.
  *
+ * **CI / GitHub Actions:** the Playwright browser sends an English
+ * `Accept-Language` by default, and our i18n resolver prefers that
+ * over the app default when no cookie is set. We seed `NEXT_LOCALE=es`
+ * in `beforeEach` so smokes are deterministic on every host.
+ *
  * If you need to exercise the English bundle, set the `NEXT_LOCALE=en`
  * cookie before navigating — see the last test in this file for the
  * pattern. There is no dedicated EN smoke yet because the one here
  * catches the 90% case (bundle loads, provider wires up correctly)
  * regardless of locale.
  */
+
+test.beforeEach(async ({ context, baseURL }) => {
+  await context.addCookies([
+    {
+      name: 'NEXT_LOCALE',
+      value: 'es',
+      url: baseURL ?? 'http://localhost:3000',
+    },
+  ]);
+});
 
 test('home page renders the map shell with brand and controls', async ({ page }) => {
   await page.goto('/');

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import esMessages from '../../../messages/es.json';
 import { OfflineIndicator } from './OfflineIndicator';
 
 /**
@@ -9,13 +11,22 @@ import { OfflineIndicator } from './OfflineIndicator';
  * probe as a safety net for the initial render and the 20s interval.
  */
 
-const PILL_TEXT = /Offline — showing cached map only/;
+/** Spanish copy from `es.json` (pwa.offlineIndicator) — the component always runs inside NextIntl in the app. */
+const PILL_TEXT = /Sin conexión — mostrando mapa en caché/;
 
 function setOnlineFlag(value: boolean) {
   Object.defineProperty(navigator, 'onLine', {
     configurable: true,
     get: () => value,
   });
+}
+
+function renderOfflineIndicator() {
+  return render(
+    <NextIntlClientProvider locale="es" messages={esMessages}>
+      <OfflineIndicator />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe('<OfflineIndicator />', () => {
@@ -34,7 +45,7 @@ describe('<OfflineIndicator />', () => {
   });
 
   it('renders nothing when the browser reports online', async () => {
-    render(<OfflineIndicator />);
+    renderOfflineIndicator();
     // Let the mount-time probe resolve (synchronous microtasks).
     await act(async () => {
       await Promise.resolve();
@@ -43,7 +54,7 @@ describe('<OfflineIndicator />', () => {
   });
 
   it('appears instantly when the browser fires "offline"', async () => {
-    render(<OfflineIndicator />);
+    renderOfflineIndicator();
     await act(async () => {
       await Promise.resolve();
     });
@@ -58,7 +69,7 @@ describe('<OfflineIndicator />', () => {
   it('disappears instantly when the browser fires "online" (no probe race)', async () => {
     // Start offline so the pill is visible.
     setOnlineFlag(false);
-    render(<OfflineIndicator />);
+    renderOfflineIndicator();
 
     await act(async () => {
       window.dispatchEvent(new Event('offline'));
@@ -84,7 +95,7 @@ describe('<OfflineIndicator />', () => {
       vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
     );
 
-    render(<OfflineIndicator />);
+    renderOfflineIndicator();
 
     await act(async () => {
       // Flush the probe promise chain.
@@ -101,7 +112,7 @@ describe('<OfflineIndicator />', () => {
     const failingFetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', failingFetch);
 
-    render(<OfflineIndicator />);
+    renderOfflineIndicator();
 
     await act(async () => {
       await Promise.resolve();
