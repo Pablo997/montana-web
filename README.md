@@ -183,10 +183,11 @@ montana/
 ├─ scripts/
 │  └─ generate-vapid-keys.ts
 ├─ tests/
-│  └─ e2e/                  # Playwright smoke tests
+│  └─ e2e/                  # Playwright smoke + axe a11y tests
 ├─ docs/
 │  └─ DEVELOPMENT.md        # Full technical spec
-└─ .github/workflows/ci.yml # GitHub Actions (lint, types, unit, E2E)
+├─ lighthouserc.json        # Lighthouse CI budgets (a11y/perf/seo)
+└─ .github/workflows/ci.yml # GitHub Actions (lint, types, unit, E2E, LHCI)
 ```
 
 ## Scripts
@@ -202,8 +203,10 @@ montana/
 | `npm test`             | Vitest unit/component tests                           |
 | `npm run test:watch`   | Vitest watch mode                                     |
 | `npm run test:ui`      | Vitest UI                                             |
-| `npm run test:e2e`     | Playwright smoke tests (requires `npm run build`)     |
+| `npm run test:e2e`     | Playwright smoke + a11y tests (requires dev server)   |
 | `npm run test:e2e:ui`  | Playwright UI mode                                    |
+| `npm run test:a11y`    | Playwright a11y-only subset (axe-core, WCAG A/AA)     |
+| `npm run lhci`         | Lighthouse CI locally (run `npm run build` first)     |
 | `npm run db:push`      | Apply pending migrations to the linked project        |
 | `npm run db:reset`     | Reset local DB and re-run migrations                  |
 | `npm run db:types`     | Regenerate TS types from the local DB schema          |
@@ -231,9 +234,16 @@ montana/
 - **Open Graph image**: `app/opengraph-image.tsx` renders the default 1200×630 card at the edge using `next/og`. Per-incident pages fall back to the first attached photo.
 - **Structured data**: each incident page embeds a JSON-LD `Event` (`schema.org`) with coordinates, elevation, status and photos so search engines can render a rich card. The helper (`src/lib/seo/jsonld.ts`) escapes any `</script>` sequence in user-supplied fields before injection.
 
+## Accessibility & performance budgets
+
+- **Axe-core in Playwright**: `tests/e2e/a11y.spec.ts` scans `/`, `/auth/sign-in` and the legal pages against WCAG 2.0/2.1 A/AA. Critical and serious violations fail the build; moderate and minor ones are logged but tolerated. The MapLibre canvas is excluded because there's no meaningful accessibility tree to expose for a raster tile — surrounding UI (search, filters, incident list, keyboard-navigable controls) carries the a11y burden instead.
+- **Lighthouse CI**: `lighthouserc.json` runs a full audit on every PR and fails the job if accessibility or SEO drop below **0.9**. Performance is a warning (not an error) with a floor of **0.6** — the MapTiler SDK is ~400KB gzipped and the budget is intentionally loose so it acts as a regression guard, not a micro-optimisation forcing function. Pages under `/auth/*` opt out of the SEO assertion because we explicitly send `robots: noindex` there.
+- **Running locally**: `npm run test:a11y` for the axe suite, `npm run build && npm run lhci` for the full Lighthouse pass. Reports upload to Google's temporary storage so you get a shareable URL without provisioning an LHCI server.
+- **Fixing regressions**: if an a11y test fails, the report prints the rule id, element selector, and the WCAG ticket it maps to. Start there before touching thresholds.
+
 ## Contributing
 
-Main is protected: all changes go through a pull request, and CI (lint, type-check, unit tests, Playwright smokes) must be green before merge. Before opening a PR please read the development guide and keep your changes consistent with the conventions there (BEM for CSS, English code & comments, feature-scoped folders).
+Main is protected: all changes go through a pull request, and CI (lint, type-check, unit tests, Playwright smokes, a11y axe scan, Lighthouse budgets) must be green before merge. Before opening a PR please read the development guide and keep your changes consistent with the conventions there (BEM for CSS, English code & comments, feature-scoped folders).
 
 ## License
 
