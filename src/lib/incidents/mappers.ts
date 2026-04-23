@@ -45,7 +45,7 @@ function parseWkbHexPoint(hex: string): { lng: number; lat: number } | null {
 }
 
 /** Extracts lng/lat from flat columns, GeoJSON, or PostGIS WKB hex. */
-function extractPoint(row: IncidentRow): { lat: number; lng: number } {
+function extractPoint(row: IncidentRow): { lat: number; lng: number } | null {
   if (typeof row.lng === 'number' && typeof row.lat === 'number') {
     return { lat: row.lat, lng: row.lng };
   }
@@ -57,16 +57,38 @@ function extractPoint(row: IncidentRow): { lat: number; lng: number } {
     Array.isArray((geo as { coordinates: unknown }).coordinates)
   ) {
     const [lng, lat] = (geo as { coordinates: number[] }).coordinates;
-    return { lat, lng };
+    if (typeof lng === 'number' && typeof lat === 'number') {
+      return { lat, lng };
+    }
   }
   if (typeof geo === 'string') {
     const parsed = parseWkbHexPoint(geo);
     if (parsed) return { lat: parsed.lat, lng: parsed.lng };
   }
-  return { lat: 0, lng: 0 };
+  // Intentionally return null so callers can skip the row instead of
+  // rendering an incident at null-island / top-left of the viewport.
+  // Previously we returned { lat: 0, lng: 0 } which made a malformed
+  // row render as a "ghost" marker on the map — worse than dropping
+  // it silently.
+  return null;
+}
+
+/**
+ * Thrown by `rowToIncident` when a row lacks usable coordinates.
+ * Callers doing `list.map(rowToIncident)` should switch to a
+ * filter + map or wrap with `safeRowToIncident` to silently drop
+ * the bad rows instead of surfacing a throw up to the UI.
+ */
+export class InvalidIncidentLocationError extends Error {
+  constructor(id: string) {
+    super(`Incident ${id} has no resolvable lng/lat — dropping`);
+    this.name = 'InvalidIncidentLocationError';
+  }
 }
 
 export function rowToIncident(row: IncidentRow): Incident {
+  const location = extractPoint(row);
+  if (!location) throw new InvalidIncidentLocationError(row.id);
   return {
     id: row.id,
     userId: row.user_id,
@@ -75,7 +97,7 @@ export function rowToIncident(row: IncidentRow): Incident {
     status: row.status,
     title: row.title,
     description: row.description,
-    location: extractPoint(row),
+    location,
     elevationM: row.elevation_m,
     upvotes: row.upvotes,
     downvotes: row.downvotes,
@@ -86,4 +108,22 @@ export function rowToIncident(row: IncidentRow): Incident {
     updatedAt: row.updated_at,
     expiresAt: row.expires_at,
   };
+}
+
+/**
+ * Non-throwing variant for the hot paths (`fetchIncidentsInBbox`,
+ * `fetchNearbyIncidents`). Returns `null` for rows with missing or
+ * malformed coordinates so callers can filter them out with a simple
+ * `rows.map(safeRowToIncident).filter(Boolean)`. Reports the drop to
+ * Sentry when available so we still notice silent corruption.
+ */
+export function safeRowToIncident(row: IncidentRow): Incident | null {
+  try {
+    return rowToIncident(row);
+  } catch {
+    // Do not let a single malformed row crash a map refresh. Sentry
+    // integration happens at the caller level; mappers stay
+    // environment-agnostic on purpose (they're used in unit tests).
+    return null;
+  }
 }

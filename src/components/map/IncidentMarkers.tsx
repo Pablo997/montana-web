@@ -317,6 +317,37 @@ export function IncidentMarkers({ map }: Props) {
     });
   }, [clusterViews, map]);
 
+  // 6) Unmount-only cleanup.
+  //
+  // Without this, React 18's StrictMode (and any hot-reload that unmounts
+  // `MapView`) leaks every marker we ever created: the refs below survive
+  // the unmount, the map they were bound to does not. When React then
+  // remounts us with a fresh `map` prop, the reconciliation effects above
+  // find the stale marker in the ref and call `setLngLat` on it — but
+  // the DOM node is orphaned (its original `.maplibregl-map` parent was
+  // destroyed by `map.remove()`), so its `transform` is still applied
+  // *in the frame of a detached container* and it renders at (0, 0) of
+  // the viewport — the bug where every marker was glued to the top-left
+  // corner of the screen.
+  //
+  // The fix is trivial: remove every marker on unmount and empty the
+  // refs so the next mount starts from scratch with markers attached to
+  // the live map instance.
+  useEffect(() => {
+    // Capture the ref targets locally so the cleanup closure is bound
+    // to the same Map instances we read here (react-hooks/exhaustive-deps
+    // correctness — the underlying `useRef()` objects are stable across
+    // renders but ESLint can't prove it).
+    const leafRef = incidentMarkers.current;
+    const clusterRef = clusterMarkers.current;
+    return () => {
+      leafRef.forEach((m) => m.remove());
+      leafRef.clear();
+      clusterRef.forEach((m) => m.remove());
+      clusterRef.clear();
+    };
+  }, []);
+
   return null;
 }
 
