@@ -1819,6 +1819,61 @@ body {
   color: #ff9f94;
 }
 
+/* Inline edit form lives in the same slot as the resolve/delete
+   buttons, so we reuse the container but tighten the spacing and
+   render the fields as a column. */
+.author-actions--edit {
+  gap: 0.75rem;
+}
+
+.author-actions__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  position: relative;
+}
+
+.author-actions__label {
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.author-actions__input,
+.author-actions__textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.author-actions__input:focus-visible,
+.author-actions__textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-brand);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.author-actions__input:disabled,
+.author-actions__textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.author-actions__hint {
+  align-self: flex-end;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
 /* --------------------------------- Panel --------------------------------- */
 .panel {
   position: absolute;
@@ -2309,6 +2364,34 @@ body {
   background: rgba(255, 100, 90, 0.08);
 }
 
+/* Clickable variant — stat cards that navigate to the relevant
+   sub-page. Subtle hover lift + border emphasis so moderators notice
+   they can drill down without making the cards look like buttons. */
+.admin-stats__card--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease, background 120ms ease;
+}
+
+.admin-stats__card--link:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.admin-stats__card--link.admin-stats__card--warn:hover {
+  border-color: rgba(255, 180, 80, 0.6);
+}
+
+.admin-stats__card--link.admin-stats__card--danger:hover {
+  border-color: rgba(255, 100, 90, 0.6);
+}
+
+.admin-stats__card--link:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
 .admin-stats__value {
   font-size: 1.6rem;
   font-weight: 700;
@@ -2706,6 +2789,45 @@ body {
 
 .admin-activity__reason {
   color: rgba(255, 255, 255, 0.55);
+}
+
+/* Diff block appended to `author_edit_incident` rows. Tiny mono type so
+   a moderator can scan before/after values at a glance without a visual
+   hierarchy fight with the main action line. */
+.admin-activity__diff {
+  margin-top: 0.3rem;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.75);
+  overflow-wrap: anywhere;
+}
+
+.admin-activity__diff-row + .admin-activity__diff-row {
+  margin-top: 0.2rem;
+  padding-top: 0.2rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.admin-activity__diff-label {
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.7rem;
+}
+
+.admin-activity__diff-from {
+  color: #ff9f94;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 159, 148, 0.4);
+}
+
+.admin-activity__diff-to {
+  color: #7ee1b2;
 }
 
 @media (max-width: 560px) {

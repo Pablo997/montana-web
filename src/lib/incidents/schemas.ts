@@ -64,6 +64,29 @@ export const CreateIncidentSchema = z.object({
 
 export type CreateIncidentInput = z.infer<typeof CreateIncidentSchema>;
 
+/**
+ * Author-only edit. We intentionally restrict the editable surface to
+ * free-text fields so a correction can never silently change *where*
+ * or *what kind* of hazard is being reported — that would invalidate
+ * the votes already cast and mislead anyone who only saw the updated
+ * row. If the author got the type or location wrong, deleting and
+ * reposting is the safer path.
+ *
+ * `description` accepts an empty string so the author can clear the
+ * field; the Zod transform normalises whitespace-only input to `null`.
+ */
+export const UpdateIncidentSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters.').max(120),
+  description: z
+    .string()
+    .trim()
+    .max(2000)
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+});
+
+export type UpdateIncidentInput = z.infer<typeof UpdateIncidentSchema>;
+
 /** Bounding box used by `fetchIncidentsInBbox`. */
 export const BBoxSchema = z
   .object({

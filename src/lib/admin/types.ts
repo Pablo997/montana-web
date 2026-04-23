@@ -45,7 +45,18 @@ export type ModerationAction =
   | 'remove_incident'
   | 'restore_incident'
   | 'ban_user'
-  | 'unban_user';
+  | 'unban_user'
+  | 'author_edit_incident';
+
+/**
+ * Shape of `meta` for an `author_edit_incident` audit entry. The SQL
+ * trigger (`log_author_edit_incident`) stores a diff with either or
+ * both of these keys — whichever field the author actually changed.
+ */
+export interface AuthorEditMeta {
+  title?: { from: string; to: string };
+  description?: { from: string | null; to: string | null };
+}
 
 export type ModerationTargetKind = 'report' | 'incident' | 'user';
 

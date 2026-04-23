@@ -4,6 +4,7 @@ import {
   mapActionRow,
   type AdminActionRawRow,
   type AdminActionRow,
+  type AuthorEditMeta,
   type ModerationAction,
   type ModerationTargetKind,
 } from '@/lib/admin/types';
@@ -20,7 +21,51 @@ const ACTION_VERBS: Record<ModerationAction, string> = {
   restore_incident: 'restored incident',
   ban_user: 'banned user',
   unban_user: 'unbanned user',
+  author_edit_incident: 'edited their incident',
 };
+
+/** Trim long diff values so a 2000-char description doesn't flood the log. */
+function trim(value: string | null | undefined, max = 80): string {
+  if (!value) return '∅';
+  return value.length > max ? `${value.slice(0, max)}…` : value;
+}
+
+/**
+ * Renders the diff stored on an `author_edit_incident` audit row.
+ * Falls back to nothing when `meta` is missing or malformed — we never
+ * want the audit feed to crash on a single bad row.
+ */
+function renderAuthorEditMeta(meta: unknown): React.ReactNode {
+  if (!meta || typeof meta !== 'object') return null;
+  const m = meta as AuthorEditMeta;
+  const rows: React.ReactNode[] = [];
+  if (m.title && typeof m.title === 'object') {
+    rows.push(
+      <div key="title" className="admin-activity__diff-row">
+        <span className="admin-activity__diff-label">title:</span>{' '}
+        <span className="admin-activity__diff-from">{trim(m.title.from)}</span>
+        {' → '}
+        <span className="admin-activity__diff-to">{trim(m.title.to)}</span>
+      </div>,
+    );
+  }
+  if (m.description && typeof m.description === 'object') {
+    rows.push(
+      <div key="desc" className="admin-activity__diff-row">
+        <span className="admin-activity__diff-label">description:</span>{' '}
+        <span className="admin-activity__diff-from">
+          {trim(m.description.from)}
+        </span>
+        {' → '}
+        <span className="admin-activity__diff-to">
+          {trim(m.description.to)}
+        </span>
+      </div>,
+    );
+  }
+  if (rows.length === 0) return null;
+  return <div className="admin-activity__diff">{rows}</div>;
+}
 
 function parsePage(raw: string | undefined): number {
   const n = Number.parseInt(raw ?? '1', 10);
@@ -96,6 +141,9 @@ export default async function AdminActivityPage({
                   {row.reason ? (
                     <span className="admin-activity__reason"> — {row.reason}</span>
                   ) : null}
+                  {row.action === 'author_edit_incident'
+                    ? renderAuthorEditMeta(row.meta)
+                    : null}
                 </div>
               </li>
             );

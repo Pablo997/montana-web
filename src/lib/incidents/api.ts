@@ -3,15 +3,22 @@ import { rowToIncident } from './mappers';
 import {
   BBoxSchema,
   CreateIncidentSchema,
+  UpdateIncidentSchema,
   VoteSchema,
   type BBox,
   type CreateIncidentInput,
+  type UpdateIncidentInput,
   type Vote,
 } from './schemas';
 import { readImageDimensions } from '@/lib/utils/image-compression';
 import type { Incident, IncidentMedia } from '@/types/incident';
 
-export type { BBox, CreateIncidentInput, Vote } from './schemas';
+export type {
+  BBox,
+  CreateIncidentInput,
+  UpdateIncidentInput,
+  Vote,
+} from './schemas';
 
 const MEDIA_BUCKET = 'incident-media';
 
@@ -154,6 +161,46 @@ export async function castVote(incidentId: string, vote: Vote): Promise<void> {
     );
 
   if (error) throw error;
+}
+
+/**
+ * Author-only edit of title + description. Location, type and severity
+ * stay immutable on purpose — see `UpdateIncidentSchema` for the
+ * reasoning. RLS (`incidents_update_own` in 00011) is the real
+ * authority; this helper just validates the payload and returns the
+ * refreshed row so the caller can update its local cache optimistically.
+ *
+ * `select(...).single()` rather than `.select()` is deliberate: if RLS
+ * silently filters the row out (e.g. the viewer isn't the author any
+ * more because they signed out mid-request), PostgREST returns zero
+ * rows and `.single()` raises, surfacing a real error instead of a
+ * phantom success.
+ */
+export async function updateIncident(
+  incidentId: string,
+  input: UpdateIncidentInput,
+): Promise<Incident> {
+  const payload = UpdateIncidentSchema.parse(input);
+
+  const { data, error } = await supabase()
+    .from('incidents')
+    .update({ title: payload.title, description: payload.description })
+    .eq('id', incidentId)
+    .select(
+      'id, user_id, type, severity, status, title, description, ' +
+        'location, elevation_m, upvotes, downvotes, score, created_at, ' +
+        'updated_at, expires_at, media_count',
+    )
+    .single();
+
+  if (error) throw error;
+
+  // `location` comes back as a PostGIS WKB hex string which
+  // `rowToIncident` already knows how to decode. The cast goes through
+  // `unknown` because Supabase's generated types sometimes widen
+  // `data` to include an internal error shape.
+  const row = data as unknown as Parameters<typeof rowToIncident>[0];
+  return rowToIncident(row);
 }
 
 /**
