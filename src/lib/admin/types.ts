@@ -46,7 +46,50 @@ export type ModerationAction =
   | 'restore_incident'
   | 'ban_user'
   | 'unban_user'
-  | 'author_edit_incident';
+  | 'author_edit_incident'
+  | 'author_create_update'
+  | 'author_delete_update'
+  | 'author_create_incident'
+  | 'author_resolve_incident'
+  | 'author_delete_incident'
+  | 'account_deleted';
+
+/**
+ * Shape of `meta` for the incident lifecycle actions introduced in
+ * migration 00034. Every field is optional because the trigger only
+ * fills what is relevant for each specific action.
+ */
+export interface IncidentLifecycleMeta {
+  title?: string;
+  type?: string;
+  severity?: string;
+  status?: string;
+  previous_status?: string;
+  original_author_id?: string;
+  description_preview?: string | null;
+}
+
+/**
+ * Shape of `meta` for `account_deleted`. `username` is captured at
+ * deletion time so the audit row stays informative after the profile
+ * row has been cascade-deleted.
+ */
+export interface AccountDeletedMeta {
+  incidents_deleted?: number;
+  username?: string | null;
+}
+
+/**
+ * Shape of `meta` for `author_create_update` / `author_delete_update`
+ * audit rows written by the triggers in migration 00033. The body is
+ * truncated server-side to 200 chars so the activity feed stays
+ * scannable.
+ */
+export interface IncidentUpdateAuditMeta {
+  update_id?: string;
+  body_preview?: string;
+  original_author_id?: string;
+}
 
 /**
  * Shape of `meta` for an `author_edit_incident` audit entry. The SQL

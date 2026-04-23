@@ -8,6 +8,7 @@ import { getExpiryInfo } from '@/lib/incidents/expiry';
 import { FlagIncidentDialog } from './FlagIncidentDialog';
 import { IncidentAuthorActions } from './IncidentAuthorActions';
 import { IncidentMediaGrid } from './IncidentMediaGrid';
+import { IncidentUpdates } from './IncidentUpdates';
 import { ShareIncidentButton } from './ShareIncidentButton';
 import { VoteButtons } from './VoteButtons';
 
@@ -66,6 +67,8 @@ export function IncidentCard({ incident }: Props) {
           {new Date(incident.createdAt).toLocaleString()}
         </time>
       </footer>
+
+      <IncidentUpdates incidentId={incident.id} />
 
       {isAuthor ? (
         <IncidentAuthorActions incident={incident} />
