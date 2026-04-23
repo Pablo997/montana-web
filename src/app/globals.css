@@ -2181,10 +2181,14 @@ body {
    Admin / moderation panel
    ============================================================ */
 
+/* The app root locks overflow so the map owns gestures; admin pages
+   reclaim their own scroll context with grid + overflow on the main
+   region. Without this the whole admin panel is unscrollable on mobile. */
 .admin-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
   background: var(--color-bg);
 }
 
@@ -2233,11 +2237,18 @@ body {
 }
 
 .admin-shell__main {
-  flex: 1;
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 4rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .admin-nav {
@@ -2368,6 +2379,19 @@ body {
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
   border-radius: 0.85rem;
+}
+
+/* Short contextual explainer shown right under the sub-tab bar.
+   Kept subtle — it's a reminder, not the main content. */
+.admin-hint {
+  margin: -0.5rem 0 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid rgba(255, 214, 107, 0.35);
+  border-radius: 0 0.4rem 0.4rem 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 /* ---- Report list ---- */
@@ -2938,4 +2962,451 @@ body {
   margin: 0;
   color: #ff8c80;
   font-size: 0.82rem;
+}
+
+/* ============================================================
+   Profile / "my stuff" (/me)
+   ============================================================ */
+
+/* The global html/body/#__next lock scroll so the map owns gestures.
+   `.profile-shell` reclaims its own scroll context the same way
+   `.legal` does on the privacy / terms pages. `min-width: 0` is
+   critical so flex children with long text (emails, titles) can
+   shrink below their intrinsic width and let ellipsis kick in
+   instead of overflowing the viewport horizontally. */
+.profile-shell {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.5rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.profile-shell > * {
+  max-width: 900px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 0;
+}
+
+/* ---- Header ---- */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+}
+
+.profile-header__avatar {
+  flex: 0 0 auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a6f57 0%, #24755a 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.02em;
+}
+
+.profile-header__text {
+  min-width: 0;
+}
+
+.profile-header__name {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-header__email,
+.profile-header__since {
+  margin: 0.1rem 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Stats ---- */
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.profile-stats__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.85rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.profile-stats__card--ok {
+  border-color: rgba(125, 211, 160, 0.35);
+  background: rgba(125, 211, 160, 0.06);
+}
+
+.profile-stats__card--warn {
+  border-color: rgba(255, 180, 80, 0.4);
+  background: rgba(255, 180, 80, 0.08);
+}
+
+.profile-stats__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.profile-stats__label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---- Section (list) ---- */
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.profile-section__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.profile-section__count {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Override: the admin incident card is a non-link block. Here each
+   card is wrapped in an <a>, so bring back the hover affordance. */
+.profile-incident {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.profile-incident:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ---- Back-to-map link ---- */
+
+/* Shared breadcrumb-style pill used at the top of /me and /admin
+   sub-pages so the "Back to map" link always lives in the same spot. */
+.page-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  margin-bottom: -0.25rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.page-back:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-border);
+}
+
+/* ---- Danger zone ---- */
+
+.danger-zone {
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  background: rgba(217, 48, 37, 0.05);
+  border: 1px solid rgba(217, 48, 37, 0.35);
+  border-radius: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.danger-zone__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.danger-zone__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ff9f94;
+  letter-spacing: 0.02em;
+}
+
+.danger-zone__subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 159, 148, 0.7);
+}
+
+.danger-zone__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.danger-zone__row-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.92rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.danger-zone__row-body {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  max-width: 50ch;
+}
+
+.danger-zone__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.danger-zone__confirm-body {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.danger-zone__confirm-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font: inherit;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.danger-zone__confirm-input:focus {
+  outline: 2px solid rgba(217, 48, 37, 0.5);
+  outline-offset: 0;
+}
+
+.danger-zone__error {
+  margin: 0;
+  color: #ff8c80;
+  font-size: 0.85rem;
+}
+
+.danger-zone__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ============================================================
+   Mobile tightening for /admin and /me
+   ------------------------------------------------------------
+   These pages were built "desktop first". The rules below are
+   purely compression: reduce paddings, stack rows that were
+   spread across a flex line, and shrink typography.
+   ============================================================ */
+
+@media (max-width: 720px) {
+  .admin-shell__main {
+    padding: 1rem 0.85rem 3rem;
+  }
+
+  .admin-shell__header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  /* The nav pills scroll horizontally when they don't fit,
+     which keeps the "Map · Moderation" row on its own line above. */
+  .admin-nav {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.1rem;
+  }
+  .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-nav__link {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .admin-shell__title {
+    font-size: 0.95rem;
+  }
+
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .admin-stats__card {
+    padding: 0.75rem;
+  }
+
+  .admin-stats__value {
+    font-size: 1.3rem;
+  }
+
+  .admin-page__title {
+    font-size: 1.2rem;
+  }
+
+  .admin-page__subtitle {
+    font-size: 0.85rem;
+  }
+
+  .admin-report,
+  .admin-ban,
+  .admin-incident {
+    padding: 0.8rem;
+  }
+
+  .admin-report__foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-report__actions,
+  .admin-incident__actions {
+    justify-content: flex-end;
+  }
+
+  .admin-search {
+    gap: 0.35rem;
+  }
+
+  .admin-search__input {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .profile-shell {
+    padding: 1rem 0.85rem 3rem;
+    gap: 1rem;
+  }
+
+  .profile-header {
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .profile-header__avatar {
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 1rem;
+  }
+
+  .profile-header__name {
+    font-size: 1.1rem;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+  }
+
+  .profile-stats__card {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .profile-stats__value {
+    font-size: 1.25rem;
+  }
+
+  .profile-section__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .danger-zone {
+    padding: 1rem;
+  }
+
+  .danger-zone__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .danger-zone__row .button {
+    align-self: flex-end;
+  }
+}
+
+/* Narrow phones: the 2-column stat grid starts to feel cramped
+   below ~360px — drop to a single column so values never clip. */
+@media (max-width: 380px) {
+  .admin-stats,
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-report__head,
+  .admin-incident__head {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
+
+  .admin-report__people {
+    gap: 0.6rem;
+    font-size: 0.78rem;
+  }
 }

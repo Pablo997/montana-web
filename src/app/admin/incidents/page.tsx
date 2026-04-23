@@ -26,6 +26,15 @@ const STATUS_TABS: Array<{ id: IncidentStatus | 'all'; label: string }> = [
   { id: 'expired', label: 'Expired' },
 ];
 
+const STATUS_HINTS: Record<string, string> = {
+  all: 'Every incident ever created, regardless of state.',
+  pending: 'Just reported by a user, waiting for community votes.',
+  validated: 'Confirmed by enough upvotes — currently visible on the map.',
+  dismissed: 'Hidden from the map. Either a moderator removed it or the community voted it down. Use "Restore" to bring it back.',
+  resolved: 'Marked by the community as no longer a problem on the trail.',
+  expired: 'Automatically retired after its expiry date. Hidden from the map.',
+};
+
 function parseStatus(raw: string | undefined): IncidentStatus | null {
   const valid: IncidentStatus[] = [
     'pending',
@@ -89,8 +98,10 @@ export default async function AdminIncidentsPage({
       <header className="admin-page__header">
         <h1 className="admin-page__title">Incidents</h1>
         <p className="admin-page__subtitle">
-          All incidents in the system, including hidden ones. Use this to
-          proactively remove or restore content before — or after — users flag it.
+          The full catalogue, including hidden incidents. Search or
+          filter to find one, then remove it (hides from the map),
+          restore a previously hidden one, or ban its author. Unlike
+          the Reports tab, you act here without waiting for a user flag.
         </p>
       </header>
 
@@ -117,6 +128,10 @@ export default async function AdminIncidentsPage({
           );
         })}
       </div>
+
+      <p className="admin-hint">
+        {STATUS_HINTS[statusFilter ?? 'all']}
+      </p>
 
       {rows.length === 0 ? (
         <p className="admin-empty">No incidents match this query.</p>
