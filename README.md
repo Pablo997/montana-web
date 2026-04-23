@@ -76,6 +76,7 @@ Required:
 
 Optional:
 
+- `NEXT_PUBLIC_SITE_URL` — canonical site URL used by `<metadataBase>`, OG tags, `robots.txt`, `sitemap.xml` and JSON-LD. Set it to your production domain (e.g. `https://montana.app`). Falls back to `https://$VERCEL_URL` on preview deploys and `http://localhost:3000` in dev, but those fallbacks shouldn't reach production — set it explicitly.
 - `NEXT_PUBLIC_SENTRY_DSN` — enables error reporting. Leave empty in dev.
 - `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` — required only on the build host (CI / Vercel) if you want uploaded source maps so stack traces point at original TS lines. Without them builds still succeed, they just ship minified frames to Sentry.
 - `SENTRY_RELEASE` — overrides the auto-detected release name. Defaults to `VERCEL_GIT_COMMIT_SHA` when absent. Same value is reflected by `/api/health` so you can tell which deploy a probe hit.
@@ -222,6 +223,13 @@ montana/
 - **Server-side helpers**: reach for `captureServerError(err, { tag, extras })` from `src/lib/observability/sentry.ts` in API routes and server actions instead of `console.error`. It never throws and tags events so Issues can be filtered by `op:admin.banUser`, `op:api.me.delete`, etc. Admin server actions already route infrastructure failures through it while keeping domain errors (`NOT_ADMIN`, `CANNOT_BAN_SELF`, ...) silent.
 - **Release tracking**: on Vercel, `VERCEL_GIT_COMMIT_SHA` is auto-picked up and tagged on every event + upload target for source maps. Set `SENTRY_RELEASE` manually for non-Vercel hosts. Source map uploads require `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` during `next build`.
 - **Uptime probe**: `GET /api/health` round-trips a cheap RPC (`health_ping()`) so external monitors (BetterUptime, Uptime Kuma, Pingdom) get a 200 only when Next.js *and* Supabase are both reachable. `/api/ping` stays as a pure Next.js-only probe used by the offline indicator.
+
+## SEO
+
+- **`robots.txt`** and **`sitemap.xml`** are generated dynamically by `app/robots.ts` and `app/sitemap.ts`. The sitemap exposes the home page, legal pages, and every incident whose status is `pending`, `validated` or `resolved`. Dismissed and expired incidents are excluded so moderated content never ends up in search results. The sitemap is cached for an hour via `export const revalidate = 3600`.
+- **Canonical URLs + metadataBase**: `NEXT_PUBLIC_SITE_URL` drives the canonical and absolute OG URLs. Per-page metadata (e.g. `/me`, `/admin/*`, `/auth/*`) opts out of indexing via `robots: { index: false }`.
+- **Open Graph image**: `app/opengraph-image.tsx` renders the default 1200×630 card at the edge using `next/og`. Per-incident pages fall back to the first attached photo.
+- **Structured data**: each incident page embeds a JSON-LD `Event` (`schema.org`) with coordinates, elevation, status and photos so search engines can render a rich card. The helper (`src/lib/seo/jsonld.ts`) escapes any `</script>` sequence in user-supplied fields before injection.
 
 ## Contributing
 

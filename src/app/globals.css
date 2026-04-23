@@ -1773,13 +1773,27 @@ body {
 }
 
 /* --------------------------- Map expiring marker ------------------------- */
+/* Do NOT animate `transform` here. MapLibre writes the marker's
+   translate(x, y) into `element.style.transform` inline and CSS
+   animations beat inline styles in the cascade — animating transform
+   would pin every pulsing marker to (0, 0) of its container. Animate
+   box-shadow instead: same "breathing" effect, zero interference with
+   positioning. */
 .map-marker--expiring {
   animation: map-marker-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes map-marker-pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.15); }
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 255, 255, 0.55),
+      0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px rgba(255, 255, 255, 0),
+      0 2px 6px rgba(0, 0, 0, 0.35);
+  }
 }
 
 /* ------------------------------ Empty state ------------------------------ */

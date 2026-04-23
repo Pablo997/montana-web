@@ -1,5 +1,5 @@
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
-import { rowToIncident } from './mappers';
+import { rowToIncident, safeRowToIncident } from './mappers';
 import {
   BBoxSchema,
   CreateIncidentSchema,
@@ -114,7 +114,10 @@ export async function fetchNearbyIncidents(
   });
 
   if (error) throw error;
-  return (data ?? []).map(rowToIncident);
+  const rows = (data ?? []) as Parameters<typeof safeRowToIncident>[0][];
+  return rows
+    .map(safeRowToIncident)
+    .filter((v): v is Incident => v !== null);
 }
 
 /**
@@ -143,7 +146,10 @@ export async function fetchIncidentsInBbox(bbox: BBox): Promise<Incident[]> {
   });
 
   if (error) throw error;
-  return (data ?? []).map(rowToIncident);
+  const rows = (data ?? []) as Parameters<typeof safeRowToIncident>[0][];
+  return rows
+    .map(safeRowToIncident)
+    .filter((v): v is Incident => v !== null);
 }
 
 /** Cast or update a user's vote for an incident. */
