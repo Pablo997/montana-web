@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { AdminStats } from '@/lib/admin/types';
 
@@ -18,15 +19,42 @@ async function fetchStats(): Promise<AdminStats> {
   };
 }
 
+/**
+ * Dashboard overview at the top of every admin page.
+ *
+ * Each card is a navigation hint: clicking drops you into the section of
+ * the panel that actually lets you act on those numbers. Without this,
+ * "Actions · 24h: 2" was dead information — the counter would go up
+ * from author-edit triggers (audit log) but none of the sub-tabs on
+ * `/admin` (which only lists *reports*) would show them.
+ */
 export async function StatsHeader() {
   const stats = await fetchStats();
 
   return (
     <section className="admin-stats" aria-label="Moderation overview">
-      <StatCard label="Open reports" value={stats.openReports} tone="warn" />
-      <StatCard label="Banned users" value={stats.bannedUsers} tone="danger" />
-      <StatCard label="Incidents today" value={stats.incidentsToday} />
-      <StatCard label="Actions · 24h" value={stats.actions24h} />
+      <StatCard
+        label="Open reports"
+        value={stats.openReports}
+        tone="warn"
+        href="/admin?status=open"
+      />
+      <StatCard
+        label="Banned users"
+        value={stats.bannedUsers}
+        tone="danger"
+        href="/admin/bans"
+      />
+      <StatCard
+        label="Incidents today"
+        value={stats.incidentsToday}
+        href="/admin/incidents"
+      />
+      <StatCard
+        label="Actions · 24h"
+        value={stats.actions24h}
+        href="/admin/activity"
+      />
     </section>
   );
 }
@@ -35,16 +63,22 @@ function StatCard({
   label,
   value,
   tone,
+  href,
 }: {
   label: string;
   value: number;
   tone?: 'warn' | 'danger';
+  href: string;
 }) {
   const toneClass = tone ? ` admin-stats__card--${tone}` : '';
   return (
-    <div className={`admin-stats__card${toneClass}`}>
+    <Link
+      href={href}
+      prefetch={false}
+      className={`admin-stats__card admin-stats__card--link${toneClass}`}
+    >
       <span className="admin-stats__value">{value.toLocaleString()}</span>
       <span className="admin-stats__label">{label}</span>
-    </div>
+    </Link>
   );
 }

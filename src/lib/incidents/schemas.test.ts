@@ -3,6 +3,7 @@ import {
   BBoxSchema,
   CreateIncidentSchema,
   LatLngSchema,
+  UpdateIncidentSchema,
   VoteSchema,
 } from './schemas';
 
@@ -135,6 +136,61 @@ describe('BBoxSchema', () => {
     if (!result.success) {
       expect(result.error.issues[0]?.message).toMatch(/min must be <= max/);
     }
+  });
+});
+
+describe('UpdateIncidentSchema', () => {
+  it('accepts a valid title + description', () => {
+    const parsed = UpdateIncidentSchema.parse({
+      title: 'Trail is clear again',
+      description: 'Crew cleared the debris this morning.',
+    });
+    expect(parsed.title).toBe('Trail is clear again');
+    expect(parsed.description).toBe('Crew cleared the debris this morning.');
+  });
+
+  it('normalises empty and whitespace-only descriptions to null', () => {
+    // The UI binds a <textarea> value, so we must treat "" and "   " as
+    // "clear the field" instead of persisting blank strings.
+    expect(
+      UpdateIncidentSchema.parse({ title: 'Okay', description: '' }).description,
+    ).toBeNull();
+    expect(
+      UpdateIncidentSchema.parse({ title: 'Okay', description: '   ' }).description,
+    ).toBeNull();
+    expect(
+      UpdateIncidentSchema.parse({ title: 'Okay', description: null }).description,
+    ).toBeNull();
+  });
+
+  it('rejects titles shorter than 3 after trimming', () => {
+    const result = UpdateIncidentSchema.safeParse({
+      title: '  ab ',
+      description: null,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects descriptions longer than 2000', () => {
+    const result = UpdateIncidentSchema.safeParse({
+      title: 'Valid title',
+      description: 'x'.repeat(2001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('does NOT accept location or type — frozen on purpose', () => {
+    // If somebody adds `location` to the form tomorrow the schema will
+    // strip it, not forward it. The comment in the schema explains why
+    // (votes cast against the old meaning would become misleading).
+    const parsed = UpdateIncidentSchema.parse({
+      title: 'Ok title',
+      description: null,
+      location: { lat: 0, lng: 0 },
+      type: 'accident',
+    });
+    expect('location' in parsed).toBe(false);
+    expect('type' in parsed).toBe(false);
   });
 });
 
