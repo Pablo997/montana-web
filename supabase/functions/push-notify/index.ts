@@ -70,6 +70,11 @@ interface FanoutRow {
   incident_severity: string;
   incident_lat: number;
   incident_lng: number;
+  // Nullable: the LEFT JOIN against `notifications` returns null when
+  // the in-app row wasn't created (rare — would only happen if the
+  // enqueue RPC failed earlier in this tick). The SW handles a null
+  // gracefully: it just skips the mark-read fetch.
+  notification_id: string | null;
 }
 
 const SEVERITY_EMOJI: Record<string, string> = {
@@ -102,6 +107,10 @@ function buildPayload(row: FanoutRow) {
     url: `/incidents/${row.incident_id}`,
     type: row.incident_type,
     severity: row.incident_severity,
+    // Threaded into the SW's `notificationclick` handler so it can
+    // POST to /api/notifications/mark-read on tap — keeps the in-app
+    // bell badge consistent with the push the user just opened.
+    notificationId: row.notification_id,
   });
 }
 

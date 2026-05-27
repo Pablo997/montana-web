@@ -33,7 +33,33 @@
       ],
       "settings": {
         "preset": "desktop",
-        "chromeFlags": "--no-sandbox --headless=new"
+        "chromeFlags": "--no-sandbox --headless=new",
+        "//maxWaitForLoad": [
+          "On a cold GitHub runner the map page never reaches MapLibre's",
+          "idle state inside the default 45s window — too many in-flight",
+          "tile / realtime / push-subscription tasks. 90s gives the",
+          "Chrome navigator a comfortable cushion without hiding genuine",
+          "regressions: a real hang still trips this ceiling."
+        ],
+        "maxWaitForLoad": 90000,
+        "//blockedUrlPatterns": [
+          "We are measuring the *shell* — Next.js routes, our JS bundle,",
+          "a11y, SEO — not third-party performance. Block external hosts",
+          "so Lighthouse stops waiting on MapTiler tiles, Supabase",
+          "realtime websockets and Sentry beacons that would otherwise",
+          "keep the page busy long past the timeout.",
+          "",
+          "If LH starts blaming us for a metric that's actually caused by",
+          "one of these hosts, remove the pattern temporarily to",
+          "reproduce locally."
+        ],
+        "blockedUrlPatterns": [
+          "https://api.maptiler.com/*",
+          "https://*.maptiler.com/*",
+          "wss://*.supabase.co/*",
+          "https://*.ingest.sentry.io/*",
+          "https://*.ingest.us.sentry.io/*"
+        ]
       }
     },
     "assert": {

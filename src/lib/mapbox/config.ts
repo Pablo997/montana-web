@@ -1,22 +1,15 @@
-import { MapStyle } from '@maptiler/sdk';
-
 export const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY ?? '';
-
-/** Outdoor style with contour lines and hiking POIs. */
-export const DEFAULT_MAP_STYLE = MapStyle.OUTDOOR_V4;
 
 /** Fallback center if the user denies geolocation (Pyrenees roughly). */
 export const DEFAULT_CENTER: [number, number] = [0.5, 42.65];
 export const DEFAULT_ZOOM = 8;
 
-export const TERRAIN_SOURCE = {
-  id: 'maptiler-dem',
-  spec: {
-    type: 'raster-dem' as const,
-    url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
-    tileSize: 512,
-    maxzoom: 14,
-  },
-};
+/**
+ * Shared raster-dem source used by BOTH terrain (3D extrusion) and
+ * the optional hillshade overlay. Kept here (not in `customLayers`)
+ * so the id is import-safe from server contexts that build URLs
+ * referencing it without touching MapLibre.
+ */
+export const TERRAIN_DEM_SOURCE_ID = 'maptiler-dem';
 
 export const TERRAIN_EXAGGERATION = 1.3;
