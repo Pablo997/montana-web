@@ -5,18 +5,23 @@ import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/style.css';
 import {
   DEFAULT_CENTER,
-  DEFAULT_MAP_STYLE,
   DEFAULT_ZOOM,
   MAPTILER_KEY,
-  TERRAIN_EXAGGERATION,
-  TERRAIN_SOURCE,
 } from '@/lib/mapbox/config';
+import { getBasemap } from '@/lib/mapbox/basemaps';
+import {
+  applyHillshade,
+  applyTerrain,
+  removeHillshade,
+} from '@/lib/mapbox/customLayers';
+import { useMapPreferencesStore } from '@/store/useMapPreferencesStore';
 import { fetchIncidentsInBbox, type BBox } from '@/lib/incidents/api';
 import { bboxForTiles, tilesForBbox } from '@/lib/incidents/tile-cache';
 import { useMapStore } from '@/store/useMapStore';
 import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { IncidentMarkers } from './IncidentMarkers';
 import { FilterPanel } from './FilterPanel';
+import { BasemapSwitcher } from './BasemapSwitcher';
 import { MapEmptyState } from './MapEmptyState';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
@@ -41,6 +46,8 @@ export function MapView() {
   const pickingPushCenter = useIsPickingPushCenter();
   const selectedId = useMapStore((s) => s.selectedId);
   const incidents = useMapStore((s) => s.incidents);
+  const basemapId = useMapPreferencesStore((s) => s.basemapId);
+  const hillshadeEnabled = useMapPreferencesStore((s) => s.hillshadeEnabled);
   // Mobile-friendly geolocation flow: the browser Geolocation API
   // refuses to re-prompt for permission on iOS Safari once it's been
   // denied, so we avoid firing it on mount (silent failure) and only
@@ -63,12 +70,21 @@ export function MapView() {
   const mergeIncidentsRef = useRef(mergeIncidents);
   mergeIncidentsRef.current = mergeIncidents;
 
+  // `basemapId` is intentionally NOT in the deps below. We snapshot
+  // the value once at mount-time so the initial style matches the
+  // user's last preference, and from then on every style swap goes
+  // through `map.setStyle()` in the dedicated effect further down.
+  // Re-running the entire init effect on basemap change would tear
+  // down and recreate the map (losing camera position, animation
+  // state, all the markers IncidentMarkers tracks, etc.).
+  const initialBasemapRef = useRef(basemapId);
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = new maptilersdk.Map({
       container: containerRef.current,
-      style: DEFAULT_MAP_STYLE,
+      style: getBasemap(initialBasemapRef.current).style,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       pitch: 45,
@@ -124,8 +140,7 @@ export function MapView() {
     };
 
     map.on('load', () => {
-      map.addSource(TERRAIN_SOURCE.id, TERRAIN_SOURCE.spec);
-      map.setTerrain({ source: TERRAIN_SOURCE.id, exaggeration: TERRAIN_EXAGGERATION });
+      applyTerrain(map);
       setMapReady(true);
       loadVisibleIncidents();
     });
@@ -142,6 +157,62 @@ export function MapView() {
       setMapReady(false);
     };
   }, []);
+
+  // Basemap swap. `setStyle()` wipes every custom source and layer,
+  // so we wait for the `styledata` event MapLibre fires once the new
+  // style finishes loading, then re-attach terrain + hillshade. The
+  // IncidentMarkers component re-mounts through its `key` prop below
+  // and rebuilds its own GeoJSON source from scratch.
+  //
+  // We diff against `appliedBasemapRef` because the prefs store gets
+  // hydrated from localStorage during the first commit; if we didn't
+  // diff, that hydration would trigger a redundant `setStyle()` with
+  // the same id as the initial style, throwing away the freshly-built
+  // tile cache for no reason.
+  const appliedBasemapRef = useRef(basemapId);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (appliedBasemapRef.current === basemapId) return;
+    appliedBasemapRef.current = basemapId;
+
+    setMapReady(false);
+    const nextStyle = getBasemap(basemapId).style;
+
+    const onStyleData = () => {
+      // `styledata` fires multiple times during the load (once per
+      // source ready). We only want to re-attach our overlays after
+      // the new style has fully settled.
+      if (!map.isStyleLoaded()) return;
+      map.off('styledata', onStyleData);
+      applyTerrain(map);
+      if (hillshadeEnabledRef.current) applyHillshade(map);
+      setMapReady(true);
+    };
+
+    map.on('styledata', onStyleData);
+    map.setStyle(nextStyle);
+  }, [basemapId]);
+
+  // The `styledata` callback above closes over a stale value of
+  // `hillshadeEnabled` if we read it directly. Mirror it in a ref so
+  // the post-swap re-attach always sees the latest user preference.
+  const hillshadeEnabledRef = useRef(hillshadeEnabled);
+  useEffect(() => {
+    hillshadeEnabledRef.current = hillshadeEnabled;
+  }, [hillshadeEnabled]);
+
+  // Hillshade toggle. Independent of basemap swap because the user
+  // can toggle it on the current style without changing the basemap.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    if (hillshadeEnabled) {
+      applyHillshade(map);
+    } else {
+      removeHillshade(map);
+    }
+  }, [hillshadeEnabled, mapReady]);
 
   // Auto-dismiss the geolocation error banner after a few seconds so
   // it doesn't linger on top of the map once the user has read it.
@@ -308,13 +379,20 @@ export function MapView() {
   return (
     <div className="map">
       <div ref={containerRef} className="map__canvas" />
-      {mapReady && mapRef.current ? <IncidentMarkers map={mapRef.current} /> : null}
+      {mapReady && mapRef.current ? (
+        // `key` forces a full remount whenever the basemap changes.
+        // `setStyle` wipes the GeoJSON source IncidentMarkers
+        // registers, so the cleanest reset is a fresh mount that
+        // re-runs all the source / ghost-layer setup from scratch.
+        <IncidentMarkers key={basemapId} map={mapRef.current} />
+      ) : null}
 
       <div className="map__overlay map__overlay--top-left">
         <FilterPanel />
       </div>
 
       <div className="map__overlay map__overlay--bottom-right">
+        <BasemapSwitcher />
         <button
           type="button"
           className="map__locate"

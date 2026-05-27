@@ -287,6 +287,226 @@ body {
   }
 }
 
+/* ---------------------------- Basemap switcher --------------------------- */
+/* Floating layer-picker pinned in the bottom-right action column alongside
+   the locate + report buttons. Trigger mirrors the locate-button visual
+   language (dark glass pill) so the column reads as a coherent group. */
+.basemap-switcher {
+  position: relative;
+  /* The panel is absolutely-positioned relative to the trigger, but we
+     still want the trigger itself to flow inside the bottom-right
+     column. Default `display: block` is fine for that. */
+}
+
+.basemap-switcher__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  background: rgba(15, 20, 18, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.basemap-switcher__trigger:hover,
+.basemap-switcher__trigger[aria-expanded='true'] {
+  background: rgba(15, 20, 18, 0.92);
+  border-color: rgba(47, 143, 111, 0.5);
+}
+
+.basemap-switcher__trigger:active {
+  transform: scale(0.95);
+}
+
+.basemap-switcher__panel {
+  position: absolute;
+  /* Anchor to the bottom-right of the trigger so the panel grows up
+     and to the left. Prevents clipping against the right edge of the
+     viewport and keeps the trigger anchor visually attached. */
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  width: 260px;
+  max-width: calc(100vw - 2rem);
+  padding: 0.85rem;
+  background: rgba(15, 20, 18, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: #f6f7f6;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.basemap-switcher__heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(246, 247, 246, 0.7);
+}
+
+.basemap-switcher__heading--secondary {
+  margin-top: 0.9rem;
+}
+
+.basemap-switcher__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.basemap-switcher__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.45rem 0.3rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.basemap-switcher__option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.basemap-switcher__option[data-active] {
+  border-color: rgba(47, 143, 111, 0.85);
+  background: rgba(47, 143, 111, 0.18);
+}
+
+.basemap-switcher__option:active {
+  transform: scale(0.97);
+}
+
+.basemap-switcher__swatch {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-size: cover;
+  background-position: center;
+  /* Each variant gets a tiny CSS-only preview built from gradients so
+     we don't have to ship six basemap thumbnails. They're abstract on
+     purpose — the label below is the source of truth, the swatch is
+     just a visual anchor. */
+}
+
+.basemap-switcher__swatch[data-variant='outdoor'] {
+  background: linear-gradient(160deg, #a5c799 0%, #6fa363 55%, #3e7a3a 100%);
+}
+
+.basemap-switcher__swatch[data-variant='topo'] {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.12) 0 1px,
+      transparent 1px 6px
+    ),
+    linear-gradient(160deg, #d9c7a4 0%, #a78a5e 100%);
+}
+
+.basemap-switcher__swatch[data-variant='satellite'] {
+  background: radial-gradient(circle at 30% 35%, #4a4a4a 0%, #1c1c1c 100%);
+}
+
+.basemap-switcher__swatch[data-variant='hybrid'] {
+  background:
+    linear-gradient(transparent 0 60%, rgba(0, 0, 0, 0.35) 100%),
+    radial-gradient(circle at 35% 40%, #5e6a52 0%, #1c1c1c 100%);
+}
+
+.basemap-switcher__swatch[data-variant='streets'] {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 8px,
+      rgba(0, 0, 0, 0.12) 8px 10px
+    ),
+    linear-gradient(160deg, #efe7d8 0%, #d5cab1 100%);
+}
+
+.basemap-switcher__swatch[data-variant='winter'] {
+  background: linear-gradient(160deg, #ffffff 0%, #c9dbe4 55%, #7d99a6 100%);
+}
+
+.basemap-switcher__label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  color: rgba(246, 247, 246, 0.92);
+}
+
+.basemap-switcher__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.basemap-switcher__toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.basemap-switcher__toggle input[type='checkbox'] {
+  margin-top: 0.2rem;
+  accent-color: #2f8f6f;
+  cursor: pointer;
+}
+
+.basemap-switcher__toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.basemap-switcher__toggle-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.basemap-switcher__toggle-description {
+  font-size: 0.72rem;
+  color: rgba(246, 247, 246, 0.65);
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .basemap-switcher__panel {
+    /* On phones the panel can grow nearly to full width; clamp so it
+       never clips off-screen but still leaves a small margin. */
+    width: min(280px, calc(100vw - 1.5rem));
+  }
+}
+
 /* -------------------------------- Header --------------------------------- */
 .site-header {
   position: relative;
