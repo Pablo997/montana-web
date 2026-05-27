@@ -53,6 +53,27 @@ export function normalizeIntervalSeconds(input: unknown): number {
   return rounded;
 }
 
+/**
+ * Per-subscription Do-Not-Disturb settings. `null` ⇒ DnD is disabled,
+ * matching the NULL sentinel on `push_subscriptions.quiet_hours_*`.
+ *
+ * `start`/`end` are 24h wall-clock strings in `HH:MM` format. The
+ * server interprets them in `timezone` (IANA name, e.g.
+ * `Europe/Madrid`). `start === end` means "no window" and is also
+ * treated as DnD off on the SQL side; we accept the value so the user
+ * can keep their tz/override choices around and re-enable later by
+ * changing only one of the bounds.
+ *
+ * `criticalOverride` lets severity=severe incidents bypass DnD. False
+ * by default — the user has to opt into being woken up.
+ */
+export interface QuietHours {
+  start: string; // "HH:MM"
+  end: string; // "HH:MM"
+  timezone: string; // IANA
+  criticalOverride: boolean;
+}
+
 export interface PushPreferences {
   center: { lat: number; lng: number };
   radiusKm: number;
@@ -64,6 +85,58 @@ export interface PushPreferences {
    * via `normalizeIntervalSeconds` on its way in.
    */
   minIntervalSeconds: number;
+  /** DnD window, or null when DnD is off. */
+  quietHours: QuietHours | null;
+}
+
+/** Matches `HH:MM` with 24h hours. Used to guard server-bound values. */
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Validate an `HH:MM` string. Anything else is treated as missing. */
+export function isValidTimeString(value: unknown): value is string {
+  return typeof value === 'string' && TIME_RE.test(value);
+}
+
+/**
+ * Returns the browser's IANA timezone (e.g. `Europe/Madrid`) so we can
+ * persist quiet-hours wall-clock values without ambiguity. Falls back
+ * to UTC if the platform can't tell us (very old browsers, some
+ * privacy-hardened setups). The fallback is honest rather than
+ * silently wrong: a UTC-quiet-hours user can still manually switch the
+ * stored tz if they ever notice the discrepancy.
+ */
+export function detectBrowserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+/**
+ * Normalises a quiet-hours payload coming from the DB (where SQL TIME
+ * values arrive as `HH:MM:SS` strings) into the UI's `HH:MM` shape, or
+ * returns null when DnD is disabled / malformed. Defensive against
+ * partial rows because stale clients writing through the upsert RPC
+ * could in principle skip one of the fields.
+ */
+export function parseQuietHoursRow(row: {
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  quiet_hours_timezone: string | null;
+  quiet_hours_critical_override: boolean | null;
+}): QuietHours | null {
+  const start = row.quiet_hours_start?.slice(0, 5) ?? null;
+  const end = row.quiet_hours_end?.slice(0, 5) ?? null;
+  const tz = row.quiet_hours_timezone ?? null;
+  if (!start || !end || !tz) return null;
+  if (!isValidTimeString(start) || !isValidTimeString(end)) return null;
+  return {
+    start,
+    end,
+    timezone: tz,
+    criticalOverride: Boolean(row.quiet_hours_critical_override),
+  };
 }
 
 export interface PushStatus {
@@ -174,6 +247,25 @@ export async function subscribe(prefs: PushPreferences): Promise<void> {
   }
 
   const supabase = createSupabaseBrowserClient();
+  // Coerce quiet-hours into the shape the RPC expects: either four
+  // non-null values or four nulls (mirrors the DB CHECK). Validate
+  // `HH:MM` here so the server-side error message stays generic.
+  const qh = prefs.quietHours;
+  const qhPayload =
+    qh && isValidTimeString(qh.start) && isValidTimeString(qh.end) && qh.timezone
+      ? {
+          p_quiet_hours_start: qh.start,
+          p_quiet_hours_end: qh.end,
+          p_quiet_hours_timezone: qh.timezone,
+          p_quiet_hours_critical_override: qh.criticalOverride,
+        }
+      : {
+          p_quiet_hours_start: null,
+          p_quiet_hours_end: null,
+          p_quiet_hours_timezone: null,
+          p_quiet_hours_critical_override: false,
+        };
+
   const { error } = await supabase.rpc('upsert_push_subscription', {
     p_endpoint: json.endpoint,
     p_p256dh: json.keys.p256dh,
@@ -184,6 +276,7 @@ export async function subscribe(prefs: PushPreferences): Promise<void> {
     p_min_severity: prefs.minSeverity,
     p_enabled: prefs.enabled,
     p_min_push_interval_seconds: normalizeIntervalSeconds(prefs.minIntervalSeconds),
+    ...qhPayload,
   });
 
   if (error) throw new Error(error.message);
@@ -220,6 +313,7 @@ export async function loadPreferences(): Promise<PushPreferences | null> {
     // through the migration's default; normalise so the UI always has
     // a valid number to render.
     minIntervalSeconds: normalizeIntervalSeconds(row.min_push_interval_seconds),
+    quietHours: parseQuietHoursRow(row),
   };
 }
 

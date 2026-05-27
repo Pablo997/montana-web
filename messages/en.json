@@ -543,7 +543,14 @@
       "loadError": "Failed to load settings.",
       "locationError": "Could not read your location. Check browser permissions.",
       "saveError": "Could not save.",
-      "unsubscribeError": "Could not unsubscribe."
+      "unsubscribeError": "Could not unsubscribe.",
+      "quietHoursLegend": "Do not disturb",
+      "quietHoursDescription": "Silence notifications during a daily window. Useful for keeping nights free of pings.",
+      "quietHoursToggle": "Enable quiet hours",
+      "quietHoursStart": "From",
+      "quietHoursEnd": "Until",
+      "quietHoursTimezone": "Timezone: {tz}",
+      "quietHoursCriticalOverride": "Still allow severe alerts during quiet hours"
     }
   },
   "legal": {

@@ -543,7 +543,14 @@
       "loadError": "No se pudieron cargar los ajustes.",
       "locationError": "No se pudo leer tu ubicación. Revisa los permisos del navegador.",
       "saveError": "No se pudieron guardar los ajustes.",
-      "unsubscribeError": "No se pudieron desactivar las notificaciones."
+      "unsubscribeError": "No se pudieron desactivar las notificaciones.",
+      "quietHoursLegend": "No molestar",
+      "quietHoursDescription": "Silencia las notificaciones durante una franja diaria. Útil para no recibir avisos por la noche.",
+      "quietHoursToggle": "Activar franja sin notificaciones",
+      "quietHoursStart": "Desde",
+      "quietHoursEnd": "Hasta",
+      "quietHoursTimezone": "Zona horaria: {tz}",
+      "quietHoursCriticalOverride": "Permitir avisos graves aunque esté en silencio"
     }
   },
   "legal": {
