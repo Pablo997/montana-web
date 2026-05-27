@@ -179,18 +179,39 @@ export function MapView() {
     setMapReady(false);
     const nextStyle = getBasemap(basemapId).style;
 
-    const onStyleData = () => {
-      // `styledata` fires multiple times during the load (once per
-      // source ready). We only want to re-attach our overlays after
-      // the new style has fully settled.
-      if (!map.isStyleLoaded()) return;
-      map.off('styledata', onStyleData);
+    // Detach 3D terrain BEFORE the style swap. MapLibre keeps a
+    // reference to the active terrain config and tries to render it
+    // against the outgoing style for one frame after `setStyle()`
+    // — the new painter doesn't yet have the terrain shader compiled,
+    // so it crashes with the cryptic
+    // `Cannot read properties of undefined (reading 'shaderPreludeCode')`.
+    // Setting terrain to null releases the reference so the swap
+    // happens against a flat painter, then we re-apply terrain once
+    // the new style is parsed.
+    try {
+      map.setTerrain(null);
+    } catch {
+      /* not all SDK versions accept null here — defensive only */
+    }
+
+    // `style.load` is MapLibre's "the new style spec is fully parsed
+    // and applied" event — fires exactly once per `setStyle()` call.
+    // It's the right hook for re-attaching our custom sources / layers:
+    //
+    //   * `styledata` fires repeatedly during a style swap (once per
+    //     source ready) and `isStyleLoaded()` flickers between true
+    //     and false during the same window, which previously made
+    //     `IncidentMarkers` race the parser and crash with
+    //     "Style is not done loading" when it tried to add its
+    //     GeoJSON source.
+    //   * `idle` would also work but only fires once tiles are
+    //     loaded, which can be seconds later on a slow network — we
+    //     don't want to hold `mapReady` that long.
+    map.once('style.load', () => {
       applyTerrain(map);
       if (hillshadeEnabledRef.current) applyHillshade(map);
       setMapReady(true);
-    };
-
-    map.on('styledata', onStyleData);
+    });
     map.setStyle(nextStyle);
   }, [basemapId]);
 
