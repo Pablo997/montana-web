@@ -106,64 +106,90 @@ export function IncidentMarkers({ map }: Props) {
   // layers that keep the source alive in the tile pipeline. Without
   // those layers, MapLibre never bothers to load the tiles and
   // `querySourceFeatures` always returns an empty array.
+  //
+  // The effect runs on mount AND whenever `MapView` swaps basemaps
+  // (via its `key={basemapId}` prop). On swap, MapLibre's
+  // `setStyle()` is in flight — calling `addSource` while the style
+  // is mid-parse throws "Style is not done loading". We guard by
+  // checking `isStyleLoaded()` and deferring to the next
+  // `styledata` event if not. The flag latches so we only register
+  // once even though `styledata` keeps firing during tile load.
   useEffect(() => {
-    if (!map.getSource(SOURCE_ID)) {
-      map.addSource(SOURCE_ID, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true,
-        clusterMaxZoom: CLUSTER_MAX_ZOOM,
-        clusterRadius: CLUSTER_RADIUS,
-        // Aggregate max severity so the cluster bubble can colour itself
-        // red when any incident inside is severe.
-        clusterProperties: {
-          maxSev: ['max', ['get', 'severityWeight']],
-        },
-      });
-    }
+    let added = false;
 
-    if (!map.getLayer(GHOST_CLUSTER_LAYER_ID)) {
-      map.addLayer({
-        id: GHOST_CLUSTER_LAYER_ID,
-        type: 'circle',
-        source: SOURCE_ID,
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-radius': 1,
-          'circle-opacity': 0,
-          'circle-stroke-width': 0,
-        },
-      });
-    }
+    const tryRegister = () => {
+      if (added) return;
+      if (!map.isStyleLoaded()) return;
 
-    if (!map.getLayer(GHOST_POINT_LAYER_ID)) {
-      map.addLayer({
-        id: GHOST_POINT_LAYER_ID,
-        type: 'circle',
-        source: SOURCE_ID,
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-radius': 1,
-          'circle-opacity': 0,
-          'circle-stroke-width': 0,
-        },
-      });
-    }
+      if (!map.getSource(SOURCE_ID)) {
+        map.addSource(SOURCE_ID, {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+          cluster: true,
+          clusterMaxZoom: CLUSTER_MAX_ZOOM,
+          clusterRadius: CLUSTER_RADIUS,
+          clusterProperties: {
+            maxSev: ['max', ['get', 'severityWeight']],
+          },
+        });
+      }
+
+      if (!map.getLayer(GHOST_CLUSTER_LAYER_ID)) {
+        map.addLayer({
+          id: GHOST_CLUSTER_LAYER_ID,
+          type: 'circle',
+          source: SOURCE_ID,
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-radius': 1,
+            'circle-opacity': 0,
+            'circle-stroke-width': 0,
+          },
+        });
+      }
+
+      if (!map.getLayer(GHOST_POINT_LAYER_ID)) {
+        map.addLayer({
+          id: GHOST_POINT_LAYER_ID,
+          type: 'circle',
+          source: SOURCE_ID,
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-radius': 1,
+            'circle-opacity': 0,
+            'circle-stroke-width': 0,
+          },
+        });
+      }
+
+      added = true;
+      map.off('styledata', tryRegister);
+    };
+
+    tryRegister();
+    if (!added) map.on('styledata', tryRegister);
+
+    return () => {
+      map.off('styledata', tryRegister);
+    };
   }, [map]);
 
   // 2) Feed the filtered incidents into the source. MapLibre reclusters
   // on each `setData` call.
+  //
+  // The source might not be registered yet on the very first render
+  // after a basemap swap (effect #1 above is deferred via
+  // `styledata`). The fallback handles that race: bind a one-shot
+  // listener that re-fires this effect's body once the source
+  // actually exists, otherwise the markers would stay empty until
+  // the next filter / fetch change.
   useEffect(() => {
-    const source = map.getSource(SOURCE_ID) as
-      | (maptilersdk.GeoJSONSource & { setData: (d: unknown) => void })
-      | undefined;
-    if (!source) return;
-    source.setData({
-      type: 'FeatureCollection',
+    const featureCollection = {
+      type: 'FeatureCollection' as const,
       features: visibleIncidents.map((incident) => ({
-        type: 'Feature',
+        type: 'Feature' as const,
         geometry: {
-          type: 'Point',
+          type: 'Point' as const,
           coordinates: [incident.location.lng, incident.location.lat],
         },
         properties: {
@@ -172,7 +198,26 @@ export function IncidentMarkers({ map }: Props) {
           severityWeight: SEVERITY_WEIGHT[incident.severity],
         },
       })),
-    });
+    };
+
+    const pushData = (): boolean => {
+      const source = map.getSource(SOURCE_ID) as
+        | (maptilersdk.GeoJSONSource & { setData: (d: unknown) => void })
+        | undefined;
+      if (!source) return false;
+      source.setData(featureCollection);
+      return true;
+    };
+
+    if (pushData()) return;
+
+    const onSourceReady = () => {
+      if (pushData()) map.off('styledata', onSourceReady);
+    };
+    map.on('styledata', onSourceReady);
+    return () => {
+      map.off('styledata', onSourceReady);
+    };
   }, [map, visibleIncidents]);
 
   // 3) Recompute cluster views + unclustered IDs whenever the source

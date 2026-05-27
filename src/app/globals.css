@@ -363,7 +363,17 @@ body {
 
 .basemap-switcher__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* `minmax(0, 1fr)` instead of plain `1fr`: the shorthand defaults
+     to `minmax(auto, 1fr)`, where `auto` lets each column grow to
+     its min-content. Long unbreakable labels ("Excursionismo")
+     therefore expanded their column past 1fr while shorter ones
+     ("Satélite") shrank to the remaining space — visibly unequal
+     tiles. `minmax(0, …)` overrides the floor so every column ends
+     up exactly the same width regardless of label length. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Equal-height rows so the row with the long-label tile doesn't
+     look taller than the one below it. */
+  grid-auto-rows: 1fr;
   gap: 0.45rem;
   margin: 0;
   padding: 0;
@@ -376,6 +386,14 @@ body {
   align-items: center;
   gap: 0.3rem;
   width: 100%;
+  /* Stretch to fill the grid cell so every tile is the same height
+     regardless of how the label wraps. */
+  height: 100%;
+  /* `min-width: 0` neutralises the default `min-width: auto` flex
+     items inherit, which would let an unbreakable label push the
+     button (and therefore the grid cell) wider than its allotted
+     1fr share. Pairs with `minmax(0, 1fr)` on the grid above. */
+  min-width: 0;
   padding: 0.45rem 0.3rem 0.4rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
@@ -460,6 +478,18 @@ body {
   text-align: center;
   line-height: 1.2;
   color: rgba(246, 247, 246, 0.92);
+  /* Pin the label to the bottom of the option so the swatch sits
+     hard against the top edge across every row, even when labels
+     wrap to a different number of lines. */
+  margin-top: auto;
+  /* Allow long single words ("Excursionismo", "Topográfico") to
+     break inside the narrow column instead of stretching the cell.
+     `anywhere` is the aggressive form that breaks anywhere needed;
+     `break-word` would also work but leaves trailing whitespace
+     visible at column edges. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .basemap-switcher__toggle {

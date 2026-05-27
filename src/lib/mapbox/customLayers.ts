@@ -71,14 +71,25 @@ export function applyTerrain(map: maptilersdk.Map): void {
 }
 
 /**
- * Adds the hillshade overlay below the first label / symbol layer. No
- * effect if it's already present.
+ * Adds the hillshade overlay just below the first label / symbol
+ * layer. No-op if it's already present.
  *
- * The chosen colours are deliberately desaturated: a pure-black shadow
- * makes the outdoor / topo styles muddy, and a pure-white highlight
- * blows out snow areas on Satellite. The picks here read well over
- * every basemap we ship (verified manually against Pyrenees + Picos
- * de Europa tiles).
+ * Tuning notes:
+ *
+ *   * `exaggeration: 1.0` — full strength on purpose. Outdoor and
+ *     Topo basemaps already include a baked-in hillshade, so a
+ *     subtle layer on top is invisible. Pushing to 1.0 makes the
+ *     toggle a real visual change on every basemap (most noticeable
+ *     on Satellite and Streets where there's no baked relief).
+ *   * Warm-shadow colour (`#3b2b1a`) borrowed from cartographic
+ *     conventions for outdoor / topographic styling: pure black
+ *     looks like a UI artefact, warm brown reads as "natural
+ *     terrain". The matching accent extends the effect to slopes
+ *     that face neither sun nor shadow.
+ *   * `findFirstSymbolLayer` places us below labels but ABOVE all
+ *     fill / raster layers in the basemap (including the satellite
+ *     imagery and the existing hillshade in Outdoor / Topo). The
+ *     additive blend is what gives the user a perceptible change.
  */
 export function applyHillshade(map: maptilersdk.Map): void {
   ensureDemSource(map);
@@ -90,10 +101,10 @@ export function applyHillshade(map: maptilersdk.Map): void {
       type: 'hillshade',
       source: TERRAIN_DEM_SOURCE_ID,
       paint: {
-        'hillshade-shadow-color': '#2c2c2c',
-        'hillshade-highlight-color': '#ffffff',
-        'hillshade-accent-color': '#503e2b',
-        'hillshade-exaggeration': 0.55,
+        'hillshade-shadow-color': '#3b2b1a',
+        'hillshade-highlight-color': 'rgba(255, 245, 230, 0.85)',
+        'hillshade-accent-color': '#6e4a26',
+        'hillshade-exaggeration': 1,
       },
     },
     beforeId,
