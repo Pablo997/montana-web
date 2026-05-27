@@ -553,6 +553,19 @@
       "quietHoursCriticalOverride": "Still allow severe alerts during quiet hours"
     }
   },
+  "notifications": {
+    "triggerAriaLabel": "Open notifications",
+    "triggerAriaLabelUnread": "Open notifications, {count} unread",
+    "title": "Notifications",
+    "loading": "Loading…",
+    "empty": "No notifications yet. We'll let you know when something gets reported near you.",
+    "markAllRead": "Mark all as read",
+    "itemAriaLabel": "{title} — {severity}",
+    "relativeJustNow": "just now",
+    "relativeMinutes": "{count}m ago",
+    "relativeHours": "{count}h ago",
+    "relativeDays": "{count}d ago"
+  },
   "legal": {
     "privacyTitle": "Privacy Policy",
     "termsTitle": "Terms and Conditions",

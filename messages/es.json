@@ -553,6 +553,19 @@
       "quietHoursCriticalOverride": "Permitir avisos graves aunque esté en silencio"
     }
   },
+  "notifications": {
+    "triggerAriaLabel": "Abrir notificaciones",
+    "triggerAriaLabelUnread": "Abrir notificaciones, {count} sin leer",
+    "title": "Notificaciones",
+    "loading": "Cargando…",
+    "empty": "Aún no tienes notificaciones. Te avisaremos cuando se reporte algo cerca.",
+    "markAllRead": "Marcar todas como leídas",
+    "itemAriaLabel": "{title} — {severity}",
+    "relativeJustNow": "ahora mismo",
+    "relativeMinutes": "hace {count} min",
+    "relativeHours": "hace {count} h",
+    "relativeDays": "hace {count} d"
+  },
   "legal": {
     "privacyTitle": "Política de Privacidad",
     "termsTitle": "Términos y Condiciones",

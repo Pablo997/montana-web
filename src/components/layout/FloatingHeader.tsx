@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { isCurrentUserAdmin } from '@/lib/admin/auth';
 import { Logo } from '@/components/brand/Logo';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserMenu } from './UserMenu';
 
 /**
@@ -41,7 +42,10 @@ export async function FloatingHeader() {
 
       <div className="floating-header__actions">
         {user ? (
-          <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />
+          <>
+            <NotificationBell isAuthenticated={true} />
+            <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />
+          </>
         ) : (
           <Link href="/auth/sign-in" className="button button--primary">
             {t('signIn')}
