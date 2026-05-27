@@ -164,6 +164,23 @@ Deno.serve(async (req) => {
     );
   }
 
+  // In-app notification feed. Run BEFORE the push fan-out so that
+  // even if push delivery fails (network, provider 5xx), the user
+  // still has a persistent record they can recover from the bell
+  // dropdown. The RPC is idempotent — ON CONFLICT DO NOTHING — so a
+  // retry of this entire endpoint won't duplicate entries.
+  //
+  // Failure here is logged but not fatal: a missed feed insert is
+  // strictly less bad than a missed push. The push path keeps going.
+  const { data: enqueued, error: enqueueErr } = await supabase.rpc(
+    'enqueue_inapp_notifications',
+    { incident_ids: incidentIds },
+  );
+  if (enqueueErr) {
+    console.error('enqueue_inapp_notifications failed', enqueueErr);
+  }
+  const enqueuedCount = Array.isArray(enqueued) ? enqueued.length : 0;
+
   const { data: rows, error: fanErr } = await supabase.rpc(
     'push_fanout_for_incidents',
     { incident_ids: incidentIds },
@@ -215,6 +232,10 @@ Deno.serve(async (req) => {
       fanout: fanout.length,
       sent: sentIds.length,
       gone: goneIds.length,
+      // `inapp` is the number of NEW in-app feed entries created this
+      // tick (existing dedup rows are not counted). Useful when
+      // debugging "why didn't I see a bell for this incident".
+      inapp: enqueuedCount,
       durationMs: Date.now() - startedAt,
     }),
     { headers: { 'content-type': 'application/json' } },

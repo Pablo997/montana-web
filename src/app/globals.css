@@ -646,6 +646,198 @@ body {
   }
 }
 
+/* ------------------------- Notification bell ----------------------------- */
+/* Lives in the floating header next to the user menu trigger. The
+ * dropdown follows the same dark-glass pattern as `.user-menu__panel`
+ * for visual continuity; we just allow it to be a bit wider so two
+ * lines of body copy don't truncate to ellipsis on most incidents.
+ */
+.notification-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notification-bell__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: rgba(15, 20, 18, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #e9efec;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.notification-bell__trigger:hover,
+.notification-bell__trigger:focus-visible {
+  background: rgba(15, 20, 18, 0.92);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Unread count pill. Anchored top-right of the bell. Uses brand-strong
+ * (the contrast-safe green) instead of red to stay on-brand: this is
+ * not an error indicator, it's "new content". Tabular-numerals so
+ * counts >9 (rendered as "9+") don't shift the layout pixel by pixel
+ * when the number changes. */
+.notification-bell__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--color-brand-strong, #247657);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid rgba(15, 20, 18, 0.95);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.notification-bell__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(360px, calc(100vw - 1.5rem));
+  max-height: min(70dvh, 480px);
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--color-bg, #0f1412) 94%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  z-index: 30;
+  animation: user-menu-in 140ms ease-out;
+  overflow: hidden;
+}
+
+.notification-bell__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.notification-bell__title {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.notification-bell__mark-all {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--color-brand-strong, #247657);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notification-bell__status,
+.notification-bell__empty {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #8e98a3;
+}
+
+.notification-bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.notification-bell__item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.notification-bell__item:last-child {
+  border-bottom: 0;
+}
+
+.notification-bell__item--unread {
+  background: rgba(36, 118, 87, 0.08);
+}
+
+.notification-bell__link {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.notification-bell__link:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.notification-bell__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45rem;
+  border-radius: 999px;
+  /* Default colour for "mild"; the severity-specific modifiers below
+   * override. Keeps the dot visible even if a future severity slips in
+   * without a stylesheet update. */
+  background: #6f7a72;
+}
+
+.notification-bell__dot--mild {
+  background: #6f7a72;
+}
+.notification-bell__dot--moderate {
+  background: #e6a23c;
+}
+.notification-bell__dot--severe {
+  background: #c8463f;
+}
+
+.notification-bell__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.notification-bell__item-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  /* Two-line clamp keeps long titles from blowing up row height. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-bell__meta {
+  font-size: 0.75rem;
+  color: #8e98a3;
+}
+
 /* --------------------------------- Auth ---------------------------------- */
 .auth {
   display: grid;
