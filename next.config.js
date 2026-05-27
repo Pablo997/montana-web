@@ -44,6 +44,25 @@ const nextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      {
+        // Tell shared caches (CDN, browser, intermediary proxies) that
+        // the *same URL* may return different HTML depending on the
+        // user's `NEXT_LOCALE` cookie or `Accept-Language` header.
+        // Without this, a Vercel edge cache could serve the Spanish
+        // HTML to an English visitor (or vice-versa) once the page is
+        // warmed up. Scoped to user-facing HTML routes; API routes
+        // (`/api/*`) don't render localised markup, so they're not
+        // included to avoid cache-fragmenting JSON responses.
+        //
+        // This is the cookie-based-locale equivalent of `hreflang` —
+        // we don't have distinct URLs per language, so the only honest
+        // SEO signal we can ship is "this URL varies; cache it per
+        // negotiation key". See README → Internationalization.
+        source: '/((?!api/|_next/|monitoring).*)',
+        headers: [
+          { key: 'Vary', value: 'Cookie, Accept-Language' },
+        ],
+      },
     ];
   },
 };

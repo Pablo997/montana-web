@@ -5,6 +5,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { RegisterServiceWorker } from '@/components/pwa/RegisterServiceWorker';
+import { LOCALES } from '@/i18n/config';
 import { SITE_NAME, SITE_URL, siteSeo } from '@/lib/seo/config';
 import './globals.css';
 
@@ -61,6 +62,19 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: 'website',
       locale: seo.ogLocale,
+      // List every locale the site can serve *except* the active one.
+      // Social-media previewers (Twitter, Slack, Discord) use this to
+      // hint that an alternate-language version exists. We intentionally
+      // do NOT emit `<link rel="alternate" hreflang>` from here because
+      // the app currently serves both languages from the same URL
+      // (cookie-based locale, no routing prefix). Until we move to
+      // path-based locales (`/es/...` vs `/en/...`), declaring hreflang
+      // would mislead Google about which URL serves which language —
+      // see the "Internationalization" section in the README for the
+      // migration plan.
+      alternateLocale: LOCALES.filter((l) => l !== locale).map(
+        (l) => siteSeo(l).ogLocale,
+      ),
       url: SITE_URL,
       siteName: SITE_NAME,
       title: `${SITE_NAME} — ${seo.description.split(/[.,—]/)[0]}`,
