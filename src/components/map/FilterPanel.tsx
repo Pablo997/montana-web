@@ -145,6 +145,19 @@ export function FilterPanel() {
         aria-expanded={open}
         aria-haspopup="dialog"
       >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
         <span>{t('open')}</span>
         {activeCount > 0 ? (
           <span className="filter-panel__badge">{activeCount}</span>
@@ -168,6 +181,12 @@ export function FilterPanel() {
                 onChange={(e) => setQueryDraft(e.target.value)}
                 autoComplete="off"
               />
+              {/* Differentiates from the place-search bar in the
+                  top-left. Users had no obvious cue that one search
+                  hits geocoding (worldwide places) and the other
+                  filters the currently-loaded incidents by title /
+                  description. */}
+              <span className="filter-panel__hint">{t('searchHint')}</span>
             </label>
           </section>
 

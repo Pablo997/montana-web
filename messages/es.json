@@ -58,10 +58,11 @@
       "dismiss": "Descartar"
     },
     "filters": {
-      "title": "Filtros del mapa",
-      "open": "Filtros",
-      "search": "Buscar",
+      "title": "Filtrar incidencias",
+      "open": "Incidencias",
+      "search": "Filtrar por texto",
       "searchPlaceholder": "Título o descripción…",
+      "searchHint": "Filtra las incidencias ya visibles en el mapa. Para buscar un lugar, usa la barra de búsqueda.",
       "type": "Tipo",
       "severity": "Gravedad",
       "severityAny": "Cualquiera",
@@ -77,12 +78,27 @@
       "validatedOnly": "Solo validadas",
       "countShown": "{visible} de {total} visibles",
       "reset": "Restablecer",
-      "dialogLabel": "Filtros del mapa"
+      "dialogLabel": "Filtrar incidencias"
     },
     "pickBanner": {
       "title": "Toca el mapa para fijar tu centro de alertas",
       "cancel": "Cancelar",
       "help": "O mantén pulsado sobre el punto exacto para mayor precisión."
+    },
+    "search": {
+      "triggerAriaLabel": "Abrir búsqueda de lugares",
+      "backAriaLabel": "Cerrar búsqueda",
+      "placeholder": "Buscar lugares…",
+      "inputAriaLabel": "Buscar un lugar",
+      "clearAriaLabel": "Borrar búsqueda",
+      "listAriaLabel": "Resultados de búsqueda",
+      "loading": "Buscando…",
+      "empty": "Sin resultados.",
+      "error": "No se ha podido conectar con el buscador.",
+      "minChars": "Escribe al menos {min} caracteres.",
+      "recents": "Recientes",
+      "clear": "Borrar",
+      "hint": "Búsqueda mundial — los lugares más cercanos a la vista actual aparecen primero."
     },
     "basemap": {
       "triggerAriaLabel": "Capas del mapa",

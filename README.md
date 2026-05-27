@@ -10,7 +10,8 @@ Montana lets hikers, trail runners and climbers report hazards (blocked trails, 
 
 ## Features
 
-- Interactive 3D terrain map (MapTiler Outdoor + terrain DEM).
+- Interactive 3D terrain map (MapTiler) with a **basemap switcher** (Outdoor, Topo, Satellite, Hybrid, Streets, Winter) and an optional **hillshade overlay**. User choice is persisted to `localStorage`.
+- **Place search** (MapTiler Geocoding) with proximity-based ranking around the current view, recent-searches memory and worldwide coverage — no viewport restriction.
 - Report incidents with type, severity, title, description and up to 3 compressed photos.
 - Up / down voting with automatic status transitions driven by database triggers.
 - Real-time updates via Supabase Realtime — markers move/appear/disappear live.

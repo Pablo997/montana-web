@@ -287,6 +287,271 @@ body {
   }
 }
 
+/* ------------------------------ Search bar ------------------------------- */
+/* Geocoder pinned in the top-left action column above the filter panel.
+   Colours track the global dark theme — `--color-surface` is the
+   dark-green panel, `--color-text` the off-white primary text, and
+   `--color-text-muted` the desaturated mountain-green used for
+   secondary copy. Earlier revisions hard-coded grey text values that
+   ended up dark-on-dark and effectively invisible. */
+.map-search {
+  position: relative;
+  width: clamp(220px, 28vw, 320px);
+}
+
+/* Collapsed mode: trigger only, no input visible. Used on phones
+   (default) and after the user dismisses an open dropdown there. */
+.map-search--collapsed {
+  width: auto;
+}
+
+/* Mobile expanded mode: the bar breaks out of the top-left overlay
+   and pins to the screen edges via `position: fixed`. A high
+   z-index puts it above the floating header (brand + bell + user
+   menu, all at `z-index: 6`) so the user types in a clean surface
+   instead of fighting overlapping controls. The opaque
+   `--color-surface` background completes the illusion of replacing
+   the header for the duration of the search session.
+   Only takes effect on viewports ≤720px via the media query below. */
+@media (max-width: 720px) {
+  .map-search--mobile-active {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    z-index: 20;
+  }
+}
+
+.map-search__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.map-search__trigger:hover {
+  border-color: var(--color-brand);
+}
+
+.map-search__trigger:active {
+  transform: scale(0.95);
+}
+
+.map-search__inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.map-search__icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* Mobile back-arrow that collapses the search. Sits at the same
+   slot as the static `__icon` (absolute, left-aligned inside the
+   input wrap) but is a real button so it captures touches and
+   announces itself to screen readers. The input padding-left
+   below is already wide enough to clear it. */
+.map-search__back {
+  position: absolute;
+  left: 0.35rem;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.map-search__back:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.map-search__input {
+  width: 100%;
+  height: 40px;
+  /* Left padding sized to clear the back-arrow button on mobile
+     (32px wide + 0.35rem left ≈ 2.35rem). Right padding clears the
+     clear "×" button. */
+  padding: 0 2.25rem 0 2.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.92rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.map-search__input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow:
+    0 0 0 3px rgba(47, 143, 111, 0.28),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.map-search__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.85;
+}
+
+/* The browser-rendered "x" inside type=search varies wildly across
+   engines; we draw our own so it sits at a consistent position. */
+.map-search__input::-webkit-search-cancel-button,
+.map-search__input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.map-search__clear {
+  position: absolute;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-search__clear:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.map-search__panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  color: var(--color-text);
+  z-index: 10;
+}
+
+.map-search__status {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.map-search__status--error {
+  /* `#ff8c7a` reads at ~7.5:1 against `--color-surface`, well above
+     WCAG AA. The original `#c0392b` was too dark for the dark panel. */
+  color: #ff8c7a;
+}
+
+.map-search__sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.map-search__textButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  cursor: pointer;
+}
+
+.map-search__textButton:hover {
+  text-decoration: underline;
+}
+
+.map-search__list {
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+}
+
+.map-search__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: background-color 80ms ease;
+}
+
+.map-search__item:hover,
+.map-search__item[data-active] {
+  background: rgba(47, 143, 111, 0.18);
+}
+
+.map-search__itemTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.map-search__itemSubtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.map-search__footer {
+  margin: 0;
+  padding: 0.5rem 0.9rem 0.55rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* The collapsed-icon → fixed-expanded transition above replaces an
+   earlier rule that just widened the inline bar inside the overlay
+   on mobile. That ran into z-index collisions with the floating
+   header; the fixed positioning + high z-index handles it cleanly. */
+
 /* ---------------------------- Basemap switcher --------------------------- */
 /* Floating layer-picker pinned in the bottom-right action column alongside
    the locate + report buttons. Trigger mirrors the locate-button visual
@@ -344,6 +609,13 @@ body {
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   color: #f6f7f6;
+  /* MapLibre's native NavigationControl (zoom + compass) renders at
+     z-index 2 in the top-right. Without an explicit value here the
+     panel inherits `auto` and on smaller viewports — where it grows
+     tall enough to reach the top-right corner — the zoom buttons
+     render in front of the panel. Matches the user-menu /
+     notification-bell stacking. */
+  z-index: 30;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -884,11 +1156,19 @@ body {
    full email + caret are still semantically there (screen readers
    get it via aria-label on the trigger) and they come back on
    wider screens. 520px is a touch above typical phone widths,
-   which leaves small tablets with the full label. */
+   which leaves small tablets with the full label.
+
+   Width / height locked to 38px so the trigger optically matches
+   the notification bell next to it. Without an explicit size the
+   trigger collapsed to `padding(0.4rem) + 18px icon ≈ 31px` —
+   visibly smaller than the bell's 38px square. */
 @media (max-width: 520px) {
   .user-menu__trigger {
-    padding: 0.4rem;
+    width: 38px;
+    height: 38px;
+    padding: 0;
     gap: 0;
+    justify-content: center;
   }
   .user-menu__email,
   .user-menu__caret {
@@ -962,6 +1242,11 @@ body {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
+  /* On wide screens the panel anchors to the bell trigger's right
+     edge. The mobile media query below switches to viewport-pinned
+     positioning so it can't overflow off the left side of the
+     screen when the bell sits ~50px from the right edge of a
+     360px-wide phone. */
   width: min(360px, calc(100vw - 1.5rem));
   max-height: min(70dvh, 480px);
   display: flex;
@@ -975,6 +1260,24 @@ body {
   z-index: 30;
   animation: user-menu-in 140ms ease-out;
   overflow: hidden;
+}
+
+/* Mobile: pin the panel to the viewport instead of anchoring it to
+   the bell trigger. On a 360px phone the bell sits ~50px from the
+   right edge (gap + user menu trigger), so a 336px-wide panel
+   right-aligned to that bell extends past the left of the screen
+   and the first ~25px get clipped. Fixed positioning with explicit
+   left + right margins prevents that and gives the same edge-to-edge
+   feel as the search bar's mobile overlay. */
+@media (max-width: 520px) {
+  .notification-bell__panel {
+    position: fixed;
+    top: 4rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    max-height: calc(100dvh - 5rem);
+  }
 }
 
 .notification-bell__header {
@@ -1258,7 +1561,11 @@ body {
 .map__overlay--bottom-left {
   top: auto;
   left: 1rem;
-  bottom: 1rem;
+  /* Clear the MapLibre attribution strip ("© OpenStreetMap
+     contributors") which renders at the very bottom of the canvas;
+     2.5rem matches the bottom-right column so both action clusters
+     sit on the same baseline. */
+  bottom: 2.5rem;
 }
 
 .map__overlay--bottom-right {
@@ -1323,9 +1630,18 @@ body {
 
 .filter-panel__dropdown {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  /* Anchored to the bottom of the toggle so the panel grows
+     UPWARD. The button now lives in `.map__overlay--bottom-left`,
+     so a downward dropdown would clip off the canvas. */
+  bottom: calc(100% + 0.5rem);
+  top: auto;
   left: 0;
   width: min(22rem, 90vw);
+  /* Cap the panel height to leave breathing room for the search bar
+     above on small screens. `overflow-y: auto` lets long content
+     scroll instead of overflowing onto other floating UI. */
+  max-height: min(70vh, 540px);
+  overflow-y: auto;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -1335,6 +1651,14 @@ body {
   border-radius: 14px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
   z-index: 10;
+}
+
+.filter-panel__hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
 }
 
 .filter-panel__section {

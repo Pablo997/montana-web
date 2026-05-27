@@ -22,6 +22,7 @@ import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { IncidentMarkers } from './IncidentMarkers';
 import { FilterPanel } from './FilterPanel';
 import { BasemapSwitcher } from './BasemapSwitcher';
+import { SearchBar, type PickedPlace } from './SearchBar';
 import { MapEmptyState } from './MapEmptyState';
 import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
@@ -409,6 +410,46 @@ export function MapView() {
       ) : null}
 
       <div className="map__overlay map__overlay--top-left">
+        <SearchBar
+          getMapContext={() => {
+            const map = mapRef.current;
+            if (!map) return { center: null };
+            const c = map.getCenter();
+            return { center: [c.lng, c.lat] };
+          }}
+          onSelect={(place: PickedPlace) => {
+            const map = mapRef.current;
+            if (!map) return;
+            // Prefer the geocoder's bbox when present — `fitBounds`
+            // frames the whole feature (city centre / valley / range)
+            // far better than a hard-coded zoom level.
+            if (place.bbox) {
+              map.fitBounds(
+                [
+                  [place.bbox[0], place.bbox[1]],
+                  [place.bbox[2], place.bbox[3]],
+                ],
+                { padding: 60, duration: 800 },
+              );
+            } else {
+              map.flyTo({
+                center: place.center,
+                zoom: place.suggestedZoom,
+                duration: 800,
+              });
+            }
+          }}
+        />
+      </div>
+
+      {/* Incident filters live in the *bottom*-left so they're not
+          adjacent to the place-search bar above. Two pieces of
+          filtering UI side by side led users to assume the chips
+          were narrowing the search dropdown (they aren't — they
+          filter map markers). Putting filters at the opposite end
+          of the map breaks that association and reinforces that
+          they belong to the map / incident layer. */}
+      <div className="map__overlay map__overlay--bottom-left">
         <FilterPanel />
       </div>
 

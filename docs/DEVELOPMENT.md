@@ -71,7 +71,8 @@ src/
 │  ├─ privacy/ terms/ cookies/
 ├─ components/
 │  ├─ layout/                 # FloatingHeader, UserMenu, LegalNotice, Footer
-│  ├─ map/                    # MapView, IncidentMarkers, FilterPanel, empty state
+│  ├─ map/                    # MapView, IncidentMarkers, FilterPanel,
+│  │                          # SearchBar, BasemapSwitcher, empty state
 │  ├─ incidents/              # IncidentCard, VoteButtons, IncidentForm,
 │  │                          # IncidentDetailsPanel, ReportIncidentButton/Dialog,
 │  │                          # IncidentDeepLinkBootstrap
@@ -200,9 +201,11 @@ To persist across restarts, `ALTER DATABASE postgres SET montana.validation_thre
 
 ### Map rendering
 
-- `MapView` owns the `maptilersdk.Map` instance. Terrain source and DEM are added on `load`.
+- `MapView` owns the `maptilersdk.Map` instance. Terrain source and DEM are added on `load` via `applyTerrain()` (in `src/lib/mapbox/customLayers.ts`).
 - `IncidentMarkers` diff-renders one DOM marker per incident, color-coded by severity. Clicking selects the incident in the store, which opens `IncidentDetailsPanel`.
 - Two independent "pick a point" flows share the crosshair / banner UX but use separate state: incident report (Zustand) and push-notification center (`src/lib/push/pickMode.ts`).
+- **Basemap switcher** (`BasemapSwitcher`) lets users swap between Outdoor / Topo / Satellite / Hybrid / Streets / Winter and toggle a hillshade overlay. Selection is persisted by `useMapPreferencesStore` (localStorage). On swap, `map.setTerrain(null)` runs before `setStyle()` to avoid a known MapLibre shader-prelude crash; once the `style.load` event fires, `applyTerrain()` and (optionally) `applyHillshade()` re-attach to the fresh style. `IncidentMarkers` re-mounts via `key={basemapId}` so its GeoJSON / cluster setup runs fresh.
+- **Place search** (`SearchBar`) calls MapTiler Geocoding (`src/lib/mapbox/geocoding.ts`). Worldwide coverage with `proximity` ranking — we deliberately do **not** pass `bbox`, which would hard-restrict results to the viewport and surprise users searching for distant places. Recent picks live in `useSearchHistoryStore` (LRU of 8, localStorage). `AbortController` cancels in-flight requests on every keystroke.
 
 ### Forms
 
