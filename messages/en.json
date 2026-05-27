@@ -58,10 +58,11 @@
       "dismiss": "Dismiss"
     },
     "filters": {
-      "title": "Map filters",
-      "open": "Filters",
-      "search": "Search",
+      "title": "Filter incidents",
+      "open": "Incidents",
+      "search": "Filter by text",
       "searchPlaceholder": "Title or description…",
+      "searchHint": "Filters incidents already on the map. To find a place, use the search bar.",
       "type": "Type",
       "severity": "Severity",
       "severityAny": "Any",
@@ -77,12 +78,27 @@
       "validatedOnly": "Validated only",
       "countShown": "{visible} of {total} shown",
       "reset": "Reset",
-      "dialogLabel": "Map filters"
+      "dialogLabel": "Filter incidents"
     },
     "pickBanner": {
       "title": "Tap the map to set your alert center",
       "cancel": "Cancel",
       "help": "Or long-press to pinpoint the exact spot."
+    },
+    "search": {
+      "triggerAriaLabel": "Open place search",
+      "backAriaLabel": "Close search",
+      "placeholder": "Search places…",
+      "inputAriaLabel": "Search for a place",
+      "clearAriaLabel": "Clear search",
+      "listAriaLabel": "Search results",
+      "loading": "Searching…",
+      "empty": "No matches.",
+      "error": "Couldn't reach the search service.",
+      "minChars": "Type at least {min} characters.",
+      "recents": "Recent",
+      "clear": "Clear",
+      "hint": "Worldwide search — places nearest the map view are ranked first."
     },
     "basemap": {
       "triggerAriaLabel": "Map layers",
