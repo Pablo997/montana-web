@@ -83,6 +83,20 @@
       "title": "Tap the map to set your alert center",
       "cancel": "Cancel",
       "help": "Or long-press to pinpoint the exact spot."
+    },
+    "basemap": {
+      "triggerAriaLabel": "Map layers",
+      "panelTitle": "Map layers",
+      "basemapsHeading": "Base map",
+      "overlaysHeading": "Overlays",
+      "hillshade": "Hillshade",
+      "hillshadeDescription": "Shaded relief that emphasises slopes and ridges. Works on every base map.",
+      "outdoor": "Outdoor",
+      "topo": "Topographic",
+      "satellite": "Satellite",
+      "hybrid": "Hybrid",
+      "streets": "Streets",
+      "winter": "Winter"
     }
   },
   "incident": {

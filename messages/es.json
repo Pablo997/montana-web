@@ -83,6 +83,20 @@
       "title": "Toca el mapa para fijar tu centro de alertas",
       "cancel": "Cancelar",
       "help": "O mantén pulsado sobre el punto exacto para mayor precisión."
+    },
+    "basemap": {
+      "triggerAriaLabel": "Capas del mapa",
+      "panelTitle": "Capas del mapa",
+      "basemapsHeading": "Mapa base",
+      "overlaysHeading": "Superposiciones",
+      "hillshade": "Sombreado del relieve",
+      "hillshadeDescription": "Realza pendientes y crestas con sombras tridimensionales. Compatible con cualquier mapa base.",
+      "outdoor": "Excursionismo",
+      "topo": "Topográfico",
+      "satellite": "Satélite",
+      "hybrid": "Híbrido",
+      "streets": "Calles",
+      "winter": "Invierno"
     }
   },
   "incident": {
