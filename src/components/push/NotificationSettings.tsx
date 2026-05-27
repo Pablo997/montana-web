@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   DEFAULT_INTERVAL_SECONDS,
+  detectBrowserTimezone,
+  isValidTimeString,
   loadPreferences,
   refreshSubscriptionStatus,
   subscribe,
   unsubscribe,
   type MinSeverity,
   type PushPreferences,
+  type QuietHours,
 } from '@/lib/push/client';
 import { getCurrentPosition } from '@/lib/utils/geolocation';
 
@@ -40,6 +43,23 @@ const DEFAULT_PREFS: Omit<PushPreferences, 'center'> = {
   minSeverity: 'moderate',
   enabled: true,
   minIntervalSeconds: DEFAULT_INTERVAL_SECONDS,
+  // Quiet hours off by default — see the migration comment in
+  // 00036_push_quiet_hours.sql for why we don't ship a "sensible
+  // default" window. tl;dr: silencing notifications without user
+  // consent has a worse failure mode than no DnD at all.
+  quietHours: null,
+};
+
+/**
+ * Defaults the toggle materialises when the user enables DnD for the
+ * first time. 23:00–07:00 is the canonical "night" window across
+ * cultures and a safer starting point than asking the user to invent
+ * one from scratch. They can adjust freely afterwards.
+ */
+const DEFAULT_QUIET_HOURS: Omit<QuietHours, 'timezone'> = {
+  start: '23:00',
+  end: '07:00',
+  criticalOverride: false,
 };
 
 /**
@@ -294,6 +314,104 @@ export function NotificationSettings({
               </select>
               <p className="notification-settings__hint">{t('cooldownHint')}</p>
             </label>
+
+            <fieldset className="notification-settings__field notification-settings__field--quiet-hours">
+              <legend className="notification-settings__label">
+                {t('quietHoursLegend')}
+              </legend>
+              <p className="notification-settings__hint">
+                {t('quietHoursDescription')}
+              </p>
+
+              <label className="notification-settings__radio">
+                <input
+                  type="checkbox"
+                  checked={prefs.quietHours !== null}
+                  onChange={(e) =>
+                    setPrefs((p) => ({
+                      ...p,
+                      quietHours: e.target.checked
+                        ? {
+                            ...DEFAULT_QUIET_HOURS,
+                            timezone: detectBrowserTimezone(),
+                          }
+                        : null,
+                    }))
+                  }
+                  disabled={saving}
+                />
+                <span>{t('quietHoursToggle')}</span>
+              </label>
+
+              {prefs.quietHours ? (
+                <div className="notification-settings__quiet-hours">
+                  <div className="notification-settings__quiet-hours-times">
+                    <label className="notification-settings__quiet-hours-time">
+                      <span>{t('quietHoursStart')}</span>
+                      <input
+                        type="time"
+                        value={prefs.quietHours.start}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (!isValidTimeString(next)) return;
+                          setPrefs((p) =>
+                            p.quietHours
+                              ? { ...p, quietHours: { ...p.quietHours, start: next } }
+                              : p,
+                          );
+                        }}
+                        disabled={saving}
+                        required
+                      />
+                    </label>
+                    <label className="notification-settings__quiet-hours-time">
+                      <span>{t('quietHoursEnd')}</span>
+                      <input
+                        type="time"
+                        value={prefs.quietHours.end}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (!isValidTimeString(next)) return;
+                          setPrefs((p) =>
+                            p.quietHours
+                              ? { ...p, quietHours: { ...p.quietHours, end: next } }
+                              : p,
+                          );
+                        }}
+                        disabled={saving}
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <p className="notification-settings__hint">
+                    {t('quietHoursTimezone', { tz: prefs.quietHours.timezone })}
+                  </p>
+
+                  <label className="notification-settings__radio">
+                    <input
+                      type="checkbox"
+                      checked={prefs.quietHours.criticalOverride}
+                      onChange={(e) =>
+                        setPrefs((p) =>
+                          p.quietHours
+                            ? {
+                                ...p,
+                                quietHours: {
+                                  ...p.quietHours,
+                                  criticalOverride: e.target.checked,
+                                },
+                              }
+                            : p,
+                        )
+                      }
+                      disabled={saving}
+                    />
+                    <span>{t('quietHoursCriticalOverride')}</span>
+                  </label>
+                </div>
+              ) : null}
+            </fieldset>
 
             {error ? (
               <p className="notification-settings__error" role="alert">

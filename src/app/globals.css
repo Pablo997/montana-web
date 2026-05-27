@@ -2401,6 +2401,55 @@ body {
   color: #8e98a3;
 }
 
+/* Quiet hours sub-block: time pickers + timezone hint + override.
+ * Slight inset and divider so the "DnD enabled" controls read as a
+ * conditional group hanging off the parent toggle rather than as
+ * peers of the other top-level fields (severity, cooldown, …). */
+.notification-settings__field--quiet-hours {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1rem;
+  margin-top: 0.25rem;
+}
+
+.notification-settings__quiet-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0.25rem;
+}
+
+.notification-settings__quiet-hours-times {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.notification-settings__quiet-hours-time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: #b5bdc7;
+}
+
+.notification-settings__quiet-hours-time input[type='time'] {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e9efec;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  /* Native time pickers ship a tiny clock icon that on Chromium uses a
+   * "light-mode" SVG by default and is invisible against our dark
+   * panel. `color-scheme: dark` switches the picker chrome (icon,
+   * dropdown, focus ring) to the OS dark variant. Cheaper than a
+   * custom widget and stays accessible to a screen reader. */
+  color-scheme: dark;
+}
+
 /* -------------------------- Push onboarding ----------------------------- */
 /* A small, non-modal floating card shown once to a signed-in user who
    has never interacted with Web Push. Visually a cousin of the pick

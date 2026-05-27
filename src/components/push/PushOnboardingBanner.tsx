@@ -56,6 +56,12 @@ export function PushOnboardingBanner() {
         minSeverity: DEFAULT_MIN_SEVERITY,
         enabled: true,
         minIntervalSeconds: DEFAULT_INTERVAL_SECONDS,
+        // Onboarding flow opts the user in with DnD disabled — the full
+        // settings modal exposes the picker once they want to tune it.
+        // Forcing a "sensible default" window here would silence
+        // notifications the user just asked for, which would be a poor
+        // first impression.
+        quietHours: null,
       });
       markAccepted();
     } catch (err) {
