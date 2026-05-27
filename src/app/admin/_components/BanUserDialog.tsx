@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { banUser } from '@/app/admin/actions';
 
 interface Props {
@@ -9,14 +10,15 @@ interface Props {
   onClose: () => void;
 }
 
-const DURATIONS: Array<{ id: string; label: string; interval: string | null }> = [
-  { id: '24h', label: '24 hours', interval: '1 day' },
-  { id: '7d', label: '7 days', interval: '7 days' },
-  { id: '30d', label: '30 days', interval: '30 days' },
-  { id: 'perm', label: 'Permanent', interval: null },
+const DURATIONS: ReadonlyArray<{ id: string; interval: string | null }> = [
+  { id: '24h', interval: '1 day' },
+  { id: '7d', interval: '7 days' },
+  { id: '30d', interval: '30 days' },
+  { id: 'perm', interval: null },
 ];
 
 export function BanUserDialog({ userId, username, onClose }: Props) {
+  const t = useTranslations('admin.banDialog');
   const [durationId, setDurationId] = useState<string>('7d');
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,19 +37,21 @@ export function BanUserDialog({ userId, username, onClose }: Props) {
     const duration = DURATIONS.find((d) => d.id === durationId)?.interval ?? null;
     const trimmed = reason.trim();
     if (trimmed.length < 3) {
-      setError('Please describe why you are banning this user (3+ chars).');
+      setError(t('reasonError'));
       return;
     }
     setError(null);
     startTransition(async () => {
       const result = await banUser(userId, trimmed, duration);
       if (!result.ok) {
-        setError(result.error ?? 'Failed to ban user.');
+        setError(result.error ?? t('errorFallback'));
         return;
       }
       onClose();
     });
   };
+
+  const displayUser = username ?? userId.slice(0, 8);
 
   return (
     <div
@@ -61,16 +65,17 @@ export function BanUserDialog({ userId, username, onClose }: Props) {
     >
       <form className="admin-modal__card" onSubmit={handleSubmit}>
         <h2 id="admin-ban-title" className="admin-modal__title">
-          Ban user
+          {t('title')}
         </h2>
         <p className="admin-modal__body">
-          Banning <strong>{username ?? userId.slice(0, 8)}</strong> immediately
-          prevents them from posting, voting or reporting. Reads are not
-          affected. You can revert this from the Bans tab.
+          {t.rich('body', {
+            user: displayUser,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
 
         <fieldset className="admin-modal__field">
-          <legend>Duration</legend>
+          <legend>{t('durationLegend')}</legend>
           <div className="admin-modal__choices">
             {DURATIONS.map((d) => (
               <label key={d.id} className="admin-modal__choice">
@@ -81,20 +86,20 @@ export function BanUserDialog({ userId, username, onClose }: Props) {
                   checked={durationId === d.id}
                   onChange={() => setDurationId(d.id)}
                 />
-                {d.label}
+                {t(`durations.${d.id}`)}
               </label>
             ))}
           </div>
         </fieldset>
 
         <label className="admin-modal__field">
-          <span>Reason (visible to the banned user)</span>
+          <span>{t('reasonLabel')}</span>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             maxLength={500}
-            placeholder="e.g. Repeated false reports after warnings."
+            placeholder={t('reasonPlaceholder')}
             autoFocus
           />
         </label>
@@ -108,14 +113,14 @@ export function BanUserDialog({ userId, username, onClose }: Props) {
             onClick={onClose}
             disabled={pending}
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             type="submit"
             className="button button--danger"
             disabled={pending}
           >
-            {pending ? 'Banning…' : 'Ban user'}
+            {pending ? t('submitting') : t('submit')}
           </button>
         </div>
       </form>

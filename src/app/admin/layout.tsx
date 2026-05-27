@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { requireAdmin } from '@/lib/admin/auth';
 import { AdminNav } from './_components/AdminNav';
 
-export const metadata: Metadata = {
-  title: 'Admin · Montana',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.layout');
+  return {
+    title: `${t('title')} · Montana`,
+    robots: { index: false, follow: false },
+  };
+}
 
 // Every admin page runs on each request: moderation data is mutable and
 // we never want a stale audit feed.
@@ -20,12 +24,13 @@ export default async function AdminLayout({
   // Guard runs once per request; `notFound()` for non-admins is surfaced
   // by Next.js as a standard 404, so the surface is invisible to them.
   await requireAdmin();
+  const t = await getTranslations('admin.layout');
 
   return (
     <div className="admin-shell">
       <header className="admin-shell__header">
         <div className="admin-shell__brand">
-          <span className="admin-shell__title">Moderation</span>
+          <span className="admin-shell__title">{t('title')}</span>
         </div>
         <AdminNav />
       </header>
@@ -46,7 +51,7 @@ export default async function AdminLayout({
               strokeLinejoin="round"
             />
           </svg>
-          Back to map
+          {t('backToMap')}
         </Link>
         {children}
       </main>

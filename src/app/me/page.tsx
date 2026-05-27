@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   mapMyIncidentRow,
@@ -16,10 +17,13 @@ import { StatsCards } from './_components/StatsCards';
 import { IncidentListItem } from './_components/IncidentListItem';
 import { DangerZone } from './_components/DangerZone';
 
-export const metadata: Metadata = {
-  title: 'My profile · Montana',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('profile');
+  return {
+    title: t('metaTitle'),
+    robots: { index: false, follow: false },
+  };
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -30,13 +34,13 @@ interface SearchParams {
 
 const PAGE_SIZE = 20;
 
-const STATUS_TABS: Array<{ id: IncidentStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'pending', label: 'Pending' },
-  { id: 'validated', label: 'Validated' },
-  { id: 'resolved', label: 'Resolved' },
-  { id: 'dismissed', label: 'Dismissed' },
-  { id: 'expired', label: 'Expired' },
+const STATUS_TABS: readonly (IncidentStatus | 'all')[] = [
+  'all',
+  'pending',
+  'validated',
+  'resolved',
+  'dismissed',
+  'expired',
 ];
 
 function parseStatus(raw: string | undefined): IncidentStatus | null {
@@ -125,6 +129,10 @@ export default async function MyProfilePage({
 }: {
   searchParams: SearchParams;
 }) {
+  const t = await getTranslations('profile');
+  const tIncidents = await getTranslations('profile.incidents');
+  const locale = await getLocale();
+
   const statusFilter = parseStatus(searchParams.status);
   const page = parsePage(searchParams.page);
   const data = await loadData(statusFilter, page);
@@ -151,7 +159,7 @@ export default async function MyProfilePage({
               strokeLinejoin="round"
             />
           </svg>
-          Back to map
+          {t('backToMap')}
         </Link>
 
         <ProfileHeader
@@ -165,27 +173,30 @@ export default async function MyProfilePage({
         <section className="profile-section" aria-labelledby="my-incidents">
           <div className="profile-section__head">
             <h2 id="my-incidents" className="profile-section__title">
-              My incidents
+              {tIncidents('title')}
             </h2>
             <span className="profile-section__count">
-              {data.total.toLocaleString()} total
+              {tIncidents('countTotal', { count: data.total.toLocaleString(locale) })}
             </span>
           </div>
 
-          <div className="admin-tabs" role="tablist" aria-label="Incident status">
-            {STATUS_TABS.map((tab) => {
+          <div
+            className="admin-tabs"
+            role="tablist"
+            aria-label={tIncidents('sectionAria')}
+          >
+            {STATUS_TABS.map((id) => {
               const active =
-                (tab.id === 'all' && statusFilter === null) ||
-                tab.id === statusFilter;
+                (id === 'all' && statusFilter === null) || id === statusFilter;
               return (
                 <Link
-                  key={tab.id}
-                  href={buildHref(tab.id)}
+                  key={id}
+                  href={buildHref(id)}
                   role="tab"
                   aria-selected={active}
                   className={`admin-tabs__tab${active ? ' admin-tabs__tab--active' : ''}`}
                 >
-                  {tab.label}
+                  {tIncidents(`statusTabs.${id}`)}
                 </Link>
               );
             })}
@@ -194,8 +205,8 @@ export default async function MyProfilePage({
           {data.rows.length === 0 ? (
             <p className="admin-empty">
               {statusFilter === null
-                ? "You haven't reported any incident yet. Tap the map to create one."
-                : 'No incidents match this filter.'}
+                ? tIncidents('emptyAll')
+                : tIncidents('emptyFiltered')}
             </p>
           ) : (
             <ul className="admin-incident-list">
@@ -208,32 +219,32 @@ export default async function MyProfilePage({
           )}
 
           {totalPages > 1 ? (
-            <nav className="admin-pager" aria-label="Pagination">
+            <nav className="admin-pager" aria-label={tIncidents('pagerAria')}>
               {page > 1 ? (
                 <Link
                   href={buildHref(statusFilter ?? 'all', page - 1)}
                   className="admin-pager__link"
                 >
-                  ← Prev
+                  {tIncidents('pagerPrev')}
                 </Link>
               ) : (
                 <span className="admin-pager__link admin-pager__link--disabled">
-                  ← Prev
+                  {tIncidents('pagerPrev')}
                 </span>
               )}
               <span className="admin-pager__info">
-                Page {page} / {totalPages}
+                {tIncidents('pagerPage', { page, total: totalPages })}
               </span>
               {page < totalPages ? (
                 <Link
                   href={buildHref(statusFilter ?? 'all', page + 1)}
                   className="admin-pager__link"
                 >
-                  Next →
+                  {tIncidents('pagerNext')}
                 </Link>
               ) : (
                 <span className="admin-pager__link admin-pager__link--disabled">
-                  Next →
+                  {tIncidents('pagerNext')}
                 </span>
               )}
             </nav>

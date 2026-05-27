@@ -242,6 +242,11 @@
     "expiresSoon": "Expiring soon"
   },
   "admin": {
+    "layout": {
+      "title": "Moderation",
+      "navAria": "Moderation sections",
+      "backToMap": "Back to map"
+    },
     "nav": {
       "reports": "Reports",
       "incidents": "Incidents",
@@ -249,112 +254,296 @@
       "activity": "Activity"
     },
     "stats": {
-      "pending": "Pending",
-      "validated": "Validated",
-      "flags": "Open reports",
-      "bans": "Active bans"
-    },
-    "tabsHelp": {
-      "reports": "Queue of reports submitted by users.",
-      "incidents": "Browse any incident even if it hasn't been reported."
+      "regionAria": "Moderation overview",
+      "openReports": "Open reports",
+      "bannedUsers": "Banned users",
+      "incidentsToday": "Incidents today",
+      "actions24h": "Actions · 24h"
     },
     "reports": {
-      "empty": "No pending reports.",
-      "validate": "Validate",
-      "dismiss": "Dismiss",
-      "ban": "Ban author"
+      "title": "Reports queue",
+      "subtitle": "Incidents your users flagged as problematic (spam, harassment, false info…). Review them here and choose whether to dismiss the report or remove the incident. You can also ban the reporter or the author from any row.",
+      "tabAria": "Report status",
+      "tabs": {
+        "open": "Pending",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned",
+        "all": "All"
+      },
+      "hints": {
+        "open": "Fresh reports from users, waiting for your review.",
+        "dismissed": "Reports you marked as \"no action\" — filed for the record.",
+        "actioned": "Reports whose incident you removed — the user who flagged it got heard.",
+        "all": "Every report in the system, newest first."
+      },
+      "emptyOpen": "Inbox zero. No pending reports right now.",
+      "emptyOther": "No reports match this filter.",
+      "pagerAria": "Pagination",
+      "pagerPrev": "← Prev",
+      "pagerNext": "Next →",
+      "pagerPage": "Page {page} / {total}"
     },
-    "bans": {
-      "title": "Banned users",
-      "empty": "No active bans.",
-      "unban": "Lift ban",
-      "reason": "Reason",
-      "until": "Until"
+    "reportRow": {
+      "reasons": {
+        "spam": "Spam",
+        "harassment": "Harassment",
+        "false_info": "False info",
+        "inappropriate": "Inappropriate",
+        "personal_data": "Personal data",
+        "other": "Other"
+      },
+      "status": {
+        "open": "open",
+        "dismissed": "dismissed",
+        "actioned": "actioned"
+      },
+      "reportedByLabel": "Reported by",
+      "authorLabel": "Author",
+      "banReporterAria": "Ban reporter",
+      "banAuthorAria": "Ban author",
+      "dismiss": "Dismiss",
+      "working": "Working…",
+      "remove": "Remove incident",
+      "removePromptTitle": "Reason for removing this incident (shown only in the audit log):",
+      "errorDismiss": "Failed to dismiss report.",
+      "errorRemove": "Failed to remove incident.",
+      "relativeJustNow": "just now",
+      "relativeMinAgo": "{count}m ago",
+      "relativeHoursAgo": "{count}h ago",
+      "relativeDaysAgo": "{count}d ago"
     },
     "banDialog": {
       "title": "Ban user",
-      "reason": "Reason",
-      "reasonPlaceholder": "Repeated spam, offensive content…",
-      "duration": "Duration",
-      "durationOptions": {
+      "body": "Banning <strong>{user}</strong> immediately prevents them from posting, voting or reporting. Reads are not affected. You can revert this from the Bans tab.",
+      "durationLegend": "Duration",
+      "durations": {
         "24h": "24 hours",
         "7d": "7 days",
         "30d": "30 days",
-        "permanent": "Permanent"
+        "perm": "Permanent"
       },
-      "submit": "Confirm ban",
-      "cancel": "Cancel"
+      "reasonLabel": "Reason (visible to the banned user)",
+      "reasonPlaceholder": "e.g. Repeated false reports after warnings.",
+      "reasonError": "Please describe why you are banning this user (3+ chars).",
+      "cancel": "Cancel",
+      "submit": "Ban user",
+      "submitting": "Banning…",
+      "errorFallback": "Failed to ban user."
+    },
+    "incidents": {
+      "title": "Incidents",
+      "subtitle": "The full catalogue, including hidden incidents. Search or filter to find one, then remove it (hides from the map), restore a previously hidden one, or ban its author. Unlike the Reports tab, you act here without waiting for a user flag.",
+      "tabAria": "Incident status",
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "validated": "Validated",
+        "dismissed": "Dismissed",
+        "resolved": "Resolved",
+        "expired": "Expired"
+      },
+      "hints": {
+        "all": "Every incident ever created, regardless of state.",
+        "pending": "Just reported by a user, waiting for community votes.",
+        "validated": "Confirmed by enough upvotes — currently visible on the map.",
+        "dismissed": "Hidden from the map. Either a moderator removed it or the community voted it down. Use \"Restore\" to bring it back.",
+        "resolved": "Marked by the community as no longer a problem on the trail.",
+        "expired": "Automatically retired after its expiry date. Hidden from the map."
+      },
+      "empty": "No incidents match this query.",
+      "pagerAria": "Pagination",
+      "pagerPrev": "← Prev",
+      "pagerNext": "Next →",
+      "pagerPageWithTotal": "Page {page} / {total} · {count} total"
+    },
+    "incidentsSearch": {
+      "roleAria": "Search incidents",
+      "inputAria": "Search incidents",
+      "placeholder": "Search title or description…",
+      "clear": "Clear",
+      "search": "Search",
+      "searching": "Searching…"
+    },
+    "incidentRow": {
+      "status": {
+        "pending": "pending",
+        "validated": "validated",
+        "dismissed": "dismissed",
+        "resolved": "resolved",
+        "expired": "expired"
+      },
+      "reportsBadge": "{count, plural, one {# report} other {# reports}}",
+      "reportsBadgeTitle": "Open reports",
+      "banAuthorAria": "Ban author",
+      "byUser": "by {user}",
+      "score": "score {score}",
+      "working": "Working…",
+      "restore": "Restore",
+      "remove": "Remove",
+      "removePromptTitle": "Reason for removing this incident (audit log):",
+      "restorePromptTitle": "Reason for restoring this incident (optional):",
+      "errorRemove": "Failed to remove incident.",
+      "errorRestore": "Failed to restore incident."
+    },
+    "bans": {
+      "title": "Active bans",
+      "subtitle": "Users currently banned from interacting with the platform. They cannot create incidents, vote or report anything. Reading the map still works so they understand why their actions fail. Expired bans disappear from this list automatically; use \"Unban\" to lift an active one early.",
+      "empty": "No active bans.",
+      "permanent": "Permanent",
+      "expired": "Expired",
+      "hoursLeft": "~{count}h left",
+      "daysLeft": "~{count}d left",
+      "banned": "banned {date}",
+      "by": "by {user}",
+      "unban": "Unban",
+      "unbanning": "Unbanning…",
+      "unbanConfirm": "Unban {user}?",
+      "unbanError": "Failed to unban user."
     },
     "activity": {
       "title": "Activity log",
-      "empty": "No actions logged yet."
+      "subtitle": "A chronological audit trail of every moderation action taken on the platform — who did what, on which target, and why. Entries here are append-only: they cannot be edited or deleted, which makes this the canonical record if you ever need to review past decisions.",
+      "empty": "No moderation actions yet.",
+      "unknown": "Unknown",
+      "verbs": {
+        "dismiss_report": "dismissed a report on",
+        "remove_incident": "removed incident",
+        "restore_incident": "restored incident",
+        "ban_user": "banned user",
+        "unban_user": "unbanned user",
+        "author_edit_incident": "edited their incident",
+        "author_create_update": "posted a follow-up on",
+        "author_delete_update": "deleted a follow-up on",
+        "author_create_incident": "created incident",
+        "author_resolve_incident": "resolved incident",
+        "author_delete_incident": "deleted their incident",
+        "account_deleted": "deleted their account"
+      },
+      "diff": {
+        "title": "title:",
+        "description": "description:",
+        "kind": "kind:",
+        "was": "was:",
+        "body": "body:",
+        "username": "username:",
+        "incidentsWiped": "incidents wiped:"
+      },
+      "pagerAria": "Pagination",
+      "pagerPrev": "← Prev",
+      "pagerNext": "Next →",
+      "pagerPage": "Page {page} / {total}"
     }
   },
   "profile": {
     "title": "My profile",
-    "signedInAs": "Signed in as",
-    "memberSince": "Member since",
-    "stats": {
-      "total": "Incidents",
-      "validated": "Validated",
-      "pending": "Pending",
-      "resolved": "Resolved"
+    "metaTitle": "My profile · Montana",
+    "backToMap": "Back to map",
+    "anonymous": "Anonymous",
+    "memberSince": "Member since {date}",
+    "memberSinceUnknown": "Unknown",
+    "statsRegionAria": "Your activity",
+    "statsCards": {
+      "totalLabel": "Total incidents",
+      "validatedLabel": "Validated",
+      "scoreLabel": "Net score",
+      "openReportsLabel": "Open reports"
     },
     "incidents": {
+      "sectionAria": "Incident status",
       "title": "My incidents",
-      "empty": "You haven't reported any incidents yet.",
-      "loadMore": "Load more"
+      "countTotal": "{count} total",
+      "statusTabs": {
+        "all": "All",
+        "pending": "Pending",
+        "validated": "Validated",
+        "resolved": "Resolved",
+        "dismissed": "Dismissed",
+        "expired": "Expired"
+      },
+      "statusBadges": {
+        "pending": "pending",
+        "validated": "validated",
+        "resolved": "resolved",
+        "dismissed": "dismissed",
+        "expired": "expired"
+      },
+      "emptyAll": "You haven't reported any incident yet. Tap the map to create one.",
+      "emptyFiltered": "No incidents match this filter.",
+      "reportsBadge": "{count, plural, one {# report} other {# reports}}",
+      "reportsBadgeAria": "Open reports",
+      "photosBadge": "{count, plural, one {# photo} other {# photos}}",
+      "scoreLabel": "score {score}",
+      "pagerAria": "Pagination",
+      "pagerPrev": "← Prev",
+      "pagerNext": "Next →",
+      "pagerPage": "Page {page} / {total}"
     },
     "dangerZone": {
       "title": "Danger zone",
-      "description": "Permanently delete your account and all your data.",
-      "delete": "Delete my account",
-      "confirmTitle": "Delete your account?",
-      "confirmBody": "Your profile, votes and reports will be erased. Incidents you've posted will be anonymised. This cannot be undone.",
-      "confirmCta": "Yes, delete my account",
-      "deleting": "Deleting…"
+      "subtitle": "Permanent actions that cannot be undone.",
+      "rowTitle": "Delete my account",
+      "rowBody": "Removes your profile, every incident you reported, your votes and all uploaded photos. Other users will see your incidents as authored by a deleted account.",
+      "deleteCta": "Delete account",
+      "confirmBody": "This permanently removes your profile, incidents, votes and uploaded photos. It cannot be undone. Type <strong>DELETE</strong> to confirm.",
+      "confirmPlaceholder": "DELETE",
+      "confirmInputAria": "Type DELETE to confirm",
+      "cancel": "Cancel",
+      "deleteFinal": "Delete forever",
+      "deleting": "Deleting…",
+      "deleteError": "Could not delete the account."
     }
   },
   "pwa": {
     "offlineIndicator": "Offline — showing cached map only",
     "offlinePage": {
       "title": "You're offline",
-      "body": "Montana needs the internet to show the map and real-time incidents. Try again once you're back online.",
+      "body": "Montana needs a connection to load fresh incidents. Your previously viewed map area should still be available — try going back to the map.",
       "retry": "Retry"
     }
   },
   "push": {
     "onboardingBanner": {
-      "title": "Enable nearby alerts",
-      "body": "Get a notification when someone reports an incident near your usual trails.",
-      "enable": "Enable",
-      "dismiss": "Not now"
+      "regionAria": "Nearby alerts onboarding",
+      "heading": "Get alerts for nearby incidents",
+      "body": "Hear about new reports in your area without having to open the app.",
+      "enable": "Turn on",
+      "enabling": "Enabling…",
+      "notNow": "Not now",
+      "dismissForever": "Don't ask again",
+      "errorFallback": "Could not enable notifications. Try again from the account menu."
     },
     "settings": {
       "title": "Nearby alerts",
-      "subtitle": "Get notifications when incidents appear near a point of your choice.",
-      "enable": "Enable notifications",
-      "disable": "Disable notifications",
-      "enabling": "Enabling…",
-      "disabling": "Disabling…",
-      "centerLabel": "Alert center",
-      "centerDefault": "Using your current location",
-      "centerCustom": "Custom point",
+      "close": "Close",
+      "loading": "Loading…",
+      "intro": "Get a push notification when a new incident is reported within your area. You can change or disable this any time.",
+      "centerLabel": "Center",
+      "centerCoords": "{lat}, {lng}",
+      "useMyLocation": "Use my current location",
       "pickOnMap": "Pick on map",
-      "radiusLabel": "Radius",
-      "radiusValue": "{km} km",
-      "cooldownLabel": "Minimum time between alerts",
+      "radiusLabel": "Radius: <strong>{km} km</strong>",
+      "minSeverityLegend": "Minimum severity",
+      "severityMild": "Mild",
+      "severityModerate": "Moderate",
+      "severitySevere": "Severe",
+      "cooldownLabel": "Cooldown",
+      "cooldownHint": "When several incidents land close together, you'll only get one notification — the most severe.",
       "cooldownOptions": {
-        "5m": "5 minutes",
-        "30m": "30 minutes",
-        "1h": "1 hour",
-        "6h": "6 hours",
-        "24h": "1 day"
+        "60": "No cooldown (every alert)",
+        "600": "At most one every 10 minutes",
+        "1800": "At most one every 30 minutes",
+        "3600": "At most one per hour",
+        "21600": "At most one every 6 hours"
       },
-      "save": "Save preferences",
+      "save": "Enable notifications",
+      "update": "Update settings",
       "saving": "Saving…",
-      "permissionDenied": "You've blocked notifications in your browser. Change it from the site settings to enable them.",
-      "unsupported": "Your browser doesn't support push notifications."
+      "disable": "Turn off notifications",
+      "disabling": "Turning off…",
+      "loadError": "Failed to load settings.",
+      "locationError": "Could not read your location. Check browser permissions.",
+      "saveError": "Could not save.",
+      "unsubscribeError": "Could not unsubscribe."
     }
   },
   "legal": {

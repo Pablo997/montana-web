@@ -2,10 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import {
-  INCIDENT_TYPE_LABELS,
-  SEVERITY_LABELS,
-} from '@/types/incident';
+import { useLocale, useTranslations } from 'next-intl';
+import { useIncidentLabels } from '@/lib/incidents/useIncidentLabels';
 import type { AdminIncidentRow } from '@/lib/admin/types';
 import { removeIncident, restoreIncident } from '@/app/admin/actions';
 import { BanUserDialog } from '@/app/admin/_components/BanUserDialog';
@@ -14,11 +12,10 @@ interface Props {
   row: AdminIncidentRow;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
-}
-
 export function IncidentRow({ row }: Props) {
+  const t = useTranslations('admin.incidentRow');
+  const labels = useIncidentLabels();
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [banTarget, setBanTarget] = useState<
@@ -29,29 +26,26 @@ export function IncidentRow({ row }: Props) {
   const canRestore = row.status === 'dismissed';
 
   const handleRemove = () => {
-    const reason = window.prompt(
-      'Reason for removing this incident (audit log):',
-      '',
-    );
+    const reason = window.prompt(t('removePromptTitle'), '');
     if (!reason) return;
     setError(null);
     startTransition(async () => {
       const result = await removeIncident(row.id, reason);
-      if (!result.ok) setError(result.error ?? 'Failed to remove incident.');
+      if (!result.ok) setError(result.error ?? t('errorRemove'));
     });
   };
 
   const handleRestore = () => {
-    const reason = window.prompt(
-      'Reason for restoring this incident (optional):',
-      '',
-    );
+    const reason = window.prompt(t('restorePromptTitle'), '');
     setError(null);
     startTransition(async () => {
       const result = await restoreIncident(row.id, reason || null);
-      if (!result.ok) setError(result.error ?? 'Failed to restore incident.');
+      if (!result.ok) setError(result.error ?? t('errorRestore'));
     });
   };
+
+  const displayUser = row.authorUsername ?? row.authorId.slice(0, 8);
+  const formattedDate = new Date(row.createdAt).toLocaleString(locale);
 
   return (
     <article
@@ -68,24 +62,27 @@ export function IncidentRow({ row }: Props) {
           {row.title}
         </Link>
         <span className={`admin-incident__status admin-incident__status--${row.status}`}>
-          {row.status}
+          {t(`status.${row.status}`)}
         </span>
         {row.openReportsCount > 0 ? (
-          <span className="admin-incident__flag-badge" title="Open reports">
-            {row.openReportsCount} report{row.openReportsCount === 1 ? '' : 's'}
+          <span
+            className="admin-incident__flag-badge"
+            title={t('reportsBadgeTitle')}
+          >
+            {t('reportsBadge', { count: row.openReportsCount })}
           </span>
         ) : null}
       </header>
 
       <div className="admin-incident__meta">
-        <span>{INCIDENT_TYPE_LABELS[row.type]}</span>
+        <span>{labels.type(row.type)}</span>
         <span aria-hidden="true">·</span>
-        <span>{SEVERITY_LABELS[row.severity]}</span>
+        <span>{labels.severity(row.severity)}</span>
         <span aria-hidden="true">·</span>
-        <span>score {row.score}</span>
+        <span>{t('score', { score: row.score })}</span>
         <span aria-hidden="true">·</span>
         <time dateTime={row.createdAt} title={row.createdAt}>
-          {formatDate(row.createdAt)}
+          {formattedDate}
         </time>
       </div>
 
@@ -99,9 +96,9 @@ export function IncidentRow({ row }: Props) {
               username: row.authorUsername,
             })
           }
-          aria-label="Ban author"
+          aria-label={t('banAuthorAria')}
         >
-          by {row.authorUsername ?? row.authorId.slice(0, 8)}
+          {t('byUser', { user: displayUser })}
         </button>
 
         <div className="admin-incident__actions">
@@ -112,7 +109,7 @@ export function IncidentRow({ row }: Props) {
               onClick={handleRestore}
               disabled={pending}
             >
-              {pending ? 'Working…' : 'Restore'}
+              {pending ? t('working') : t('restore')}
             </button>
           ) : null}
           {canRemove ? (
@@ -122,7 +119,7 @@ export function IncidentRow({ row }: Props) {
               onClick={handleRemove}
               disabled={pending}
             >
-              Remove
+              {t('remove')}
             </button>
           ) : null}
         </div>

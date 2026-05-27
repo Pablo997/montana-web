@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { DEFAULT_CENTER } from '@/lib/mapbox/config';
 import { DEFAULT_INTERVAL_SECONDS, subscribe } from '@/lib/push/client';
 import { getCurrentPosition } from '@/lib/utils/geolocation';
@@ -28,6 +29,7 @@ const DEFAULT_MIN_SEVERITY = 'moderate' as const;
 const GEO_TIMEOUT_MS = 6000;
 
 export function PushOnboardingBanner() {
+  const t = useTranslations('push.onboardingBanner');
   const { visible, snooze, dismissForever, markAccepted } = usePushOnboarding();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,11 +59,7 @@ export function PushOnboardingBanner() {
       });
       markAccepted();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Could not enable notifications. Try again from the account menu.',
-      );
+      setError(err instanceof Error ? err.message : t('errorFallback'));
     } finally {
       setSubmitting(false);
     }
@@ -71,7 +69,7 @@ export function PushOnboardingBanner() {
     <aside
       className="push-onboarding"
       role="region"
-      aria-label="Nearby alerts onboarding"
+      aria-label={t('regionAria')}
     >
       <span className="push-onboarding__icon" aria-hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -91,12 +89,8 @@ export function PushOnboardingBanner() {
       </span>
 
       <div className="push-onboarding__copy">
-        <p className="push-onboarding__heading">
-          Get alerts for nearby incidents
-        </p>
-        <p className="push-onboarding__body">
-          Hear about new reports in your area without having to open the app.
-        </p>
+        <p className="push-onboarding__heading">{t('heading')}</p>
+        <p className="push-onboarding__body">{t('body')}</p>
         {error ? (
           <p className="push-onboarding__error" role="alert">
             {error}
@@ -111,7 +105,7 @@ export function PushOnboardingBanner() {
           onClick={snooze}
           disabled={submitting}
         >
-          Not now
+          {t('notNow')}
         </button>
         <button
           type="button"
@@ -119,7 +113,7 @@ export function PushOnboardingBanner() {
           onClick={handleEnable}
           disabled={submitting}
         >
-          {submitting ? 'Enabling…' : 'Turn on'}
+          {submitting ? t('enabling') : t('enable')}
         </button>
       </div>
 
@@ -127,8 +121,8 @@ export function PushOnboardingBanner() {
         type="button"
         className="push-onboarding__dismiss"
         onClick={dismissForever}
-        aria-label="Don’t ask again"
-        title="Don’t ask again"
+        aria-label={t('dismissForever')}
+        title={t('dismissForever')}
         disabled={submitting}
       >
         ×

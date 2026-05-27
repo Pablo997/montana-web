@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   mapBanRow,
@@ -19,23 +20,18 @@ async function fetchBans(): Promise<AdminBanRow[]> {
 }
 
 export default async function AdminBansPage() {
+  const t = await getTranslations('admin.bans');
   const rows = await fetchBans();
 
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">Active bans</h1>
-        <p className="admin-page__subtitle">
-          Users currently banned from interacting with the platform.
-          They cannot create incidents, vote or report anything. Reading
-          the map still works so they understand why their actions fail.
-          Expired bans disappear from this list automatically; use
-          "Unban" to lift an active one early.
-        </p>
+        <h1 className="admin-page__title">{t('title')}</h1>
+        <p className="admin-page__subtitle">{t('subtitle')}</p>
       </header>
 
       {rows.length === 0 ? (
-        <p className="admin-empty">No active bans.</p>
+        <p className="admin-empty">{t('empty')}</p>
       ) : (
         <ul className="admin-ban-list">
           {rows.map((row) => (

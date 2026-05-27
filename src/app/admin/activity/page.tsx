@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   mapActionRow,
@@ -18,21 +19,6 @@ interface SearchParams {
 
 const PAGE_SIZE = 50;
 
-const ACTION_VERBS: Record<ModerationAction, string> = {
-  dismiss_report: 'dismissed a report on',
-  remove_incident: 'removed incident',
-  restore_incident: 'restored incident',
-  ban_user: 'banned user',
-  unban_user: 'unbanned user',
-  author_edit_incident: 'edited their incident',
-  author_create_update: 'posted a follow-up on',
-  author_delete_update: 'deleted a follow-up on',
-  author_create_incident: 'created incident',
-  author_resolve_incident: 'resolved incident',
-  author_delete_incident: 'deleted their incident',
-  account_deleted: 'deleted their account',
-};
-
 /** Trim long diff values so a 2000-char description doesn't flood the log. */
 function trim(value: string | null | undefined, max = 80): string {
   if (!value) return '∅';
@@ -44,14 +30,17 @@ function trim(value: string | null | undefined, max = 80): string {
  * Falls back to nothing when `meta` is missing or malformed — we never
  * want the audit feed to crash on a single bad row.
  */
-function renderAuthorEditMeta(meta: unknown): React.ReactNode {
+function renderAuthorEditMeta(
+  meta: unknown,
+  diff: (key: string) => string,
+): React.ReactNode {
   if (!meta || typeof meta !== 'object') return null;
   const m = meta as AuthorEditMeta;
   const rows: React.ReactNode[] = [];
   if (m.title && typeof m.title === 'object') {
     rows.push(
       <div key="title" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">title:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('title')}</span>{' '}
         <span className="admin-activity__diff-from">{trim(m.title.from)}</span>
         {' → '}
         <span className="admin-activity__diff-to">{trim(m.title.to)}</span>
@@ -61,14 +50,10 @@ function renderAuthorEditMeta(meta: unknown): React.ReactNode {
   if (m.description && typeof m.description === 'object') {
     rows.push(
       <div key="desc" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">description:</span>{' '}
-        <span className="admin-activity__diff-from">
-          {trim(m.description.from)}
-        </span>
+        <span className="admin-activity__diff-label">{diff('description')}</span>{' '}
+        <span className="admin-activity__diff-from">{trim(m.description.from)}</span>
         {' → '}
-        <span className="admin-activity__diff-to">
-          {trim(m.description.to)}
-        </span>
+        <span className="admin-activity__diff-to">{trim(m.description.to)}</span>
       </div>,
     );
   }
@@ -82,14 +67,17 @@ function renderAuthorEditMeta(meta: unknown): React.ReactNode {
  * `meta.body_preview`; we just surface it here in the same mono block
  * as the author-edit diff so the admin has visual continuity.
  */
-function renderUpdateMeta(meta: unknown): React.ReactNode {
+function renderUpdateMeta(
+  meta: unknown,
+  diff: (key: string) => string,
+): React.ReactNode {
   if (!meta || typeof meta !== 'object') return null;
   const m = meta as IncidentUpdateAuditMeta;
   if (!m.body_preview) return null;
   return (
     <div className="admin-activity__diff">
       <div className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">body:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('body')}</span>{' '}
         <span className="admin-activity__diff-to">{trim(m.body_preview, 200)}</span>
       </div>
     </div>
@@ -102,14 +90,17 @@ function renderUpdateMeta(meta: unknown): React.ReactNode {
  * `author_delete_incident`). Each one stores a different subset of the
  * incident snapshot in `meta`; we surface whatever is present.
  */
-function renderLifecycleMeta(meta: unknown): React.ReactNode {
+function renderLifecycleMeta(
+  meta: unknown,
+  diff: (key: string) => string,
+): React.ReactNode {
   if (!meta || typeof meta !== 'object') return null;
   const m = meta as IncidentLifecycleMeta;
   const rows: React.ReactNode[] = [];
   if (m.title) {
     rows.push(
       <div key="title" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">title:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('title')}</span>{' '}
         <span className="admin-activity__diff-to">{trim(m.title)}</span>
       </div>,
     );
@@ -117,7 +108,7 @@ function renderLifecycleMeta(meta: unknown): React.ReactNode {
   if (m.type || m.severity) {
     rows.push(
       <div key="kind" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">kind:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('kind')}</span>{' '}
         <span className="admin-activity__diff-to">
           {[m.type, m.severity].filter(Boolean).join(' · ')}
         </span>
@@ -127,7 +118,7 @@ function renderLifecycleMeta(meta: unknown): React.ReactNode {
   if (m.previous_status) {
     rows.push(
       <div key="prev" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">was:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('was')}</span>{' '}
         <span className="admin-activity__diff-from">{m.previous_status}</span>
       </div>,
     );
@@ -135,7 +126,7 @@ function renderLifecycleMeta(meta: unknown): React.ReactNode {
   if (m.description_preview) {
     rows.push(
       <div key="desc" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">description:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('description')}</span>{' '}
         <span className="admin-activity__diff-to">
           {trim(m.description_preview, 200)}
         </span>
@@ -152,14 +143,17 @@ function renderLifecycleMeta(meta: unknown): React.ReactNode {
  * admin can at least see which username and how many incidents went
  * with it.
  */
-function renderAccountDeletedMeta(meta: unknown): React.ReactNode {
+function renderAccountDeletedMeta(
+  meta: unknown,
+  diff: (key: string) => string,
+): React.ReactNode {
   if (!meta || typeof meta !== 'object') return null;
   const m = meta as AccountDeletedMeta;
   const rows: React.ReactNode[] = [];
   if (m.username) {
     rows.push(
       <div key="u" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">username:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('username')}</span>{' '}
         <span className="admin-activity__diff-to">{m.username}</span>
       </div>,
     );
@@ -167,7 +161,7 @@ function renderAccountDeletedMeta(meta: unknown): React.ReactNode {
   if (typeof m.incidents_deleted === 'number') {
     rows.push(
       <div key="n" className="admin-activity__diff-row">
-        <span className="admin-activity__diff-label">incidents wiped:</span>{' '}
+        <span className="admin-activity__diff-label">{diff('incidentsWiped')}</span>{' '}
         <span className="admin-activity__diff-to">{m.incidents_deleted}</span>
       </div>,
     );
@@ -213,25 +207,34 @@ export default async function AdminActivityPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const t = await getTranslations('admin.activity');
+  const locale = await getLocale();
   const page = parsePage(searchParams.page);
   const { rows, total } = await fetchActions(page);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  // Bind the diff-label translator once so the row-level renderers
+  // don't have to await `getTranslations` per call.
+  const diff = (key: string) => t(`diff.${key}`);
+  const verb = (action: ModerationAction): string => {
+    try {
+      return t(`verbs.${action}`);
+    } catch {
+      // Defensive: a new action enum value rolled out by a migration
+      // but not yet translated should still render gracefully.
+      return action;
+    }
+  };
+
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">Activity log</h1>
-        <p className="admin-page__subtitle">
-          A chronological audit trail of every moderation action taken
-          on the platform — who did what, on which target, and why.
-          Entries here are append-only: they cannot be edited or
-          deleted, which makes this the canonical record if you ever
-          need to review past decisions.
-        </p>
+        <h1 className="admin-page__title">{t('title')}</h1>
+        <p className="admin-page__subtitle">{t('subtitle')}</p>
       </header>
 
       {rows.length === 0 ? (
-        <p className="admin-empty">No moderation actions yet.</p>
+        <p className="admin-empty">{t('empty')}</p>
       ) : (
         <ol className="admin-activity">
           {rows.map((row) => {
@@ -243,11 +246,11 @@ export default async function AdminActivityPage({
                   className="admin-activity__time"
                   title={row.createdAt}
                 >
-                  {new Date(row.createdAt).toLocaleString()}
+                  {new Date(row.createdAt).toLocaleString(locale)}
                 </time>
                 <div className="admin-activity__body">
-                  <strong>{row.actorUsername ?? 'Unknown'}</strong>{' '}
-                  {ACTION_VERBS[row.action] ?? row.action}{' '}
+                  <strong>{row.actorUsername ?? t('unknown')}</strong>{' '}
+                  {verb(row.action)}{' '}
                   {href ? (
                     <Link href={href} prefetch={false}>
                       {row.targetId.slice(0, 8)}
@@ -259,19 +262,19 @@ export default async function AdminActivityPage({
                     <span className="admin-activity__reason"> — {row.reason}</span>
                   ) : null}
                   {row.action === 'author_edit_incident'
-                    ? renderAuthorEditMeta(row.meta)
+                    ? renderAuthorEditMeta(row.meta, diff)
                     : null}
                   {row.action === 'author_create_update' ||
                   row.action === 'author_delete_update'
-                    ? renderUpdateMeta(row.meta)
+                    ? renderUpdateMeta(row.meta, diff)
                     : null}
                   {row.action === 'author_create_incident' ||
                   row.action === 'author_resolve_incident' ||
                   row.action === 'author_delete_incident'
-                    ? renderLifecycleMeta(row.meta)
+                    ? renderLifecycleMeta(row.meta, diff)
                     : null}
                   {row.action === 'account_deleted'
-                    ? renderAccountDeletedMeta(row.meta)
+                    ? renderAccountDeletedMeta(row.meta, diff)
                     : null}
                 </div>
               </li>
@@ -281,32 +284,32 @@ export default async function AdminActivityPage({
       )}
 
       {totalPages > 1 ? (
-        <nav className="admin-pager" aria-label="Pagination">
+        <nav className="admin-pager" aria-label={t('pagerAria')}>
           {page > 1 ? (
             <Link
               href={`/admin/activity?page=${page - 1}`}
               className="admin-pager__link"
             >
-              ← Prev
+              {t('pagerPrev')}
             </Link>
           ) : (
             <span className="admin-pager__link admin-pager__link--disabled">
-              ← Prev
+              {t('pagerPrev')}
             </span>
           )}
           <span className="admin-pager__info">
-            Page {page} / {totalPages}
+            {t('pagerPage', { page, total: totalPages })}
           </span>
           {page < totalPages ? (
             <Link
               href={`/admin/activity?page=${page + 1}`}
               className="admin-pager__link"
             >
-              Next →
+              {t('pagerNext')}
             </Link>
           ) : (
             <span className="admin-pager__link admin-pager__link--disabled">
-              Next →
+              {t('pagerNext')}
             </span>
           )}
         </nav>
