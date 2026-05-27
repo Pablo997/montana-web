@@ -242,6 +242,11 @@
     "expiresSoon": "Expira pronto"
   },
   "admin": {
+    "layout": {
+      "title": "Moderación",
+      "navAria": "Secciones de moderación",
+      "backToMap": "Volver al mapa"
+    },
     "nav": {
       "reports": "Reportes",
       "incidents": "Incidencias",
@@ -249,112 +254,296 @@
       "activity": "Actividad"
     },
     "stats": {
-      "pending": "Pendientes",
-      "validated": "Validadas",
-      "flags": "Reportes abiertos",
-      "bans": "Baneos activos"
-    },
-    "tabsHelp": {
-      "reports": "Cola de reportes enviados por usuarios.",
-      "incidents": "Explora cualquier incidencia aunque no haya sido reportada."
+      "regionAria": "Resumen de moderación",
+      "openReports": "Reportes abiertos",
+      "bannedUsers": "Usuarios baneados",
+      "incidentsToday": "Incidencias hoy",
+      "actions24h": "Acciones · 24h"
     },
     "reports": {
-      "empty": "No hay reportes pendientes.",
-      "validate": "Validar",
-      "dismiss": "Descartar",
-      "ban": "Banear al autor"
+      "title": "Cola de reportes",
+      "subtitle": "Incidencias que tus usuarios marcaron como problemáticas (spam, acoso, info falsa…). Revísalas aquí y decide si descartar el reporte o eliminar la incidencia. También puedes banear a quien reportó o al autor desde cualquier fila.",
+      "tabAria": "Estado del reporte",
+      "tabs": {
+        "open": "Pendientes",
+        "dismissed": "Descartados",
+        "actioned": "Actuados",
+        "all": "Todos"
+      },
+      "hints": {
+        "open": "Reportes nuevos de usuarios, pendientes de tu revisión.",
+        "dismissed": "Reportes que marcaste como \"sin acción\" — quedan registrados.",
+        "actioned": "Reportes cuya incidencia eliminaste — quien reportó fue escuchado.",
+        "all": "Todos los reportes del sistema, los más recientes primero."
+      },
+      "emptyOpen": "Bandeja vacía. No hay reportes pendientes ahora mismo.",
+      "emptyOther": "Ningún reporte coincide con este filtro.",
+      "pagerAria": "Paginación",
+      "pagerPrev": "← Anterior",
+      "pagerNext": "Siguiente →",
+      "pagerPage": "Página {page} / {total}"
     },
-    "bans": {
-      "title": "Usuarios baneados",
-      "empty": "No hay baneos activos.",
-      "unban": "Levantar baneo",
-      "reason": "Motivo",
-      "until": "Hasta"
+    "reportRow": {
+      "reasons": {
+        "spam": "Spam",
+        "harassment": "Acoso",
+        "false_info": "Info falsa",
+        "inappropriate": "Inapropiado",
+        "personal_data": "Datos personales",
+        "other": "Otro"
+      },
+      "status": {
+        "open": "abierto",
+        "dismissed": "descartado",
+        "actioned": "actuado"
+      },
+      "reportedByLabel": "Reportado por",
+      "authorLabel": "Autor",
+      "banReporterAria": "Banear a quien reportó",
+      "banAuthorAria": "Banear al autor",
+      "dismiss": "Descartar",
+      "working": "Procesando…",
+      "remove": "Eliminar incidencia",
+      "removePromptTitle": "Motivo para eliminar esta incidencia (solo aparece en el registro de auditoría):",
+      "errorDismiss": "No se pudo descartar el reporte.",
+      "errorRemove": "No se pudo eliminar la incidencia.",
+      "relativeJustNow": "ahora mismo",
+      "relativeMinAgo": "hace {count}m",
+      "relativeHoursAgo": "hace {count}h",
+      "relativeDaysAgo": "hace {count}d"
     },
     "banDialog": {
       "title": "Banear usuario",
-      "reason": "Motivo",
-      "reasonPlaceholder": "Spam reiterado, contenido ofensivo…",
-      "duration": "Duración",
-      "durationOptions": {
+      "body": "Banear a <strong>{user}</strong> les impide al instante publicar, votar o reportar. La lectura no se ve afectada. Puedes revertirlo desde la pestaña Baneos.",
+      "durationLegend": "Duración",
+      "durations": {
         "24h": "24 horas",
         "7d": "7 días",
         "30d": "30 días",
-        "permanent": "Permanente"
+        "perm": "Permanente"
       },
-      "submit": "Confirmar baneo",
-      "cancel": "Cancelar"
+      "reasonLabel": "Motivo (visible para quien recibe el baneo)",
+      "reasonPlaceholder": "p. ej. Reportes falsos repetidos tras avisos.",
+      "reasonError": "Indica por qué baneas a este usuario (3+ caracteres).",
+      "cancel": "Cancelar",
+      "submit": "Banear usuario",
+      "submitting": "Baneando…",
+      "errorFallback": "No se pudo banear al usuario."
+    },
+    "incidents": {
+      "title": "Incidencias",
+      "subtitle": "El catálogo completo, incluidas las incidencias ocultas. Busca o filtra para encontrar una y elimínala (la oculta del mapa), restaura una previamente oculta o banea a su autor. A diferencia de la pestaña de Reportes, aquí actúas sin esperar a un aviso de usuario.",
+      "tabAria": "Estado de la incidencia",
+      "tabs": {
+        "all": "Todas",
+        "pending": "Pendientes",
+        "validated": "Validadas",
+        "dismissed": "Descartadas",
+        "resolved": "Resueltas",
+        "expired": "Expiradas"
+      },
+      "hints": {
+        "all": "Todas las incidencias creadas, sea cual sea su estado.",
+        "pending": "Acaban de reportarse, esperando votos de la comunidad.",
+        "validated": "Confirmadas por suficientes votos positivos — visibles ahora en el mapa.",
+        "dismissed": "Ocultas del mapa. Las eliminó un moderador o la comunidad las votó negativamente. Usa \"Restaurar\" para volver a mostrarlas.",
+        "resolved": "Marcadas por la comunidad como ya no problemáticas en el sendero.",
+        "expired": "Retiradas automáticamente al pasar su fecha de caducidad. Ocultas del mapa."
+      },
+      "empty": "Ninguna incidencia coincide con esta búsqueda.",
+      "pagerAria": "Paginación",
+      "pagerPrev": "← Anterior",
+      "pagerNext": "Siguiente →",
+      "pagerPageWithTotal": "Página {page} / {total} · {count} en total"
+    },
+    "incidentsSearch": {
+      "roleAria": "Buscar incidencias",
+      "inputAria": "Buscar incidencias",
+      "placeholder": "Buscar en título o descripción…",
+      "clear": "Limpiar",
+      "search": "Buscar",
+      "searching": "Buscando…"
+    },
+    "incidentRow": {
+      "status": {
+        "pending": "pendiente",
+        "validated": "validada",
+        "dismissed": "descartada",
+        "resolved": "resuelta",
+        "expired": "expirada"
+      },
+      "reportsBadge": "{count, plural, one {# reporte} other {# reportes}}",
+      "reportsBadgeTitle": "Reportes abiertos",
+      "banAuthorAria": "Banear al autor",
+      "byUser": "por {user}",
+      "score": "puntuación {score}",
+      "working": "Procesando…",
+      "restore": "Restaurar",
+      "remove": "Eliminar",
+      "removePromptTitle": "Motivo para eliminar esta incidencia (registro de auditoría):",
+      "restorePromptTitle": "Motivo para restaurar esta incidencia (opcional):",
+      "errorRemove": "No se pudo eliminar la incidencia.",
+      "errorRestore": "No se pudo restaurar la incidencia."
+    },
+    "bans": {
+      "title": "Baneos activos",
+      "subtitle": "Usuarios actualmente baneados de interactuar con la plataforma. No pueden crear incidencias, votar ni reportar. La lectura del mapa sigue funcionando para que entiendan por qué fallan sus acciones. Los baneos expirados desaparecen de esta lista automáticamente; usa \"Levantar baneo\" para terminar uno activo antes de tiempo.",
+      "empty": "No hay baneos activos.",
+      "permanent": "Permanente",
+      "expired": "Expirado",
+      "hoursLeft": "~{count}h restantes",
+      "daysLeft": "~{count}d restantes",
+      "banned": "baneado el {date}",
+      "by": "por {user}",
+      "unban": "Levantar baneo",
+      "unbanning": "Levantando…",
+      "unbanConfirm": "¿Levantar el baneo de {user}?",
+      "unbanError": "No se pudo levantar el baneo."
     },
     "activity": {
       "title": "Registro de actividad",
-      "empty": "Aún no hay acciones registradas."
+      "subtitle": "Historial cronológico de cada acción de moderación tomada en la plataforma — quién hizo qué, sobre qué objetivo y por qué. Las entradas aquí son inmutables: no se pueden editar ni eliminar, así que este es el registro canónico si necesitas revisar decisiones pasadas.",
+      "empty": "Aún no hay acciones de moderación.",
+      "unknown": "Desconocido",
+      "verbs": {
+        "dismiss_report": "descartó un reporte sobre",
+        "remove_incident": "eliminó la incidencia",
+        "restore_incident": "restauró la incidencia",
+        "ban_user": "baneó al usuario",
+        "unban_user": "desbaneó al usuario",
+        "author_edit_incident": "editó su incidencia",
+        "author_create_update": "publicó un seguimiento sobre",
+        "author_delete_update": "eliminó un seguimiento sobre",
+        "author_create_incident": "creó la incidencia",
+        "author_resolve_incident": "resolvió la incidencia",
+        "author_delete_incident": "eliminó su incidencia",
+        "account_deleted": "eliminó su cuenta"
+      },
+      "diff": {
+        "title": "título:",
+        "description": "descripción:",
+        "kind": "tipo:",
+        "was": "estaba:",
+        "body": "texto:",
+        "username": "usuario:",
+        "incidentsWiped": "incidencias borradas:"
+      },
+      "pagerAria": "Paginación",
+      "pagerPrev": "← Anterior",
+      "pagerNext": "Siguiente →",
+      "pagerPage": "Página {page} / {total}"
     }
   },
   "profile": {
     "title": "Mi perfil",
-    "signedInAs": "Sesión iniciada como",
-    "memberSince": "Miembro desde",
-    "stats": {
-      "total": "Incidencias",
-      "validated": "Validadas",
-      "pending": "Pendientes",
-      "resolved": "Resueltas"
+    "metaTitle": "Mi perfil · Montana",
+    "backToMap": "Volver al mapa",
+    "anonymous": "Anónimo",
+    "memberSince": "Miembro desde {date}",
+    "memberSinceUnknown": "Desconocido",
+    "statsRegionAria": "Tu actividad",
+    "statsCards": {
+      "totalLabel": "Incidencias totales",
+      "validatedLabel": "Validadas",
+      "scoreLabel": "Puntuación neta",
+      "openReportsLabel": "Reportes abiertos"
     },
     "incidents": {
+      "sectionAria": "Estado de incidencia",
       "title": "Mis incidencias",
-      "empty": "Aún no has reportado ninguna incidencia.",
-      "loadMore": "Cargar más"
+      "countTotal": "{count} en total",
+      "statusTabs": {
+        "all": "Todas",
+        "pending": "Pendientes",
+        "validated": "Validadas",
+        "resolved": "Resueltas",
+        "dismissed": "Descartadas",
+        "expired": "Expiradas"
+      },
+      "statusBadges": {
+        "pending": "pendiente",
+        "validated": "validada",
+        "resolved": "resuelta",
+        "dismissed": "descartada",
+        "expired": "expirada"
+      },
+      "emptyAll": "Aún no has reportado ninguna incidencia. Toca el mapa para crear una.",
+      "emptyFiltered": "Ninguna incidencia coincide con este filtro.",
+      "reportsBadge": "{count, plural, one {# reporte} other {# reportes}}",
+      "reportsBadgeAria": "Reportes abiertos",
+      "photosBadge": "{count, plural, one {# foto} other {# fotos}}",
+      "scoreLabel": "puntuación {score}",
+      "pagerAria": "Paginación",
+      "pagerPrev": "← Anterior",
+      "pagerNext": "Siguiente →",
+      "pagerPage": "Página {page} / {total}"
     },
     "dangerZone": {
-      "title": "Zona de peligro",
-      "description": "Elimina tu cuenta y todos tus datos de forma permanente.",
-      "delete": "Eliminar mi cuenta",
-      "confirmTitle": "¿Eliminar tu cuenta?",
-      "confirmBody": "Se borrarán tu perfil, votos y reportes. Las incidencias que has publicado se anonimizarán. Esta acción es irreversible.",
-      "confirmCta": "Sí, eliminar mi cuenta",
-      "deleting": "Eliminando…"
+      "title": "Zona peligrosa",
+      "subtitle": "Acciones permanentes que no se pueden deshacer.",
+      "rowTitle": "Eliminar mi cuenta",
+      "rowBody": "Elimina tu perfil, todas las incidencias que reportaste, tus votos y todas las fotos subidas. Otros usuarios verán tus incidencias como autoría de una cuenta eliminada.",
+      "deleteCta": "Eliminar cuenta",
+      "confirmBody": "Esto elimina permanentemente tu perfil, incidencias, votos y fotos. No se puede deshacer. Escribe <strong>DELETE</strong> para confirmar.",
+      "confirmPlaceholder": "DELETE",
+      "confirmInputAria": "Escribe DELETE para confirmar",
+      "cancel": "Cancelar",
+      "deleteFinal": "Eliminar para siempre",
+      "deleting": "Eliminando…",
+      "deleteError": "No se pudo eliminar la cuenta."
     }
   },
   "pwa": {
     "offlineIndicator": "Sin conexión — mostrando mapa en caché",
     "offlinePage": {
       "title": "Estás sin conexión",
-      "body": "Montana necesita internet para mostrar el mapa y los incidentes en tiempo real. Vuelve a intentarlo cuando recuperes la conexión.",
+      "body": "Montana necesita conexión para cargar incidencias actualizadas. La última zona del mapa que visitaste debería seguir disponible — prueba a volver al mapa.",
       "retry": "Reintentar"
     }
   },
   "push": {
     "onboardingBanner": {
-      "title": "Activa las alertas cercanas",
-      "body": "Recibe una notificación cuando alguien reporte una incidencia cerca de tu ruta habitual.",
+      "regionAria": "Onboarding de alertas cercanas",
+      "heading": "Recibe avisos de incidencias cercanas",
+      "body": "Entérate de los nuevos reportes en tu zona sin tener que abrir la app.",
       "enable": "Activar",
-      "dismiss": "Ahora no"
+      "enabling": "Activando…",
+      "notNow": "Ahora no",
+      "dismissForever": "No volver a preguntar",
+      "errorFallback": "No se pudieron activar las notificaciones. Inténtalo desde el menú de cuenta."
     },
     "settings": {
       "title": "Alertas cercanas",
-      "subtitle": "Recibe notificaciones cuando haya incidencias cerca de un punto que elijas.",
-      "enable": "Activar notificaciones",
-      "disable": "Desactivar notificaciones",
-      "enabling": "Activando…",
-      "disabling": "Desactivando…",
-      "centerLabel": "Centro de alertas",
-      "centerDefault": "Usando tu ubicación actual",
-      "centerCustom": "Punto personalizado",
+      "close": "Cerrar",
+      "loading": "Cargando…",
+      "intro": "Recibe una notificación cuando se reporte una incidencia en tu zona. Puedes cambiarlo o desactivarlo cuando quieras.",
+      "centerLabel": "Centro",
+      "centerCoords": "{lat}, {lng}",
+      "useMyLocation": "Usar mi ubicación actual",
       "pickOnMap": "Elegir en el mapa",
-      "radiusLabel": "Radio",
-      "radiusValue": "{km} km",
-      "cooldownLabel": "Intervalo mínimo entre avisos",
+      "radiusLabel": "Radio: <strong>{km} km</strong>",
+      "minSeverityLegend": "Gravedad mínima",
+      "severityMild": "Leve",
+      "severityModerate": "Moderada",
+      "severitySevere": "Grave",
+      "cooldownLabel": "Intervalo entre avisos",
+      "cooldownHint": "Si caen varias incidencias seguidas, solo recibirás una notificación — la más grave.",
       "cooldownOptions": {
-        "5m": "5 minutos",
-        "30m": "30 minutos",
-        "1h": "1 hora",
-        "6h": "6 horas",
-        "24h": "1 día"
+        "60": "Sin espera (todas las alertas)",
+        "600": "Como máximo una cada 10 minutos",
+        "1800": "Como máximo una cada 30 minutos",
+        "3600": "Como máximo una por hora",
+        "21600": "Como máximo una cada 6 horas"
       },
-      "save": "Guardar preferencias",
+      "save": "Activar notificaciones",
+      "update": "Actualizar preferencias",
       "saving": "Guardando…",
-      "permissionDenied": "Has bloqueado las notificaciones en el navegador. Cámbialo desde los ajustes del sitio para activarlas.",
-      "unsupported": "Tu navegador no admite notificaciones push."
+      "disable": "Desactivar notificaciones",
+      "disabling": "Desactivando…",
+      "loadError": "No se pudieron cargar los ajustes.",
+      "locationError": "No se pudo leer tu ubicación. Revisa los permisos del navegador.",
+      "saveError": "No se pudieron guardar los ajustes.",
+      "unsubscribeError": "No se pudieron desactivar las notificaciones."
     }
   },
   "legal": {

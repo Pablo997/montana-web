@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { cookies, headers } from 'next/headers';
+import { LOCALE_COOKIE, normaliseLocale, type Locale } from '@/i18n/config';
 
 // Dynamic Open Graph image for the home page.
 //
@@ -17,13 +19,65 @@ import { ImageResponse } from 'next/og';
 //     needing a bitmap asset.
 //   * Large wordmark + tagline — the exact two pieces of info a
 //     Twitter/Discord/Slack preview has real estate for.
+//   * Locale-aware copy: we read `NEXT_LOCALE` (or `Accept-Language`)
+//     and render the heading + subtitle in the right language. Social
+//     bots typically don't send our cookie, so most embeds will show
+//     the language hinted by `Accept-Language`, which lines up with
+//     the user's own browser when they paste the link.
 
 export const runtime = 'edge';
 export const alt = 'Montana — Real-time mountain incidents';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+/**
+ * Copy per locale. Kept here (not in `messages/*.json`) because the
+ * OG image route runs on the Edge runtime where the next-intl plugin
+ * is not wired up — we resolve the locale ourselves and look up the
+ * literals from this tiny table. The strings rarely change, so the
+ * duplication is acceptable.
+ */
+const COPY: Record<
+  Locale,
+  { heading: { line1: string; line2: string }; subtitle: string }
+> = {
+  es: {
+    heading: {
+      line1: 'Mapa en tiempo real',
+      line2: 'de incidencias en montaña',
+    },
+    subtitle:
+      'Reportes comunitarios de peligros en rutas, accidentes y puntos de interés. Validados por la comunidad y actualizados al instante.',
+  },
+  en: {
+    heading: {
+      line1: 'Real-time map of',
+      line2: 'mountain incidents',
+    },
+    subtitle:
+      'Community-powered reports of trail hazards, accidents and points of interest. Crowd-validated, updated in real time.',
+  },
+};
+
+/**
+ * Resolve the OG copy locale.
+ *
+ * Priority mirrors `src/i18n/request.ts` so the OG card matches what
+ * the user (or social bot) would see if they actually opened the page:
+ *   1. `NEXT_LOCALE` cookie — the user explicitly chose a language.
+ *   2. `Accept-Language` header — the bot's / browser's preferred lang.
+ *   3. Spanish default — product is Spanish-primary.
+ */
+function resolveLocale(): Locale {
+  const cookieLocale = cookies().get(LOCALE_COOKIE)?.value;
+  if (cookieLocale) return normaliseLocale(cookieLocale);
+  const accept = headers().get('accept-language');
+  if (accept) return normaliseLocale(accept.split(',')[0]?.trim());
+  return 'es';
+}
+
 export default async function OpenGraphImage() {
+  const copy = COPY[resolveLocale()];
   return new ImageResponse(
     (
       <div
@@ -78,9 +132,9 @@ export default async function OpenGraphImage() {
             maxWidth: 960,
           }}
         >
-          Real-time map of
+          {copy.heading.line1}
           <br />
-          mountain incidents
+          {copy.heading.line2}
         </div>
         <div
           style={{
@@ -91,8 +145,7 @@ export default async function OpenGraphImage() {
             lineHeight: 1.3,
           }}
         >
-          Community-powered reports of trail hazards, accidents and points of
-          interest. Crowd-validated, updated in real time.
+          {copy.subtitle}
         </div>
       </div>
     ),

@@ -1,28 +1,37 @@
 import Link from 'next/link';
-import {
-  INCIDENT_TYPE_LABELS,
-  SEVERITY_LABELS,
-} from '@/types/incident';
+import { getLocale, getTranslations } from 'next-intl/server';
+import type { IncidentStatus } from '@/types/incident';
 import type { MyIncidentRow } from '@/lib/profile/types';
 
 interface Props {
   row: MyIncidentRow;
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime())
-    ? iso
-    : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
 /**
  * Single row in the user's incident list. Links to the existing detail
  * page where the author already has Resolve / Delete actions, so we
  * don't duplicate those buttons here.
+ *
+ * Server component: we resolve the locale-dependent enum labels and
+ * the date formatter once during render, no client JS needed.
  */
-export function IncidentListItem({ row }: Props) {
+export async function IncidentListItem({ row }: Props) {
+  const t = await getTranslations('profile.incidents');
+  const incidentT = await getTranslations('incident');
+  const locale = await getLocale();
+
+  const formattedDate = (() => {
+    const d = new Date(row.createdAt);
+    if (Number.isNaN(d.getTime())) return row.createdAt;
+    return d.toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  })();
+
   const warn = row.openReportsCount > 0;
+  const statusKey: IncidentStatus = row.status;
 
   return (
     <Link
@@ -37,31 +46,32 @@ export function IncidentListItem({ row }: Props) {
         <span
           className={`admin-incident__status admin-incident__status--${row.status}`}
         >
-          {row.status}
+          {t(`statusBadges.${statusKey}`)}
         </span>
         {warn ? (
-          <span className="admin-incident__flag-badge" title="Open reports">
-            {row.openReportsCount} report{row.openReportsCount === 1 ? '' : 's'}
+          <span
+            className="admin-incident__flag-badge"
+            title={t('reportsBadgeAria')}
+          >
+            {t('reportsBadge', { count: row.openReportsCount })}
           </span>
         ) : null}
       </header>
 
       <div className="admin-incident__meta">
-        <span>{INCIDENT_TYPE_LABELS[row.type]}</span>
+        <span>{incidentT(`type.${row.type}`)}</span>
         <span aria-hidden="true">·</span>
-        <span>{SEVERITY_LABELS[row.severity]}</span>
+        <span>{incidentT(`severity.${row.severity}`)}</span>
         <span aria-hidden="true">·</span>
-        <span>score {row.score}</span>
+        <span>{t('scoreLabel', { score: row.score })}</span>
         {row.mediaCount > 0 ? (
           <>
             <span aria-hidden="true">·</span>
-            <span>
-              {row.mediaCount} photo{row.mediaCount === 1 ? '' : 's'}
-            </span>
+            <span>{t('photosBadge', { count: row.mediaCount })}</span>
           </>
         ) : null}
         <span aria-hidden="true">·</span>
-        <time dateTime={row.createdAt}>{formatDate(row.createdAt)}</time>
+        <time dateTime={row.createdAt}>{formattedDate}</time>
       </div>
     </Link>
   );

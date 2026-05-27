@@ -2,10 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import {
-  INCIDENT_TYPE_LABELS,
-  SEVERITY_LABELS,
-} from '@/types/incident';
+import { useTranslations } from 'next-intl';
+import { useIncidentLabels } from '@/lib/incidents/useIncidentLabels';
 import type { AdminReportRow } from '@/lib/admin/types';
 import {
   dismissReport,
@@ -17,51 +15,50 @@ interface Props {
   row: AdminReportRow;
 }
 
-const REASON_LABELS: Record<string, string> = {
-  spam: 'Spam',
-  harassment: 'Harassment',
-  false_info: 'False info',
-  inappropriate: 'Inappropriate',
-  personal_data: 'Personal data',
-  other: 'Other',
-};
-
-function formatRelative(iso: string): string {
-  const diffMs = Date.now() - Date.parse(iso);
-  const minutes = Math.round(diffMs / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
-}
-
 export function ReportRow({ row }: Props) {
+  const t = useTranslations('admin.reportRow');
+  const labels = useIncidentLabels();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [banTarget, setBanTarget] = useState<
     { userId: string; username: string | null } | null
   >(null);
 
+  /**
+   * Compact, locale-aware "x minutes ago" formatter. We don't use
+   * `Intl.RelativeTimeFormat` here because the design wants the tight
+   * `5m / 2h / 3d` shape, which doesn't map well to the formatter's
+   * verbose output. Translations live alongside the rest of the row.
+   */
+  const formatRelative = (iso: string): string => {
+    const diffMs = Date.now() - Date.parse(iso);
+    const minutes = Math.round(diffMs / 60_000);
+    if (minutes < 1) return t('relativeJustNow');
+    if (minutes < 60) return t('relativeMinAgo', { count: minutes });
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return t('relativeHoursAgo', { count: hours });
+    const days = Math.round(hours / 24);
+    return t('relativeDaysAgo', { count: days });
+  };
+
   const handleDismiss = () => {
     setError(null);
     startTransition(async () => {
       const result = await dismissReport(row.reportId);
-      if (!result.ok) setError(result.error ?? 'Failed to dismiss report.');
+      if (!result.ok) setError(result.error ?? t('errorDismiss'));
     });
   };
 
   const handleRemove = () => {
     const reason = window.prompt(
-      'Reason for removing this incident (shown only in the audit log):',
-      REASON_LABELS[row.reason] ?? row.reason,
+      t('removePromptTitle'),
+      t(`reasons.${row.reason}`),
     );
     if (!reason) return;
     setError(null);
     startTransition(async () => {
       const result = await removeIncident(row.incidentId, reason);
-      if (!result.ok) setError(result.error ?? 'Failed to remove incident.');
+      if (!result.ok) setError(result.error ?? t('errorRemove'));
     });
   };
 
@@ -73,13 +70,13 @@ export function ReportRow({ row }: Props) {
     >
       <header className="admin-report__head">
         <span className={`admin-report__badge admin-report__badge--${row.reason}`}>
-          {REASON_LABELS[row.reason] ?? row.reason}
+          {t(`reasons.${row.reason}`)}
         </span>
         <span className="admin-report__time" title={row.createdAt}>
           {formatRelative(row.createdAt)}
         </span>
         <span className={`admin-report__status admin-report__status--${row.status}`}>
-          {row.status}
+          {t(`status.${row.status}`)}
         </span>
       </header>
 
@@ -90,8 +87,8 @@ export function ReportRow({ row }: Props) {
       >
         <span className="admin-report__title">{row.incidentTitle}</span>
         <span className="admin-report__meta">
-          {INCIDENT_TYPE_LABELS[row.incidentType]} ·{' '}
-          {SEVERITY_LABELS[row.incidentSeverity]} · {row.incidentStatus}
+          {labels.type(row.incidentType)} · {labels.severity(row.incidentSeverity)} ·{' '}
+          {labels.status(row.incidentStatus)}
         </span>
       </Link>
 
@@ -102,7 +99,7 @@ export function ReportRow({ row }: Props) {
       <footer className="admin-report__foot">
         <div className="admin-report__people">
           <span className="admin-report__person">
-            <span className="admin-report__person-label">Reported by</span>
+            <span className="admin-report__person-label">{t('reportedByLabel')}</span>
             <button
               type="button"
               className="admin-report__person-link"
@@ -112,13 +109,13 @@ export function ReportRow({ row }: Props) {
                   username: row.reporterUsername,
                 })
               }
-              aria-label="Ban reporter"
+              aria-label={t('banReporterAria')}
             >
               {row.reporterUsername ?? row.reporterId.slice(0, 8)}
             </button>
           </span>
           <span className="admin-report__person">
-            <span className="admin-report__person-label">Author</span>
+            <span className="admin-report__person-label">{t('authorLabel')}</span>
             <button
               type="button"
               className="admin-report__person-link"
@@ -128,7 +125,7 @@ export function ReportRow({ row }: Props) {
                   username: row.incidentAuthorUsername,
                 })
               }
-              aria-label="Ban author"
+              aria-label={t('banAuthorAria')}
             >
               {row.incidentAuthorUsername ?? row.incidentAuthorId.slice(0, 8)}
             </button>
@@ -143,7 +140,7 @@ export function ReportRow({ row }: Props) {
               onClick={handleDismiss}
               disabled={pending}
             >
-              {pending ? 'Working…' : 'Dismiss'}
+              {pending ? t('working') : t('dismiss')}
             </button>
             <button
               type="button"
@@ -151,7 +148,7 @@ export function ReportRow({ row }: Props) {
               onClick={handleRemove}
               disabled={pending}
             >
-              Remove incident
+              {t('remove')}
             </button>
           </div>
         ) : null}

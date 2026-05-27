@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { AdminStats } from '@/lib/admin/types';
 
@@ -29,31 +30,37 @@ async function fetchStats(): Promise<AdminStats> {
  * `/admin` (which only lists *reports*) would show them.
  */
 export async function StatsHeader() {
+  const t = await getTranslations('admin.stats');
+  const locale = await getLocale();
   const stats = await fetchStats();
 
   return (
-    <section className="admin-stats" aria-label="Moderation overview">
+    <section className="admin-stats" aria-label={t('regionAria')}>
       <StatCard
-        label="Open reports"
+        label={t('openReports')}
         value={stats.openReports}
         tone="warn"
         href="/admin?status=open"
+        locale={locale}
       />
       <StatCard
-        label="Banned users"
+        label={t('bannedUsers')}
         value={stats.bannedUsers}
         tone="danger"
         href="/admin/bans"
+        locale={locale}
       />
       <StatCard
-        label="Incidents today"
+        label={t('incidentsToday')}
         value={stats.incidentsToday}
         href="/admin/incidents"
+        locale={locale}
       />
       <StatCard
-        label="Actions · 24h"
+        label={t('actions24h')}
         value={stats.actions24h}
         href="/admin/activity"
+        locale={locale}
       />
     </section>
   );
@@ -64,11 +71,13 @@ function StatCard({
   value,
   tone,
   href,
+  locale,
 }: {
   label: string;
   value: number;
   tone?: 'warn' | 'danger';
   href: string;
+  locale: string;
 }) {
   const toneClass = tone ? ` admin-stats__card--${tone}` : '';
   return (
@@ -77,7 +86,7 @@ function StatCard({
       prefetch={false}
       className={`admin-stats__card admin-stats__card--link${toneClass}`}
     >
-      <span className="admin-stats__value">{value.toLocaleString()}</span>
+      <span className="admin-stats__value">{value.toLocaleString(locale)}</span>
       <span className="admin-stats__label">{label}</span>
     </Link>
   );

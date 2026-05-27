@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Props {
   initialQuery: string;
@@ -14,6 +15,7 @@ interface Props {
  * shareable and the back button works as expected.
  */
 export function IncidentsSearchForm({ initialQuery, status }: Props) {
+  const t = useTranslations('admin.incidentsSearch');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(initialQuery);
@@ -43,14 +45,19 @@ export function IncidentsSearchForm({ initialQuery, status }: Props) {
   };
 
   return (
-    <form className="admin-search" onSubmit={submit} role="search">
+    <form
+      className="admin-search"
+      onSubmit={submit}
+      role="search"
+      aria-label={t('roleAria')}
+    >
       <input
         type="search"
         className="admin-search__input"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search title or description…"
-        aria-label="Search incidents"
+        placeholder={t('placeholder')}
+        aria-label={t('inputAria')}
       />
       {initialQuery ? (
         <button
@@ -59,11 +66,11 @@ export function IncidentsSearchForm({ initialQuery, status }: Props) {
           onClick={clear}
           disabled={pending}
         >
-          Clear
+          {t('clear')}
         </button>
       ) : null}
       <button type="submit" className="button" disabled={pending}>
-        {pending ? 'Searching…' : 'Search'}
+        {pending ? t('searching') : t('search')}
       </button>
     </form>
   );

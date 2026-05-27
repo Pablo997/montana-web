@@ -245,11 +245,22 @@ How it works:
 - **Message bundles** live in `messages/es.json` and `messages/en.json`, grouped by feature namespace (`header`, `auth`, `map`, `incident`, `admin`, `profile`, `push`, `pwa`, `legal`, `error`, `locale`). New strings go in both files at the same key path.
 - **In components**, call `useTranslations('namespace')` (client) or `getTranslations('namespace')` (RSC). For strings with inline markup use `t.rich('key', { tag: (chunks) => <Tag>{chunks}</Tag> })`.
 - **Switching locales at runtime**: the `<LocaleSwitcher />` component lives inside the user menu. It calls the `setLocale` server action (`src/i18n/actions.ts`) which writes the cookie and revalidates the root layout so the whole tree re-renders in the new language without a hard reload.
-- **Metadata** (title, description, `<html lang>`, OG locale) is locale-aware via `siteSeo(locale)` in `src/lib/seo/config.ts`.
+- **Metadata** (title, description, `<html lang>`, OG locale) is locale-aware via `siteSeo(locale)` in `src/lib/seo/config.ts`. The home OG image (`src/app/opengraph-image.tsx`) reads the same cookie / `Accept-Language` and renders its tagline in the resolved language so social previews look native in both `es` and `en`.
+- **Legal pages** dispatch on locale: each of `/privacy`, `/terms`, `/cookies` reads `getLocale()` and renders a dedicated content component (`_content/<Page>Es.tsx` or `<Page>En.tsx`). The split keeps long-form legal prose as plain JSX — no `t.rich()` indirection per paragraph — so counsel can review and edit either version independently.
 
-Known follow-up scope: `/admin/*` and `/me` still carry English strings inline — they're only shown to logged-in users and were deliberately deferred to keep this PR reviewable. Same for the body copy of `/privacy`, `/terms`, `/cookies` (legal text often has to be reviewed by counsel before translating). All three are tracked and safe to ship as-is.
+### SEO and hreflang
 
-Migration path if we ever need crawlable multi-locale URLs (`/en/...` indexed separately): only `src/i18n/request.ts`, the middleware and the folder layout need to change; every `useTranslations` call site stays identical. The message bundles are the investment, not the routing.
+Because both locales are served from the **same URL** (cookie-based negotiation, no `/es/...` vs `/en/...` prefix), we deliberately **do not emit `<link rel="alternate" hreflang>`**. Google's i18n model expects distinct URLs per language; declaring hreflang against a single URL would mislead the crawler about which page serves which locale.
+
+What we ship instead:
+
+- `openGraph.alternateLocale` listing the other available locale (consumed by Twitter / Slack / Discord cards).
+- A `Vary: Cookie, Accept-Language` response header on every HTML route, so shared caches (Vercel edge, browser, intermediary CDNs) don't serve a warmed-up Spanish HTML to an English visitor or vice versa. Configured in `next.config.js`.
+- Locale-aware metadata + JSON-LD per page, so each individual response is internally consistent (HTML lang, OG locale, page title and body all agree).
+
+If we later decide to surface separate URLs to search engines, the migration is contained: switch `next-intl` to its routing mode (the plugin already supports it), restructure the `app/` tree under a `[locale]` segment and replace this section with an `hreflang` declaration helper. Every `useTranslations` / `getTranslations` call site stays identical — the message bundles are the investment, not the routing.
+
+Smoke coverage: `tests/e2e/smoke.spec.ts` asserts the Spanish bundle by default and includes one cross-check that toggling `NEXT_LOCALE=en` swaps the sign-in page to English. `tests/e2e/legal-i18n.spec.ts` covers the locale dispatch for `/privacy`, `/terms` and `/cookies` in both languages.
 
 ## Accessibility & performance budgets
 

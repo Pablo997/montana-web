@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 export const metadata: Metadata = {
   title: 'Offline — Montana',
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
 // third-party origin is unreachable. Inline styles for the same
 // reason: the globals.css file may not be cached on the very first
 // offline visit.
-export default function OfflinePage() {
+//
+// Translations come from `pwa.offlinePage.*`. This page is RSC so we
+// resolve them server-side; the service worker cache will store the
+// already-localised HTML, which is the right behaviour — once the
+// user is offline we can't run another server render to switch
+// language anyway.
+export default async function OfflinePage() {
+  const t = await getTranslations('pwa.offlinePage');
   return (
     <main
       style={{
@@ -60,13 +68,9 @@ export default function OfflinePage() {
           </svg>
         </div>
 
-        <h1 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>
-          You&apos;re offline
-        </h1>
+        <h1 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>{t('title')}</h1>
         <p style={{ color: '#9aa8a0', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
-          Montana needs a connection to load fresh incidents. Your previously
-          viewed map area should still be available — try going back to the
-          map.
+          {t('body')}
         </p>
 
         <a
@@ -81,7 +85,7 @@ export default function OfflinePage() {
             fontWeight: 500,
           }}
         >
-          Retry
+          {t('retry')}
         </a>
       </div>
     </main>

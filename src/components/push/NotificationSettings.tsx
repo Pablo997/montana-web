@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   DEFAULT_INTERVAL_SECONDS,
   loadPreferences,
@@ -46,15 +47,13 @@ const DEFAULT_PREFS: Omit<PushPreferences, 'center'> = {
  * human-meaningful intervals is more useful than a slider here: nobody
  * wants to fine-tune "every 7 minutes" vs "every 8 minutes", but they
  * do care about the distinction between "as fast as possible" and
- * "maybe hourly". Keep in sync with the CHECK range (60–86400).
+ * "maybe hourly". Keep in sync with the CHECK range (60–86400) and
+ * with `push.settings.cooldownOptions.*` in the message bundles —
+ * the key for each preset IS the value in seconds.
  */
-const INTERVAL_PRESETS: ReadonlyArray<{ value: number; label: string }> = [
-  { value: 60, label: 'No cooldown (every alert)' },
-  { value: 10 * 60, label: 'At most one every 10 minutes' },
-  { value: 30 * 60, label: 'At most one every 30 minutes' },
-  { value: 60 * 60, label: 'At most one per hour' },
-  { value: 6 * 60 * 60, label: 'At most one every 6 hours' },
-];
+const INTERVAL_PRESETS: readonly number[] = [60, 600, 1800, 3600, 6 * 3600];
+
+const SEVERITY_LEVELS: readonly MinSeverity[] = ['mild', 'moderate', 'severe'];
 
 /**
  * Modal that owns the full "nearby alerts" flow: permission prompt,
@@ -73,6 +72,7 @@ export function NotificationSettings({
   onPickOnMap,
   initialCenter,
 }: Props) {
+  const t = useTranslations('push.settings');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +109,7 @@ export function NotificationSettings({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load settings.');
+          setError(err instanceof Error ? err.message : t('loadError'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -121,7 +121,7 @@ export function NotificationSettings({
     // `initialCenter` is a deliberate dep: when the parent reopens the
     // modal after a map pick, the effect re-runs and applies the new
     // coords without needing a full remount.
-  }, [open, initialCenter]);
+  }, [open, initialCenter, t]);
 
   const useMyLocation = async () => {
     setError(null);
@@ -129,11 +129,7 @@ export function NotificationSettings({
       const fix = await getCurrentPosition({ timeoutMs: 10_000 });
       setPrefs((p) => ({ ...p, center: { lat: fix.lat, lng: fix.lng } }));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Could not read your location. Check browser permissions.',
-      );
+      setError(err instanceof Error ? err.message : t('locationError'));
     }
   };
 
@@ -145,7 +141,7 @@ export function NotificationSettings({
       setSubscribed(true);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save.');
+      setError(err instanceof Error ? err.message : t('saveError'));
     } finally {
       setSaving(false);
     }
@@ -159,7 +155,7 @@ export function NotificationSettings({
       setSubscribed(false);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not unsubscribe.');
+      setError(err instanceof Error ? err.message : t('unsubscribeError'));
     } finally {
       setSaving(false);
     }
@@ -182,31 +178,31 @@ export function NotificationSettings({
       <div className="notification-settings__panel">
         <div className="notification-settings__header">
           <h2 id="notification-settings__title" className="notification-settings__title">
-            Nearby alerts
+            {t('title')}
           </h2>
           <button
             type="button"
             className="notification-settings__close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('close')}
           >
             ×
           </button>
         </div>
 
         {loading ? (
-          <p className="notification-settings__status">Loading…</p>
+          <p className="notification-settings__status">{t('loading')}</p>
         ) : (
           <>
-            <p className="notification-settings__intro">
-              Get a push notification when a new incident is reported within
-              your area. You can change or disable this any time.
-            </p>
+            <p className="notification-settings__intro">{t('intro')}</p>
 
             <div className="notification-settings__field">
-              <span className="notification-settings__label">Center</span>
+              <span className="notification-settings__label">{t('centerLabel')}</span>
               <div className="notification-settings__coords">
-                {prefs.center.lat.toFixed(4)}, {prefs.center.lng.toFixed(4)}
+                {t('centerCoords', {
+                  lat: prefs.center.lat.toFixed(4),
+                  lng: prefs.center.lng.toFixed(4),
+                })}
               </div>
               <div className="notification-settings__center-actions">
                 <button
@@ -215,7 +211,7 @@ export function NotificationSettings({
                   onClick={useMyLocation}
                   disabled={saving}
                 >
-                  Use my current location
+                  {t('useMyLocation')}
                 </button>
                 {onPickOnMap ? (
                   <button
@@ -224,7 +220,7 @@ export function NotificationSettings({
                     onClick={onPickOnMap}
                     disabled={saving}
                   >
-                    Pick on map
+                    {t('pickOnMap')}
                   </button>
                 ) : null}
               </div>
@@ -232,7 +228,10 @@ export function NotificationSettings({
 
             <label className="notification-settings__field">
               <span className="notification-settings__label">
-                Radius: <strong>{prefs.radiusKm} km</strong>
+                {t.rich('radiusLabel', {
+                  km: prefs.radiusKm,
+                  strong: (chunks) => <strong>{chunks}</strong>,
+                })}
               </span>
               <input
                 type="range"
@@ -249,9 +248,9 @@ export function NotificationSettings({
 
             <fieldset className="notification-settings__field">
               <legend className="notification-settings__label">
-                Minimum severity
+                {t('minSeverityLegend')}
               </legend>
-              {(['mild', 'moderate', 'severe'] as MinSeverity[]).map((lvl) => (
+              {SEVERITY_LEVELS.map((lvl) => (
                 <label key={lvl} className="notification-settings__radio">
                   <input
                     type="radio"
@@ -263,13 +262,19 @@ export function NotificationSettings({
                     }
                     disabled={saving}
                   />
-                  <span style={{ textTransform: 'capitalize' }}>{lvl}</span>
+                  <span>
+                    {lvl === 'mild'
+                      ? t('severityMild')
+                      : lvl === 'moderate'
+                        ? t('severityModerate')
+                        : t('severitySevere')}
+                  </span>
                 </label>
               ))}
             </fieldset>
 
             <label className="notification-settings__field">
-              <span className="notification-settings__label">Cooldown</span>
+              <span className="notification-settings__label">{t('cooldownLabel')}</span>
               <select
                 className="notification-settings__select"
                 value={prefs.minIntervalSeconds}
@@ -281,16 +286,13 @@ export function NotificationSettings({
                 }
                 disabled={saving}
               >
-                {INTERVAL_PRESETS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
+                {INTERVAL_PRESETS.map((seconds) => (
+                  <option key={seconds} value={seconds}>
+                    {t(`cooldownOptions.${seconds}`)}
                   </option>
                 ))}
               </select>
-              <p className="notification-settings__hint">
-                When several incidents land close together, you'll only
-                get one notification — the most severe.
-              </p>
+              <p className="notification-settings__hint">{t('cooldownHint')}</p>
             </label>
 
             {error ? (
@@ -307,7 +309,7 @@ export function NotificationSettings({
                   onClick={handleDisable}
                   disabled={saving}
                 >
-                  {saving ? 'Turning off…' : 'Turn off notifications'}
+                  {saving ? t('disabling') : t('disable')}
                 </button>
               ) : null}
               <button
@@ -316,11 +318,7 @@ export function NotificationSettings({
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving
-                  ? 'Saving…'
-                  : subscribed
-                    ? 'Update settings'
-                    : 'Enable notifications'}
+                {saving ? t('saving') : subscribed ? t('update') : t('save')}
               </button>
             </div>
           </>

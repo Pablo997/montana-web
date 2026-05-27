@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 
 interface Props {
@@ -11,8 +12,15 @@ interface Props {
  * Shared chrome for `/privacy`, `/terms` and any future static legal /
  * informational page. Keeps content to one readable column and wires up
  * the same header as the rest of the app.
+ *
+ * RSC: we resolve "Back to map" and the "Last updated" label from the
+ * `common.backToMap` + `legal.lastUpdated` namespaces. The `title` and
+ * `lastUpdated` strings themselves are passed in by the caller so each
+ * page can ship the localised version of its own metadata.
  */
-export function LegalPageLayout({ title, lastUpdated, children }: Props) {
+export async function LegalPageLayout({ title, lastUpdated, children }: Props) {
+  const tCommon = await getTranslations('common');
+  const tLegal = await getTranslations('legal');
   return (
     <div className="app-shell">
       <SiteHeader />
@@ -20,10 +28,12 @@ export function LegalPageLayout({ title, lastUpdated, children }: Props) {
         <article className="legal">
           <header className="legal__header">
             <p className="legal__back">
-              <Link href="/">&larr; Back to map</Link>
+              <Link href="/">&larr; {tCommon('backToMap')}</Link>
             </p>
             <h1 className="legal__title">{title}</h1>
-            <p className="legal__updated">Last updated: {lastUpdated}</p>
+            <p className="legal__updated">
+              {tLegal('lastUpdated', { date: lastUpdated })}
+            </p>
           </header>
           <div className="legal__body">{children}</div>
         </article>

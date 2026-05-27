@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   mapIncidentRow,
@@ -17,23 +18,14 @@ interface SearchParams {
 
 const PAGE_SIZE = 25;
 
-const STATUS_TABS: Array<{ id: IncidentStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'pending', label: 'Pending' },
-  { id: 'validated', label: 'Validated' },
-  { id: 'dismissed', label: 'Dismissed' },
-  { id: 'resolved', label: 'Resolved' },
-  { id: 'expired', label: 'Expired' },
+const STATUS_TABS: readonly (IncidentStatus | 'all')[] = [
+  'all',
+  'pending',
+  'validated',
+  'dismissed',
+  'resolved',
+  'expired',
 ];
-
-const STATUS_HINTS: Record<string, string> = {
-  all: 'Every incident ever created, regardless of state.',
-  pending: 'Just reported by a user, waiting for community votes.',
-  validated: 'Confirmed by enough upvotes — currently visible on the map.',
-  dismissed: 'Hidden from the map. Either a moderator removed it or the community voted it down. Use "Restore" to bring it back.',
-  resolved: 'Marked by the community as no longer a problem on the trail.',
-  expired: 'Automatically retired after its expiry date. Hidden from the map.',
-};
 
 function parseStatus(raw: string | undefined): IncidentStatus | null {
   const valid: IncidentStatus[] = [
@@ -87,22 +79,21 @@ export default async function AdminIncidentsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const t = await getTranslations('admin.incidents');
+  const locale = await getLocale();
+
   const statusFilter = parseStatus(searchParams.status);
   const search = searchParams.q?.trim() || null;
   const page = parsePage(searchParams.page);
   const { rows, total } = await fetchIncidents(statusFilter, search, page);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hintKey = statusFilter ?? 'all';
 
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">Incidents</h1>
-        <p className="admin-page__subtitle">
-          The full catalogue, including hidden incidents. Search or
-          filter to find one, then remove it (hides from the map),
-          restore a previously hidden one, or ban its author. Unlike
-          the Reports tab, you act here without waiting for a user flag.
-        </p>
+        <h1 className="admin-page__title">{t('title')}</h1>
+        <p className="admin-page__subtitle">{t('subtitle')}</p>
       </header>
 
       <IncidentsSearchForm
@@ -110,31 +101,28 @@ export default async function AdminIncidentsPage({
         status={statusFilter ?? 'all'}
       />
 
-      <div className="admin-tabs" role="tablist" aria-label="Incident status">
-        {STATUS_TABS.map((tab) => {
+      <div className="admin-tabs" role="tablist" aria-label={t('tabAria')}>
+        {STATUS_TABS.map((id) => {
           const active =
-            (tab.id === 'all' && statusFilter === null) ||
-            tab.id === statusFilter;
+            (id === 'all' && statusFilter === null) || id === statusFilter;
           return (
             <Link
-              key={tab.id}
-              href={buildHref(tab.id, search)}
+              key={id}
+              href={buildHref(id, search)}
               role="tab"
               aria-selected={active}
               className={`admin-tabs__tab${active ? ' admin-tabs__tab--active' : ''}`}
             >
-              {tab.label}
+              {t(`tabs.${id}`)}
             </Link>
           );
         })}
       </div>
 
-      <p className="admin-hint">
-        {STATUS_HINTS[statusFilter ?? 'all']}
-      </p>
+      <p className="admin-hint">{t(`hints.${hintKey}`)}</p>
 
       {rows.length === 0 ? (
-        <p className="admin-empty">No incidents match this query.</p>
+        <p className="admin-empty">{t('empty')}</p>
       ) : (
         <ul className="admin-incident-list">
           {rows.map((row) => (
@@ -146,32 +134,36 @@ export default async function AdminIncidentsPage({
       )}
 
       {totalPages > 1 ? (
-        <nav className="admin-pager" aria-label="Pagination">
+        <nav className="admin-pager" aria-label={t('pagerAria')}>
           {page > 1 ? (
             <Link
               href={buildHref(statusFilter ?? 'all', search, page - 1)}
               className="admin-pager__link"
             >
-              ← Prev
+              {t('pagerPrev')}
             </Link>
           ) : (
             <span className="admin-pager__link admin-pager__link--disabled">
-              ← Prev
+              {t('pagerPrev')}
             </span>
           )}
           <span className="admin-pager__info">
-            Page {page} / {totalPages} · {total.toLocaleString()} total
+            {t('pagerPageWithTotal', {
+              page,
+              total: totalPages,
+              count: total.toLocaleString(locale),
+            })}
           </span>
           {page < totalPages ? (
             <Link
               href={buildHref(statusFilter ?? 'all', search, page + 1)}
               className="admin-pager__link"
             >
-              Next →
+              {t('pagerNext')}
             </Link>
           ) : (
             <span className="admin-pager__link admin-pager__link--disabled">
-              Next →
+              {t('pagerNext')}
             </span>
           )}
         </nav>
