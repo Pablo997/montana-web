@@ -24,7 +24,7 @@
 // client). The `activate` handler below deletes every cache whose
 // name doesn't end in this suffix, so a version bump is a hard
 // reset across the whole bucket.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = `montana-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `montana-assets-${CACHE_VERSION}`;
 const TILE_CACHE = `montana-tiles-${CACHE_VERSION}`;
@@ -144,10 +144,11 @@ self.addEventListener('activate', (event) => {
 //   {
 //     title: string,
 //     body: string,
-//     tag: string,       // incident id, so repeated updates collapse
-//     url: string,       // deep link to the incident detail
-//     type?: string,     // incident type, used to pick an icon if we add one
+//     tag: string,            // incident id, so repeated updates collapse
+//     url: string,            // deep link to the incident detail
+//     type?: string,          // incident type, used to pick an icon if we add one
 //     severity?: string,
+//     notificationId?: string // in-app notifications.id — used to mark-read on click
 //   }
 self.addEventListener('push', (event) => {
   let data = {};
@@ -172,23 +173,68 @@ self.addEventListener('push', (event) => {
     renotify: Boolean(data.tag),
     icon: '/icons/icon.svg',
     badge: '/icons/icon.svg',
-    // Carry the URL through so `notificationclick` knows where to go
-    // without re-parsing anything from the body.
-    data: { url: data.url || '/' },
+    // Carry the URL and the matching in-app notification.id through
+    // so `notificationclick` can mark it as read and navigate without
+    // re-parsing anything from the body.
+    data: {
+      url: data.url || '/',
+      notificationId: data.notificationId || null,
+    },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+/**
+ * Marks an in-app notification as read by POSTing to our same-origin
+ * API. The SW carries the user's Supabase auth cookie automatically
+ * because the request is same-origin and we don't strip credentials.
+ *
+ * Best-effort: a network failure here must not block the navigation.
+ * The bell badge will catch up the next time the user opens the page
+ * (the `useNotifications` hook re-fetches on mount) — out-of-sync
+ * for a few seconds is strictly better than "the notification
+ * disappears but the deep-link tab never opens".
+ */
+async function markNotificationRead(notificationId) {
+  if (!notificationId) return;
+  try {
+    await fetch('/api/notifications/mark-read', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      // `same-origin` is the default but we set it explicitly so a
+      // future tightening of cross-origin defaults doesn't strip the
+      // auth cookie silently.
+      credentials: 'same-origin',
+      body: JSON.stringify({ ids: [notificationId] }),
+      // Don't keep the worker alive past a few seconds for this
+      // bookkeeping call. If the network is hung, the user's next
+      // page load will reconcile.
+      keepalive: true,
+    });
+  } catch {
+    // Swallowed on purpose — see docblock.
+  }
+}
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';
+  const notificationId = event.notification.data?.notificationId || null;
 
   // Try to focus an already-open tab on the same origin instead of
   // opening a new one every time — matches the behaviour users expect
   // from chat apps and keeps tab sprawl down.
   event.waitUntil(
     (async () => {
+      // Fire the mark-read request in parallel with the navigation
+      // logic so the badge update isn't gated on tab-focus latency.
+      // We still `await` it before the SW handler resolves so the
+      // worker stays alive long enough to send the fetch out — without
+      // this `event.waitUntil`, Chrome can terminate the SW between
+      // `clients.matchAll` and the fetch landing on the network.
+      const markPromise = markNotificationRead(notificationId);
+
       const all = await self.clients.matchAll({
         type: 'window',
         includeUncontrolled: true,
@@ -203,10 +249,12 @@ self.addEventListener('notificationclick', (event) => {
           if ('navigate' in client) {
             await client.navigate(targetUrl);
           }
+          await markPromise;
           return;
         }
       }
       await self.clients.openWindow(targetUrl);
+      await markPromise;
     })(),
   );
 });
