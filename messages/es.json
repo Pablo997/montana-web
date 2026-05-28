@@ -40,7 +40,7 @@
   "auth": {
     "signIn": {
       "title": "Inicia sesión en Montana",
-      "subtitle": "Entra con Google o recibe un enlace mágico por email. Sin contraseñas que recordar.",
+      "subtitle": "Te enviamos un enlace mágico por email, o entra con Google. Sin contraseñas que recordar.",
       "googleButton": "Continuar con Google",
       "redirecting": "Redirigiendo…",
       "or": "o",
@@ -51,7 +51,12 @@
       "submit": "Enviar enlace mágico",
       "sending": "Enviando…",
       "sent": "Revisa <strong>{email}</strong> para encontrar el enlace de acceso.",
-      "duplicateEmailNotice": "<strong>{email}</strong> ya está asociado a otra forma de acceso (enlace mágico o Google). Inicia sesión con tu método original y, una vez dentro, ve a <strong>Mi perfil → Cuentas vinculadas</strong> para conectar el nuevo método sin duplicar la cuenta."
+      "duplicateEmailNotice": "<strong>{email}</strong> ya está asociado a otra forma de acceso (enlace mágico o Google). Inicia sesión con tu método original y, una vez dentro, ve a <strong>Mi perfil → Cuentas vinculadas</strong> para conectar el nuevo método sin duplicar la cuenta.",
+      "magicLinkHelp": {
+        "triggerAriaLabel": "¿Qué es un enlace mágico?",
+        "title": "¿Qué es un enlace mágico?",
+        "body": "Te enviamos un enlace de un solo uso a tu correo. Pulsas el enlace y entras en la app — sin contraseñas que recordar ni gestionar."
+      }
     }
   },
   "map": {

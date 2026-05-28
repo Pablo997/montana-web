@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -189,27 +189,18 @@ export default function SignInPage() {
               <span>{consent}</span>
             </label>
 
-            <button
-              type="button"
-              className="auth__google"
-              onClick={handleGoogleSignIn}
-              disabled={isBusy || !accepted}
-              aria-busy={status === 'redirecting'}
-            >
-              <GoogleLogo />
-              <span>
-                {status === 'redirecting' ? t('redirecting') : t('googleButton')}
-              </span>
-            </button>
-
-            <div className="auth__divider" role="separator" aria-label={t('or')}>
-              <span>{t('or')}</span>
-            </div>
-
+            {/* Magic link goes FIRST: it's the recommended path
+                (we own the whole flow, no third-party tracking,
+                works for anyone with email). Google is offered
+                below as a faster alternative for users who already
+                live in the Google ecosystem. */}
             <form className="auth__form" onSubmit={handleSubmit}>
-              <label className="auth__label" htmlFor="email">
-                {t('emailLabel')}
-              </label>
+              <div className="auth__labelRow">
+                <label className="auth__label" htmlFor="email">
+                  {t('emailLabel')}
+                </label>
+                <MagicLinkHelp />
+              </div>
               <input
                 id="email"
                 type="email"
@@ -231,6 +222,23 @@ export default function SignInPage() {
               </button>
             </form>
 
+            <div className="auth__divider" role="separator" aria-label={t('or')}>
+              <span>{t('or')}</span>
+            </div>
+
+            <button
+              type="button"
+              className="auth__google"
+              onClick={handleGoogleSignIn}
+              disabled={isBusy || !accepted}
+              aria-busy={status === 'redirecting'}
+            >
+              <GoogleLogo />
+              <span>
+                {status === 'redirecting' ? t('redirecting') : t('googleButton')}
+              </span>
+            </button>
+
             {status === 'error' && error ? (
               <div className="auth__notice auth__notice--error">{error}</div>
             ) : null}
@@ -238,6 +246,76 @@ export default function SignInPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Help popover for the "Email" label that explains what a magic link
+ * is in plain language. Most users have used Slack / Notion / Vercel
+ * by now and know the pattern, but non-tech audiences still ask
+ * "where do I put my password?" — a 2-line explanation upfront kills
+ * the friction.
+ *
+ * Built headless to stay accessible:
+ *   * Button has `aria-label` + `aria-expanded` + `aria-controls`.
+ *   * Panel is `role="tooltip"` (it's static informative content, not
+ *     a dialog the user interacts with) and closes on Escape /
+ *     outside-click. The opener button keeps focus, so keyboard
+ *     users can hit Escape to dismiss without losing their place.
+ */
+function MagicLinkHelp() {
+  const t = useTranslations('auth.signIn.magicLinkHelp');
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLSpanElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const tooltipId = 'magic-link-help-tooltip';
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      const root = rootRef.current;
+      if (!root) return;
+      if (e.target instanceof Node && root.contains(e.target)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <span ref={rootRef} className="help-popover">
+      <button
+        ref={buttonRef}
+        type="button"
+        className="help-popover__trigger"
+        aria-label={t('triggerAriaLabel')}
+        aria-expanded={open}
+        aria-controls={tooltipId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        ?
+      </button>
+      {open ? (
+        <span
+          id={tooltipId}
+          role="tooltip"
+          className="help-popover__panel"
+        >
+          <strong className="help-popover__title">{t('title')}</strong>
+          <span className="help-popover__body">{t('body')}</span>
+        </span>
+      ) : null}
+    </span>
   );
 }
 

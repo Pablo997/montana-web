@@ -1891,6 +1891,152 @@ html {
   gap: 0.75rem;
 }
 
+/* Label + help-icon row for the email field. We use a flex row so the
+   "?" trigger sits right next to the "Email" label baseline without
+   needing absolute positioning, which would fight RTL languages. */
+.auth__labelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* ---------------------------------------------------------------------
+   Help popover — small "?" pill next to a field label that opens an
+   inline tooltip explaining a concept. Currently only used by the
+   sign-in form to demystify magic links for non-tech users. Kept
+   purposely self-contained so we can drop it next to any other
+   label without scoping headaches.
+   --------------------------------------------------------------------- */
+.help-popover {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.help-popover__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.help-popover__trigger:hover,
+.help-popover__trigger[aria-expanded='true'] {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.help-popover__trigger:focus-visible {
+  outline: 2px solid var(--color-brand-strong);
+  outline-offset: 2px;
+}
+
+.help-popover__panel {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  width: max-content;
+  max-width: 280px;
+  padding: 0.7rem 0.85rem;
+  background: rgba(18, 25, 22, 0.97);
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  /* Casing inside the popover should NOT inherit the label's
+     uppercase + tracking — those are field-label conventions, not
+     reading text. Reset to natural typography here. */
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.help-popover__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.help-popover__body {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Mobile: promote the popover to a bottom sheet pinned to the
+   viewport. `position: absolute` with any `left` value will overflow
+   on narrow screens because the trigger sits a few hundred px in
+   from the left edge inside the auth card — there's just no on-screen
+   anchor that fits a 280px panel without spilling.
+   Bottom sheet sidesteps the problem entirely: the panel uses the
+   viewport as its container, gets safe-area-aware gutters, and is
+   thumb-reachable. Same pattern iOS / Material use for popovers
+   that don't fit next to their trigger. */
+@media (max-width: 480px) {
+  .help-popover__panel {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    top: auto;
+    width: auto;
+    max-width: none;
+    padding: 0.95rem 1rem;
+    border-radius: 0.85rem;
+    /* Slight slide-in animation makes the sheet feel intentional
+       rather than appearing out of nowhere. Honours
+       prefers-reduced-motion via the fallback below. */
+    animation: help-popover-rise 180ms ease-out;
+  }
+
+  .help-popover__title {
+    font-size: 0.95rem;
+  }
+
+  .help-popover__body {
+    font-size: 0.88rem;
+  }
+}
+
+@keyframes help-popover-rise {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-popover__panel {
+    animation: none;
+  }
+}
+
 .auth__label {
   font-size: 0.8rem;
   font-weight: 600;

@@ -40,7 +40,7 @@
   "auth": {
     "signIn": {
       "title": "Sign in to Montana",
-      "subtitle": "Sign in with Google or get a magic link by email. No password to remember.",
+      "subtitle": "We'll email you a magic link, or you can continue with Google. No password to remember.",
       "googleButton": "Continue with Google",
       "redirecting": "Redirecting…",
       "or": "or",
@@ -51,7 +51,12 @@
       "submit": "Send magic link",
       "sending": "Sending…",
       "sent": "Check <strong>{email}</strong> for a sign-in link.",
-      "duplicateEmailNotice": "<strong>{email}</strong> is already linked to another sign-in method (magic link or Google). Sign in with your original method and, once inside, head to <strong>My profile → Linked accounts</strong> to attach the new method without creating a duplicate account."
+      "duplicateEmailNotice": "<strong>{email}</strong> is already linked to another sign-in method (magic link or Google). Sign in with your original method and, once inside, head to <strong>My profile → Linked accounts</strong> to attach the new method without creating a duplicate account.",
+      "magicLinkHelp": {
+        "triggerAriaLabel": "What is a magic link?",
+        "title": "What is a magic link?",
+        "body": "We email you a one-time sign-in link. Tap it and you're in — no password to remember or manage."
+      }
     }
   },
   "map": {
