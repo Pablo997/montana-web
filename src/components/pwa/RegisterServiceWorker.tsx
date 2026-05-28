@@ -28,13 +28,44 @@ export function RegisterServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
 
     if (process.env.NODE_ENV !== 'production') {
-      // Defensive: unregister any old SW so the developer doesn't
-      // get served stale prod bundles locally. This is a no-op when
-      // there's nothing registered.
-      navigator.serviceWorker
-        .getRegistrations()
-        .then((regs) => regs.forEach((r) => r.unregister()))
-        .catch(() => {});
+      // Defensive: a SW previously registered in this browser (e.g.
+      // after a local `next start` for a Playwright/lhci run) is
+      // still active across all open tabs even after `npm run dev`
+      // starts. The default cleanup below — just `unregister()` — is
+      // both async AND keeps the SW alive on already-controlled
+      // pages until they navigate away. The result is a confusing
+      // "/me is 500" + "scripts are text/html" combo that's hard to
+      // recover from manually.
+      //
+      // The hardened cleanup:
+      //   1. Unregister every registration.
+      //   2. Flush all Cache API entries (the stale `index.html`
+      //      fallback that returns HTML for missing scripts lives
+      //      here).
+      //   3. If this page is still being controlled by an old SW
+      //      AFTER the cleanup, force a one-shot reload to detach.
+      //      We guard with `sessionStorage` so the reload only ever
+      //      happens once per dev session — no infinite loop if the
+      //      SW somehow re-registers.
+      (async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+          }
+          if (
+            navigator.serviceWorker.controller &&
+            !sessionStorage.getItem('montana:sw-dev-detach')
+          ) {
+            sessionStorage.setItem('montana:sw-dev-detach', '1');
+            window.location.reload();
+          }
+        } catch {
+          /* Cleanup is best-effort; nothing to do if it fails. */
+        }
+      })();
       return;
     }
 
