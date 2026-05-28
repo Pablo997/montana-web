@@ -93,6 +93,14 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const createNextIntlPlugin = require('next-intl/plugin');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+// Bundle analyzer. Activated only when `ANALYZE=true` is passed to
+// the build (npm script: `npm run analyze`). Wraps the config so it
+// emits `client.html` / `nodejs.html` treemaps under .next/analyze,
+// without affecting normal production builds.
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 // Release name used for source-map upload AND tagged onto every
 // Sentry event. We prefer the explicit `SENTRY_RELEASE` env var (set
 // this in CI for non-Vercel deploys), then Vercel's commit SHA,
@@ -104,7 +112,7 @@ const sentryRelease =
   process.env.VERCEL_GIT_COMMIT_SHA ||
   undefined;
 
-module.exports = withSentryConfig(withNextIntl(nextConfig), {
+module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,

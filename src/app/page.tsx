@@ -1,11 +1,35 @@
+import dynamic from 'next/dynamic';
 import { FloatingHeader } from '@/components/layout/FloatingHeader';
 import { AppFooterLinks } from '@/components/layout/AppFooterLinks';
 import { LegalNotice } from '@/components/layout/LegalNotice';
 import { ConsentSync } from '@/components/layout/ConsentSync';
 import { MapView } from '@/components/map/MapView';
-import { PushOnboardingBanner } from '@/components/push/PushOnboardingBanner';
-import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+// Visit-conditional client widgets — both pay their full bundle
+// cost only when they ACTUALLY need to render, not on every mount:
+//
+//   * OnboardingTour shows once per browser (storage-gated). Even
+//     when active, it fires ~1.6 s after mount, so there's plenty
+//     of idle time for the chunk to stream in.
+//   * PushOnboardingBanner pulls the Push API client + geolocation
+//     and only renders when the user is signed in AND hasn't
+//     dismissed the banner. Anonymous users were paying for the
+//     Web Push SDK upfront for no reason.
+const OnboardingTour = dynamic(
+  () =>
+    import('@/components/onboarding/OnboardingTour').then(
+      (m) => m.OnboardingTour,
+    ),
+  { ssr: false },
+);
+const PushOnboardingBanner = dynamic(
+  () =>
+    import('@/components/push/PushOnboardingBanner').then(
+      (m) => m.PushOnboardingBanner,
+    ),
+  { ssr: false },
+);
 
 export default async function HomePage() {
   // Resolve the auth state server-side so the onboarding tour only
