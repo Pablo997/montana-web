@@ -136,8 +136,20 @@ export function MapView() {
       // end up duplicated alongside the ones we place ourselves.
       navigationControl: false,
       geolocateControl: false,
-      // Cap zoom at 18 — each extra level ~4× tile requests with no
-      // useful detail on outdoor basemaps. See docs/COST.md.
+      // Cap the zoom at 18 instead of the MapLibre default of 22.
+      //
+      // Why this matters for cost: tile count quadruples per zoom
+      // level. Hitting z=22 in the corner of the map for a couple
+      // of seconds asks MapTiler for ~16x more tiles than z=20 for
+      // the same area. For an outdoor / mountain app there's no
+      // useful information past z=18 anyway — MapTiler's topo /
+      // satellite imagery doesn't have higher native resolution
+      // outside dense urban cores, so the user sees the same blur
+      // either way and we just burn quota.
+      //
+      // 18 is also the threshold where individual house outlines
+      // become legible on the streets style, which is the natural
+      // ceiling for "I'm checking where I parked" UX.
       maxZoom: 18,
     });
 
