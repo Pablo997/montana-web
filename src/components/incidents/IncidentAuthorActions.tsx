@@ -9,6 +9,7 @@ import {
 } from '@/lib/incidents/api';
 import { UpdateIncidentSchema } from '@/lib/incidents/schemas';
 import { useMapStore } from '@/store/useMapStore';
+import { track } from '@/lib/analytics/track';
 import type { Incident } from '@/types/incident';
 
 interface Props {
@@ -75,8 +76,12 @@ export function IncidentAuthorActions({ incident }: Props) {
 
     startTransition(async () => {
       try {
-        if (action === 'resolve') await resolveIncident(incident.id);
-        else await deleteIncident(incident.id);
+        if (action === 'resolve') {
+          await resolveIncident(incident.id);
+          track('incident_resolved');
+        } else {
+          await deleteIncident(incident.id);
+        }
       } catch (err) {
         console.error(`Failed to ${action} incident`, err);
         upsertIncident(snapshot);
@@ -116,6 +121,7 @@ export function IncidentAuthorActions({ incident }: Props) {
     startTransition(async () => {
       try {
         const updated = await updateIncident(incident.id, parsed.data);
+        track('incident_edited');
         upsertIncident(updated);
         setMode('idle');
       } catch (err) {

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useTranslations } from 'next-intl';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { track } from '@/lib/analytics/track';
 
 type Placement = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
@@ -74,7 +75,10 @@ export function OnboardingTour({ enabled }: Props) {
   // would have nothing to anchor to.
   useEffect(() => {
     if (!enabled || hasSeenTour) return;
-    const id = setTimeout(() => setActive(true), 1600);
+    const id = setTimeout(() => {
+      setActive(true);
+      track('tour_started', { total_steps: STEPS.length });
+    }, 1600);
     return () => clearTimeout(id);
   }, [enabled, hasSeenTour]);
 
@@ -205,14 +209,28 @@ export function OnboardingTour({ enabled }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, index]);
 
-  const finish = () => {
+  // We split "complete" vs "skip" at the call site rather than
+  // sniffing from `isLast` because we want different funnels: a
+  // user landing on the wrap step and pressing the primary CTA is
+  // a SUCCESS; a user dismissing earlier is a DROPOFF, and the
+  // step index is the actionable signal in that case.
+  const finish = (reason: 'completed' | 'skipped') => {
     markSeen();
     setActive(false);
+    if (reason === 'completed') {
+      track('tour_completed', { total_steps: STEPS.length });
+    } else {
+      track('tour_skipped', {
+        step: index + 1,
+        step_id: step.id,
+        total_steps: STEPS.length,
+      });
+    }
   };
 
   const next = () => {
     if (isLast) {
-      finish();
+      finish('completed');
       return;
     }
     setIndex((i) => i + 1);
@@ -223,7 +241,7 @@ export function OnboardingTour({ enabled }: Props) {
     setIndex((i) => i - 1);
   };
 
-  const skip = () => finish();
+  const skip = () => finish('skipped');
 
   // The "spotlight" — a 4-sided cutout around the target so the user
   // sees both the chrome they're being taught AND the map behind it,

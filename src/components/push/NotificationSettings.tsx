@@ -15,6 +15,7 @@ import {
   type QuietHours,
 } from '@/lib/push/client';
 import { getCurrentPosition } from '@/lib/utils/geolocation';
+import { track } from '@/lib/analytics/track';
 
 interface Props {
   open: boolean;
@@ -158,6 +159,7 @@ export function NotificationSettings({
     setError(null);
     try {
       await subscribe(prefs);
+      track('push_subscribed');
       setSubscribed(true);
       onClose();
     } catch (err) {
@@ -172,6 +174,7 @@ export function NotificationSettings({
     setError(null);
     try {
       await unsubscribe();
+      track('push_unsubscribed');
       setSubscribed(false);
       onClose();
     } catch (err) {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Incident } from '@/types/incident';
 import { buildIncidentSharePayload } from '@/lib/share/shareUrl';
+import { track } from '@/lib/analytics/track';
 
 interface Props {
   incident: Incident;
@@ -62,6 +63,7 @@ export function ShareIncidentButton({ incident, className }: Props) {
     if (isTouchDevice && typeof navigator.share === 'function') {
       try {
         await navigator.share(payload);
+        track('incident_shared', { method: 'native_share' });
         return;
       } catch (err) {
         // User cancelled the sheet: silent, not an error.
@@ -75,6 +77,7 @@ export function ShareIncidentButton({ incident, className }: Props) {
 
     try {
       await navigator.clipboard.writeText(payload.url);
+      track('incident_shared', { method: 'clipboard' });
       setState('copied');
       scheduleReset();
     } catch (err) {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { RateLimitError, createIncident, uploadIncidentMedia } from '@/lib/incidents/api';
+import { track } from '@/lib/analytics/track';
 import { CreateIncidentSchema, type CreateIncidentInput } from '@/lib/incidents/schemas';
 import { compressImage } from '@/lib/utils/image-compression';
 import { offlineQueue } from '@/lib/utils/offline-queue';
@@ -112,6 +113,15 @@ export function IncidentForm({
           return;
         }
         const created = await createIncident(payload);
+        // Fire AFTER createIncident resolves — we only want to
+        // count writes that the API actually accepted, so a rate
+        // limit or validation error throws and skips the track().
+        track('incident_report_submitted', {
+          type: created.type,
+          severity: created.severity,
+          has_photos: photos.length > 0,
+          photo_count: photos.length,
+        });
         let uploadedCount = 0;
 
         if (photos.length > 0) {

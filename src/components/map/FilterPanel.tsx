@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
+import { track } from '@/lib/analytics/track';
 import {
   INCIDENT_TYPE_LABELS,
   type IncidentType,
@@ -84,6 +85,25 @@ export function FilterPanel() {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // Fire `filters_applied` once when the panel closes with active
+  // filters. We intentionally do NOT log on every chip toggle —
+  // that would emit a dozen events per real "filter operation" and
+  // dilute the funnel. The ref guarantees one event per close,
+  // regardless of how many chips the user touched while open.
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open) {
+      wasOpenRef.current = true;
+      return;
+    }
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
+    const count = computeActiveCount(filters);
+    if (count > 0) {
+      track('filters_applied', { active_count: count });
+    }
+  }, [open, filters]);
 
   const activeTypeSet = useMemo(
     () => new Set(filters.types ?? ALL_TYPES),

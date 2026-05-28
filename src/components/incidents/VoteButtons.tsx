@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { castVote, removeVote } from '@/lib/incidents/api';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useMapStore } from '@/store/useMapStore';
+import { track } from '@/lib/analytics/track';
 import type { Incident } from '@/types/incident';
 
 interface Props {
@@ -62,6 +63,12 @@ export function VoteButtons({ incident }: Props) {
       try {
         if (next === null) await removeVote(incident.id);
         else await castVote(incident.id, next);
+        // `direction` reflects what the server now records: 'up',
+        // 'down' or 'removed'. We don't ship the incident id so
+        // the event is fully anonymous.
+        track('incident_voted', {
+          direction: next === 1 ? 'up' : next === -1 ? 'down' : 'removed',
+        });
       } catch (err) {
         console.error(err);
         // Roll back optimistic UI. The authoritative counts will be

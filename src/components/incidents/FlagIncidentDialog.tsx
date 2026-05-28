@@ -9,6 +9,7 @@ import {
   reportIncident,
   type ReportReason,
 } from '@/lib/incidents/reports';
+import { track } from '@/lib/analytics/track';
 
 interface Props {
   incidentId: string;
@@ -80,6 +81,7 @@ export function FlagIncidentDialog({ incidentId, open, onClose }: Props) {
     setError(null);
     try {
       await reportIncident(incidentId, reason, details);
+      track('incident_flagged', { reason });
       setSuccess(true);
       setTimeout(() => onClose(), 1200);
     } catch (err) {

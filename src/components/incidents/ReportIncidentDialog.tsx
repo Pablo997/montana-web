@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMapStore } from '@/store/useMapStore';
 import { IncidentForm } from './IncidentForm';
+import { track } from '@/lib/analytics/track';
 import type { Incident } from '@/types/incident';
 
 export function ReportIncidentDialog() {
@@ -14,6 +15,23 @@ export function ReportIncidentDialog() {
   const startPickingLocation = useMapStore((s) => s.startPickingLocation);
   const setReportLocation = useMapStore((s) => s.setReportLocation);
   const upsertIncident = useMapStore((s) => s.upsertIncident);
+
+  // The dialog only mounts a usable form once it has BOTH the
+  // open flag AND a location. We log on each open → ready
+  // transition so the funnel is "user committed to opening the
+  // report". The ref makes sure subsequent location updates (e.g.
+  // the user dragging the pin) don't re-fire the open event.
+  const loggedOpenRef = useRef(false);
+  useEffect(() => {
+    if (!reportOpen || !reportLocation) {
+      loggedOpenRef.current = false;
+      return;
+    }
+    if (!loggedOpenRef.current) {
+      track('incident_report_opened');
+      loggedOpenRef.current = true;
+    }
+  }, [reportOpen, reportLocation]);
 
   useEffect(() => {
     if (!reportOpen) return;
@@ -31,25 +49,33 @@ export function ReportIncidentDialog() {
     closeReport();
   };
 
+  const handleCancel = () => {
+    // Counterpart to `incident_report_opened` — distinguishes a
+    // close-without-submit (abandoned) from a successful submission
+    // which is captured in `IncidentForm` after `createIncident()`.
+    track('incident_report_abandoned');
+    closeReport();
+  };
+
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-label={t('dialogLabel')}>
       <button
         type="button"
         className="modal__backdrop"
-        onClick={closeReport}
+        onClick={handleCancel}
         aria-label={t('closeDialogAria')}
       />
       <div className="modal__content">
         <header className="modal__header">
           <h2 className="modal__title">{t('title')}</h2>
-          <button type="button" className="button" onClick={closeReport} aria-label={t('closeAria')}>
+          <button type="button" className="button" onClick={handleCancel} aria-label={t('closeAria')}>
             ✕
           </button>
         </header>
         <IncidentForm
           location={reportLocation}
           onCreated={handleCreated}
-          onCancel={closeReport}
+          onCancel={handleCancel}
           onPickLocation={startPickingLocation}
           onLocationChange={setReportLocation}
         />
