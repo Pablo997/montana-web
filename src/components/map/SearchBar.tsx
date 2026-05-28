@@ -86,25 +86,36 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
   // desktop it sits inline because the screen has the room and
   // showing the input upfront is more discoverable.
   //
-  // We track `isMobile` separately from `expanded` because the
-  // expanded layout on mobile is fundamentally different: full-width
-  // bar pinned to the top, with a back-arrow that collapses, and a
-  // z-index above the floating header so it visually replaces the
-  // brand + actions row while the user is typing.
+  // The default visibility is delegated to CSS (`@media` rules in
+  // globals.css) — that way the very first paint on mobile already
+  // shows the icon-only trigger, with no JS round-trip needed. If we
+  // gated the layout on a React `useState` boolean instead, the
+  // server would render the bar expanded by default and the mobile
+  // viewport would briefly see the full bar overlap the brand
+  // header until hydration kicked in. The flash was the bug.
+  //
+  // `userMode` is null until the user explicitly toggles. When set,
+  // it overrides the media-query default in both directions:
+  // expanding on mobile (after tapping the icon) and collapsing on
+  // desktop (rare but possible after dismissing the dropdown).
   const [isMobile, setIsMobile] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [userMode, setUserMode] = useState<'expanded' | 'collapsed' | null>(
+    null,
+  );
+  /** Effective expanded state, used by JS-driven concerns
+   * (focus management, mobile overlay class). For visibility of the
+   * trigger vs. input wrap, CSS does the work via `data-mode`. */
+  const expanded = userMode === null ? !isMobile : userMode === 'expanded';
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 720px)');
-    const sync = () => {
-      setIsMobile(mq.matches);
-      if (mq.matches) setExpanded(false);
-    };
+    const sync = () => setIsMobile(mq.matches);
     sync();
     // Listen so rotating a tablet from portrait→landscape (or a
     // resizable window in Chrome devtools) flips the layout
-    // correctly. We don't auto-expand on shrink; once collapsed the
-    // user re-opens via the icon.
+    // correctly. We don't auto-touch userMode on resize — once the
+    // user has explicitly toggled, their choice sticks.
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
@@ -180,7 +191,7 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
     if (!active) return;
 
     const collapseIfMobile = () => {
-      if (isMobile) setExpanded(false);
+      if (isMobile) setUserMode('collapsed');
     };
     const onPointer = (e: PointerEvent) => {
       const root = rootRef.current;
@@ -231,7 +242,7 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
     // header; collapsing right after a pick lets the user see the
     // flyTo / fitBounds animation they just triggered without an
     // extra tap on the back arrow.
-    if (isMobile) setExpanded(false);
+    if (isMobile) setUserMode('collapsed');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -259,47 +270,50 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
   const showRecentsHeader = open && query.trim().length === 0 && recents.length > 0;
   const showHint = open && query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH;
 
-  if (!expanded) {
-    return (
-      <div ref={rootRef} className="map-search map-search--collapsed">
-        <button
-          type="button"
-          className="map-search__trigger"
-          aria-label={t('triggerAriaLabel')}
-          onClick={() => {
-            setExpanded(true);
-            setOpen(true);
-            // Defer focus to after the render so the input exists.
-            queueMicrotask(() => inputRef.current?.focus());
-          }}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-        </button>
-      </div>
-    );
-  }
-
   // On mobile, expanded mode uses a higher z-index + solid background
   // so it visually replaces the floating header brand + bell + user
   // menu (all at `z-index: 6`). On desktop we keep the regular
   // stacking because there's room for everything to coexist.
-  const containerClass = isMobile ? 'map-search map-search--mobile-active' : 'map-search';
+  const mobileActive = isMobile && expanded;
+  const containerClass = `map-search${mobileActive ? ' map-search--mobile-active' : ''}`;
+
+  // `data-mode` is the override switch: while `null`, CSS media
+  // queries decide trigger-vs-input visibility (mobile sees icon,
+  // desktop sees bar). Once the user toggles, the explicit mode
+  // overrides the media default in both directions.
+  const dataMode =
+    userMode === null ? undefined : userMode === 'expanded' ? 'expanded' : 'collapsed';
 
   return (
-    <div ref={rootRef} className={containerClass}>
+    <div ref={rootRef} className={containerClass} data-mode={dataMode}>
+      {/* Icon-only trigger. CSS hides it on desktop by default and
+          re-shows it on mobile, OR whenever `data-mode="collapsed"`. */}
+      <button
+        type="button"
+        className="map-search__trigger"
+        aria-label={t('triggerAriaLabel')}
+        onClick={() => {
+          setUserMode('expanded');
+          setOpen(true);
+          queueMicrotask(() => inputRef.current?.focus());
+        }}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+
       {/* WAI-ARIA 1.2 combobox pattern: the role goes on the wrapper,
           not the input. Placing `aria-expanded` / `aria-controls` on
           the input itself trips `jsx-a11y/role-supports-aria-props`
@@ -312,43 +326,23 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
         aria-controls={listboxId}
         aria-owns={listboxId}
       >
-        {isMobile ? (
-          // Mobile back-arrow: collapses the bar and hands focus
-          // back to the map. Replaces the static magnifying-glass
-          // icon so the user always has an explicit way out of the
-          // search modal — outside-click works too but the visible
-          // affordance reassures.
-          <button
-            type="button"
-            className="map-search__back"
-            aria-label={t('backAriaLabel')}
-            onClick={() => {
-              setQuery('');
-              setResults([]);
-              setOpen(false);
-              setExpanded(false);
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-        ) : (
+        {/* Mobile back-arrow: only painted when the bar is in mobile
+            overlay mode (`map-search--mobile-active`). CSS hides it
+            otherwise so the desktop layout shows the static lupa. */}
+        <button
+          type="button"
+          className="map-search__back"
+          aria-label={t('backAriaLabel')}
+          onClick={() => {
+            setQuery('');
+            setResults([]);
+            setOpen(false);
+            setUserMode('collapsed');
+          }}
+        >
           <svg
-            className="map-search__icon"
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -357,10 +351,25 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
             strokeLinejoin="round"
             aria-hidden
           >
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
           </svg>
-        )}
+        </button>
+        <svg
+          className="map-search__icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
         <input
           ref={inputRef}
           id={inputId}

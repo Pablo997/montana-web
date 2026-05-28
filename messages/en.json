@@ -545,6 +545,49 @@
       "deleteFinal": "Delete forever",
       "deleting": "Deleting…",
       "deleteError": "Could not delete the account."
+    },
+    "preferences": {
+      "title": "Preferences",
+      "restartTourTitle": "Restart guided tour",
+      "restartTourDescription": "Replay the quick walkthrough of the main map controls.",
+      "restartTour": "Restart tour",
+      "restarting": "Restarting…"
+    }
+  },
+  "onboarding": {
+    "regionAria": "Montana guided tour",
+    "progress": "{current} of {total}",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Get started",
+    "welcome": {
+      "title": "Welcome to Montana",
+      "body": "In under a minute we'll show you the main controls to report and explore mountain incidents. You can skip the tour at any time."
+    },
+    "search": {
+      "title": "Search places",
+      "body": "Find peaks, refuges, valleys or any place name in the world. Picking a result flies the map there."
+    },
+    "basemap": {
+      "title": "Switch basemap",
+      "body": "Toggle between topo, satellite, winter and more. Enable hillshade to read the terrain at a glance."
+    },
+    "filters": {
+      "title": "Filter incidents",
+      "body": "Filter by status, type, severity or free-text search so you only see what matters to you."
+    },
+    "report": {
+      "title": "Report an incident",
+      "body": "Tap here to create a report — drag the pin to the exact spot, add a photo and describe what you saw."
+    },
+    "notifications": {
+      "title": "Your notifications",
+      "body": "Get alerted about nearby new incidents and review the history from the bell. Configure radius and quiet hours in your profile."
+    },
+    "wrap": {
+      "title": "You're all set",
+      "body": "That was the gist of it. You can replay this tour at any time from your profile, under Preferences."
     }
   },
   "pwa": {

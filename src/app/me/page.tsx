@@ -16,6 +16,7 @@ import { ProfileHeader } from './_components/ProfileHeader';
 import { StatsCards } from './_components/StatsCards';
 import { IncidentListItem } from './_components/IncidentListItem';
 import { LinkedAccounts } from './_components/LinkedAccounts';
+import { Preferences } from './_components/Preferences';
 import { DangerZone } from './_components/DangerZone';
 import type { UserIdentity } from '@supabase/supabase-js';
 
@@ -260,6 +261,8 @@ export default async function MyProfilePage({
             </nav>
           ) : null}
         </section>
+
+        <Preferences />
 
         <DangerZone />
       </main>
