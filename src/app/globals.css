@@ -137,18 +137,59 @@ body {
   position: absolute;
   top: 0.75rem;
   left: 50%;
-  transform: translateX(-50%);
+  /* `translate3d` instead of plain `translateX` so the transform
+     stays on the GPU compositor layer — combined with the opacity
+     fade below this gives a buttery smooth animation during pan /
+     zoom without triggering layout work on every frame. */
+  transform: translate3d(-50%, 0, 0);
   z-index: 6;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   color: #fff;
   text-decoration: none;
-  transition: opacity 120ms ease;
+  /* Asymmetric transition:
+     * Fading OUT (when the map starts moving) is fast — see the
+       `[data-map-interacting]` rule below. The brand should yield
+       the view to the gesture as soon as the user starts panning.
+     * Fading IN (this default rule, applied when the data flag is
+       cleared) is slow and slightly delayed. Two reasons:
+         1. If the user is doing a chain of small pans, the brand
+            would otherwise flicker on/off between each gesture.
+            The delay swallows brief pauses without ever fully
+            re-appearing.
+         2. It just feels more elegant — like the map "settling"
+            before the chrome returns.  */
+  transition: opacity 1100ms ease 700ms;
+  will-change: opacity;
+  /* `pointer-events: none` while faded would block the click on the
+     logo, so we keep them on but reduce reach by the fade itself. */
 }
 
 .floating-header__brand:hover {
   opacity: 0.85;
+}
+
+/* While the user is panning/zooming the map, the centred brand
+   moves out of the way visually. MapView sets the data flag on
+   movestart and clears it on moveend (see MapView.tsx). The
+   transition here OVERRIDES the slow / delayed fade-in defined
+   above so the brand disappears quickly the moment movement
+   starts. */
+:root[data-map-interacting='true'] .floating-header__brand {
+  opacity: 0.18;
+  transition: opacity 140ms ease 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-map-interacting='true'] .floating-header__brand {
+    opacity: 0.55;
+    transition: none;
+  }
+
+  .floating-header__brand {
+    transition: none;
+  }
 }
 
 .floating-header__logo {
@@ -162,16 +203,58 @@ body {
 .floating-header__wordmark {
   font-family: var(--font-brand), ui-rounded, system-ui, sans-serif;
   font-weight: 600;
-  font-size: 1.6rem;
+  font-size: 1.85rem;
   letter-spacing: 0.005em;
   line-height: 1;
   /* Outline-style legibility: paint the stroke under the fill so the
      text always has a thin dark halo regardless of the tile beneath.
-     Smaller stroke width than before since Outfit's rounder shapes
-     don't need as much halo to stay legible. */
-  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.55);
+     Slightly heavier stroke than the previous revision because we
+     bumped the wordmark size — same visual weight ratio between
+     stroke and fill keeps the silhouette consistent. */
+  -webkit-text-stroke: 2.4px rgba(0, 0, 0, 0.6);
   paint-order: stroke fill;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* On phones the centred brand competes for horizontal space with
+   BOTH the search lupa (top-left) and the action pills (top-right).
+   Two-step responsive strategy:
+
+   * 381–560px (the vast majority of modern phones): keep BOTH the
+     logo and the wordmark, just scaled down. The wordmark drops to
+     ~1.05rem and the logo to 36px so the whole brand block stays
+     under ~120px wide. The "Sign in" CTA collapses to an icon-only
+     pill (`.sign-in-cta` below) which is what frees the room.
+   * ≤380px (iPhone SE original, ultra-narrow Androids): hide the
+     wordmark, bump the logo to 38px so it doesn't read as "lonely".
+     Below this width any wordmark would either overlap or shrink
+     into illegibility.
+   The brand stays centred at every breakpoint. */
+@media (max-width: 560px) {
+  .floating-header__wordmark {
+    font-size: 1.05rem;
+    -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.55);
+  }
+
+  .floating-header__logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .floating-header__brand {
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .floating-header__wordmark {
+    display: none;
+  }
+
+  .floating-header__logo {
+    width: 38px;
+    height: 38px;
+  }
 }
 
 .floating-header__actions {
@@ -866,7 +949,7 @@ body {
 
 .site-header__wordmark {
   font-family: var(--font-brand), ui-rounded, system-ui, sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: 0.005em;
   line-height: 1;
@@ -874,6 +957,22 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Mirror the FloatingHeader strategy: keep wordmark + logo on the
+   common phone widths and only collapse on truly narrow viewports.
+   The SiteHeader has more room (no map overlays competing for it)
+   so we can keep the wordmark a touch larger. */
+@media (max-width: 560px) {
+  .site-header__wordmark {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-header__wordmark {
+    display: none;
+  }
 }
 
 .site-header__actions {
@@ -1087,6 +1186,228 @@ body {
 .locale-switcher:focus-visible {
   outline: 2px solid var(--color-brand-strong);
   outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------
+   Locale picker — custom headless dropdown used in headers + sign-in.
+   The legacy `.locale-switcher` rule above still applies to the
+   native <select> we keep INSIDE the user menu (dropdown-in-dropdown
+   safety).
+   --------------------------------------------------------------------- */
+.locale-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+.locale-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 32px;
+  padding: 0 0.55rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: rgba(23, 32, 28, 0.78);
+  border: 1px solid var(--color-border);
+  border-radius: 0.55rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.locale-picker__trigger:hover {
+  background: rgba(33, 46, 40, 0.88);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.locale-picker__trigger:focus-visible {
+  outline: 2px solid var(--color-brand-strong);
+  outline-offset: 1px;
+}
+
+.locale-picker__trigger:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.locale-picker__icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.locale-picker__code {
+  letter-spacing: 0.06em;
+}
+
+.locale-picker__caret {
+  color: var(--color-text-muted);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.locale-picker__caret[data-open] {
+  transform: rotate(180deg);
+}
+
+/* Panel. Glass surface, anchored to the right edge of the trigger
+   because every place we render it the trigger lives near the right
+   side of the viewport. */
+.locale-picker__panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: rgba(18, 25, 22, 0.96);
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  z-index: 40;
+  outline: none;
+}
+
+.locale-picker__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.locale-picker__option[data-active] {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.locale-picker__option[aria-selected='true'] {
+  color: var(--color-text);
+}
+
+.locale-picker__optionCode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.locale-picker__option[aria-selected='true'] .locale-picker__optionCode {
+  color: var(--color-brand-strong);
+  border-color: rgba(86, 198, 134, 0.45);
+  background: rgba(86, 198, 134, 0.12);
+}
+
+.locale-picker__optionLabel {
+  flex: 1 1 auto;
+}
+
+.locale-picker__check {
+  color: var(--color-brand-strong);
+  flex-shrink: 0;
+}
+
+/* Reserves the slot the check would occupy so the labels in the
+   panel stay vertically aligned regardless of selection state. */
+.locale-picker__checkSlot {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .locale-picker__trigger {
+    height: 30px;
+    padding: 0 0.45rem;
+    font-size: 0.78rem;
+  }
+
+  .locale-picker__panel {
+    min-width: 12rem;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Sign-in CTA pill — used in both headers (FloatingHeader on the map,
+   SiteHeader on legal / profile pages). On desktop we show
+   icon + label; on phones the label collapses so the pill becomes
+   a compact icon-only button matching the size of the locale picker.
+   This is what frees the horizontal room the centred logo needs on
+   ~360 px viewports. The `aria-label` on the anchor keeps the action
+   discoverable to screen readers even when the visual label is gone.
+
+   Selectors are written as `.button.sign-in-cta` (2-class) to beat
+   the base `.button` rules that live further down in the file.
+   --------------------------------------------------------------------- */
+.button.sign-in-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sign-in-cta__icon {
+  flex-shrink: 0;
+}
+
+/* Desktop / tablet: icon disappears, label carries the meaning. */
+@media (min-width: 561px) {
+  .sign-in-cta__icon {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .button.sign-in-cta {
+    /* Square pill, same height as the locale picker (32px → 30px in
+       sub-520 to keep things consistent with the locale switcher's
+       own mobile shrink). */
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .sign-in-cta__label {
+    /* Visually hidden but still in the accessibility tree. We don't
+       use `display: none` because some screen readers skip
+       display-none nodes; the clip-path trick keeps it announceable. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .button.sign-in-cta {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .user-menu__divider {
@@ -1420,6 +1741,16 @@ body {
 
 .auth__back:hover {
   color: var(--color-text);
+}
+
+/* Top row of the sign-in card: back link on the left, language
+   switcher on the right. Mirrors the desktop convention so the user
+   doesn't have to look for the locale control. */
+.auth__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .auth__title {
