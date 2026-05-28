@@ -20,9 +20,16 @@ const inter = Inter({
 // Outfit: rounded geometric sans used exclusively for the brand
 // wordmark. Friendlier than Inter's sharp terminals while keeping a
 // modern, tech-oriented feel — fits an outdoor / nature product.
+//
+// Only loading the 600 weight: that's the single weight actually
+// referenced in CSS (`.floating-header__wordmark`, `.site-header
+// __wordmark`). Earlier we shipped 500/600/700 "just in case",
+// which forced the browser to pre-connect and fetch two extra
+// WOFF2 files (~12 kB each) that no rule ever used. Verified via
+// `rg "font-brand"` in globals.css — every usage hard-codes 600.
 const outfit = Outfit({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['600'],
   variable: '--font-brand',
   display: 'swap',
 });
