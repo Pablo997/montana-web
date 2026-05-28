@@ -11,6 +11,7 @@ import {
 } from '@/lib/incidents/updates/api';
 import type { IncidentUpdate } from '@/lib/incidents/updates/types';
 import { CreateIncidentUpdateSchema } from '@/lib/incidents/updates/schemas';
+import { track } from '@/lib/analytics/track';
 
 interface Props {
   incidentId: string;
@@ -95,6 +96,7 @@ export function IncidentUpdates({ incidentId }: Props) {
     startSubmit(async () => {
       try {
         await createIncidentUpdate(incidentId, parsed.data);
+        track('incident_update_posted');
         await load();
       } catch (err) {
         console.error('[IncidentUpdates] submit failed', err);

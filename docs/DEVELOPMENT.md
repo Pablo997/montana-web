@@ -284,7 +284,7 @@ Repository structure, Next.js + TS + Tailwind, Supabase migrations, base compone
 ### Phase 6 — Launch MVP ✅
 
 - Vercel + Supabase production.
-- Vercel Analytics.
+- Vercel Analytics (page views + custom product events via `src/lib/analytics/track.ts`; see the registry in `events.ts` for the full taxonomy).
 - Per-user rate limits, EXIF guard, incident reporting flow, privacy/terms/cookies pages, account deletion, Sentry.
 - PWA + offline fallback.
 - **Web Push for nearby incidents** (VAPID + Edge Function + `pg_cron`).

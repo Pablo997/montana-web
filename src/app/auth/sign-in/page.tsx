@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { track } from '@/lib/analytics/track';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error' | 'redirecting';
 
@@ -75,6 +76,11 @@ export default function SignInPage() {
 
     persistConsentEvidence();
     setStatus('sent');
+    // Fired AFTER the OTP request succeeded so the funnel reflects
+    // intent that actually reached Supabase. We deliberately don't
+    // emit on the Google path until the OAuth redirect succeeds —
+    // there's a separate event below for that.
+    track('signin_method_chosen', { method: 'magic_link' });
   }
 
   async function handleGoogleSignIn() {
@@ -89,6 +95,11 @@ export default function SignInPage() {
     // to Google, we won't run again until the callback creates the
     // session, by which point we've already passed the consent gate.
     persistConsentEvidence();
+
+    // Fired BEFORE the redirect so the event lands even though the
+    // browser is about to navigate away. `track()` is fire-and-
+    // forget (sends a beacon) so there's no async coupling.
+    track('signin_method_chosen', { method: 'google' });
 
     const supabase = createSupabaseBrowserClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({

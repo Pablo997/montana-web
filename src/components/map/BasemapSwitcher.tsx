@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { BASEMAPS, type BasemapId } from '@/lib/mapbox/basemaps';
 import { useMapPreferencesStore } from '@/store/useMapPreferencesStore';
+import { track } from '@/lib/analytics/track';
 
 /**
  * Floating control that exposes:
@@ -97,7 +98,12 @@ export function BasemapSwitcher() {
                   className="basemap-switcher__option"
                   aria-pressed={b.id === basemapId}
                   data-active={b.id === basemapId || undefined}
-                  onClick={() => setBasemap(b.id as BasemapId)}
+                  onClick={() => {
+                    if (b.id !== basemapId) {
+                      setBasemap(b.id as BasemapId);
+                      track('basemap_changed', { basemap: b.id });
+                    }
+                  }}
                 >
                   <span
                     aria-hidden
@@ -117,7 +123,12 @@ export function BasemapSwitcher() {
             <input
               type="checkbox"
               checked={hillshadeEnabled}
-              onChange={toggleHillshade}
+              onChange={() => {
+                toggleHillshade();
+                // Read post-toggle: we know the next state is the
+                // negation of what we just read from the store.
+                track('hillshade_toggled', { enabled: !hillshadeEnabled });
+              }}
             />
             <span className="basemap-switcher__toggle-text">
               <span className="basemap-switcher__toggle-title">

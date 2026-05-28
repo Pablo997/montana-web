@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { track } from '@/lib/analytics/track';
 
 /**
  * "Preferences" section on /me. Currently houses only the
@@ -20,6 +21,7 @@ export function Preferences() {
   const handleRestartTour = () => {
     resetTour();
     setRestarted(true);
+    track('tour_restarted');
     // Bounce to the map so the user can immediately see the tour
     // run again. router.refresh() isn't enough — the tour reads
     // the persisted flag during its mount effect, so we want a

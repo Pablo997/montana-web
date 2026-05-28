@@ -7,6 +7,7 @@ import {
   useSearchHistoryStore,
   type RecentSearch,
 } from '@/store/useSearchHistoryStore';
+import { track } from '@/lib/analytics/track';
 
 interface Props {
   /**
@@ -235,6 +236,13 @@ export function SearchBar({ onSelect, getMapContext }: Props) {
 
     onSelect(picked);
     if (row.kind === 'result') addRecent(row.value);
+    track('search_used', {
+      // Tells us whether the user accepted a fresh geocoder result
+      // or replayed something from their local history — useful for
+      // sizing the geocoding API spend vs. the value of the recents
+      // feature.
+      source: row.kind,
+    });
     setQuery('');
     setOpen(false);
     inputRef.current?.blur();
