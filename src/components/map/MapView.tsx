@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/style.css';
 import {
@@ -77,6 +79,7 @@ const ReportIncidentDialog = dynamic(
 maptilersdk.config.apiKey = MAPTILER_KEY;
 
 export function MapView() {
+  const t = useTranslations('map');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maptilersdk.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -133,6 +136,9 @@ export function MapView() {
       // end up duplicated alongside the ones we place ourselves.
       navigationControl: false,
       geolocateControl: false,
+      // Cap zoom at 18 — each extra level ~4× tile requests with no
+      // useful detail on outdoor basemaps. See docs/COST.md.
+      maxZoom: 18,
     });
 
     // Only zoom / compass go through MapTiler's control layer. The
@@ -557,6 +563,37 @@ export function MapView() {
             </svg>
           )}
         </button>
+        {/* Companion entry point for the text-first /nearby list. The
+            icon and aria-label sit next to the locate / report controls
+            because all three answer variants of "what's around me?"; we
+            want users to find them without scanning the whole UI. The
+            list view is critical for slow-connection / a11y scenarios
+            (see /nearby page header for the full rationale). */}
+        <Link
+          href="/nearby"
+          className="map__locate map__list-toggle"
+          aria-label={t('listToggleAriaLabel')}
+          title={t('listToggleTitle')}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <circle cx="4" cy="6" r="1" fill="currentColor" />
+            <circle cx="4" cy="12" r="1" fill="currentColor" />
+            <circle cx="4" cy="18" r="1" fill="currentColor" />
+          </svg>
+        </Link>
         <ReportIncidentButton fallbackLocation={fallbackLocation} />
       </div>
 

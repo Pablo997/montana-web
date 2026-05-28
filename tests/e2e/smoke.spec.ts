@@ -69,6 +69,26 @@ test('sign-in page shows the magic-link form and requires consent', async ({ pag
   await expect(submit).toBeEnabled();
 });
 
+test('/nearby loads without the map and shows the location CTA', async ({
+  page,
+}) => {
+  const maptilerRequests: string[] = [];
+  page.on('request', (req) => {
+    if (req.url().includes('maptiler.com')) maptilerRequests.push(req.url());
+  });
+
+  const response = await page.goto('/nearby');
+  expect(response?.status(), 'GET /nearby').toBeLessThan(400);
+
+  await expect(page.getByRole('heading', { level: 1, name: /Cerca de ti/i })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /Usar mi ubicación/i }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /Volver al mapa/i })).toBeVisible();
+
+  expect(maptilerRequests).toHaveLength(0);
+});
+
 test('legal pages are reachable and not 404', async ({ page }) => {
   for (const path of ['/privacy', '/terms', '/cookies']) {
     const response = await page.goto(path);

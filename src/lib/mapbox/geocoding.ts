@@ -1,4 +1,5 @@
 import { MAPTILER_KEY } from './config';
+import { getCachedGeocode, setCachedGeocode } from './geocodeCache';
 
 /**
  * Thin client over the MapTiler Geocoding REST API. We deliberately
@@ -100,10 +101,16 @@ export async function geocodePlaces(
     return [];
   }
 
+  const locale = options.language ?? 'es';
+  if (!options.signal?.aborted) {
+    const cached = getCachedGeocode(trimmed, locale, options.proximity);
+    if (cached) return cached;
+  }
+
   const params = new URLSearchParams();
   params.set('key', MAPTILER_KEY);
   params.set('limit', String(options.limit ?? DEFAULT_LIMIT));
-  params.set('language', options.language ?? 'es');
+  params.set('language', locale);
   if (options.proximity) {
     params.set('proximity', options.proximity.join(','));
   }
@@ -122,7 +129,9 @@ export async function geocodePlaces(
   }
 
   const payload = (await response.json()) as unknown;
-  return parseFeatureCollection(payload);
+  const parsed = parseFeatureCollection(payload);
+  setCachedGeocode(trimmed, locale, options.proximity, parsed);
+  return parsed;
 }
 
 /**

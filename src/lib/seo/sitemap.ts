@@ -49,6 +49,16 @@ export function buildSitemapEntries(
       priority: 1.0,
     },
     {
+      url: absoluteUrl('/nearby'),
+      lastModified: now,
+      // The page content depends on the user's geolocation so search
+      // engines see an empty shell — but they still index the URL and
+      // its metadata, which is what we want for discoverability of the
+      // text-first companion to the map.
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
       url: absoluteUrl('/privacy'),
       lastModified: now,
       changeFrequency: 'yearly',

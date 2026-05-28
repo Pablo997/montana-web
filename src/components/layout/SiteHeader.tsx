@@ -27,6 +27,16 @@ export async function SiteHeader() {
         <span className="site-header__wordmark">Montana</span>
       </Link>
 
+      {/* Discoverability link to the text-first /nearby list. We expose
+          it everywhere SiteHeader is rendered (profile, legal pages)
+          so the page isn't only reachable from the map FAB. Visually
+          subdued to keep the brand and the auth CTA dominant. */}
+      <nav className="site-header__nav" aria-label={t('primaryNavAria')}>
+        <Link href="/nearby" className="site-header__nav-link">
+          {t('navNearby')}
+        </Link>
+      </nav>
+
       <div className="site-header__actions">
         {user ? (
           <UserMenu email={user.email ?? 'Account'} isAdmin={isAdmin} />

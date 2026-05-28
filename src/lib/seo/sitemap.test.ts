@@ -14,10 +14,10 @@ function inc(partial: Partial<SitemapIncidentRow>): SitemapIncidentRow {
 }
 
 describe('buildSitemapEntries', () => {
-  it('always emits the four static pages', () => {
+  it('always emits the static pages including /nearby', () => {
     const entries = buildSitemapEntries([], NOW);
     const paths = entries.map((e) => new URL(e.url).pathname);
-    expect(paths).toEqual(['/', '/privacy', '/terms', '/cookies']);
+    expect(paths).toEqual(['/', '/nearby', '/privacy', '/terms', '/cookies']);
   });
 
   it('emits incidents whose status is indexable (pending/validated/resolved)', () => {
