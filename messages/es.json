@@ -50,7 +50,8 @@
       "consentRequired": "Debes aceptar los Términos y la Política de Privacidad para continuar.",
       "submit": "Enviar enlace mágico",
       "sending": "Enviando…",
-      "sent": "Revisa <strong>{email}</strong> para encontrar el enlace de acceso."
+      "sent": "Revisa <strong>{email}</strong> para encontrar el enlace de acceso.",
+      "duplicateEmailNotice": "<strong>{email}</strong> ya está asociado a otra forma de acceso (enlace mágico o Google). Inicia sesión con tu método original y, una vez dentro, ve a <strong>Mi perfil → Cuentas vinculadas</strong> para conectar el nuevo método sin duplicar la cuenta."
     }
   },
   "map": {

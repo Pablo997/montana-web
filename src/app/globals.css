@@ -1879,6 +1879,21 @@ html {
   border: 1px solid rgba(217, 48, 37, 0.4);
 }
 
+/* Warning notice — used by the duplicate-email guard to tell the
+   user their OAuth sign-up was rolled back. Amber rather than red:
+   it's NOT an error (their account is safe, no data was lost), it's
+   guidance about the right next step. */
+.auth__notice--warning {
+  background: rgba(217, 162, 37, 0.12);
+  color: #f5d28a;
+  border: 1px solid rgba(217, 162, 37, 0.4);
+  line-height: 1.5;
+}
+
+.auth__notice--warning strong {
+  color: #ffe4a3;
+}
+
 .auth__consent {
   display: flex;
   gap: 0.55rem;
