@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { WebVitalsReporter } from '@/components/analytics/WebVitalsReporter';
 import { RegisterServiceWorker } from '@/components/pwa/RegisterServiceWorker';
 import { LOCALES } from '@/i18n/config';
 import { SITE_NAME, SITE_URL, siteSeo } from '@/lib/seo/config';
@@ -135,6 +136,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <RegisterServiceWorker />
           <Analytics />
           <SpeedInsights />
+          <WebVitalsReporter />
         </NextIntlClientProvider>
       </body>
     </html>
