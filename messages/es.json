@@ -550,6 +550,49 @@
       "deleteFinal": "Eliminar para siempre",
       "deleting": "Eliminando…",
       "deleteError": "No se pudo eliminar la cuenta."
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "restartTourTitle": "Reiniciar tour guiado",
+      "restartTourDescription": "Vuelve a mostrar la presentación rápida con los principales controles del mapa.",
+      "restartTour": "Reiniciar tour",
+      "restarting": "Reiniciando…"
+    }
+  },
+  "onboarding": {
+    "regionAria": "Tour guiado de Montana",
+    "progress": "{current} de {total}",
+    "skip": "Saltar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "Empezar",
+    "welcome": {
+      "title": "Bienvenido a Montana",
+      "body": "Te enseñamos en menos de un minuto los controles principales para reportar y consultar incidencias en montaña. Puedes saltarlo en cualquier momento."
+    },
+    "search": {
+      "title": "Buscar lugares",
+      "body": "Encuentra picos, refugios, valles o cualquier topónimo del mundo. Cuando seleccionas un resultado, el mapa vuela hasta él."
+    },
+    "basemap": {
+      "title": "Cambia de mapa",
+      "body": "Alterna entre topográfico, satélite, invierno y más. Activa el relieve sombreado (hillshade) para apreciar mejor el terreno."
+    },
+    "filters": {
+      "title": "Filtrar incidencias",
+      "body": "Filtra por estado, tipo, severidad o búsqueda de texto para centrarte solo en lo que te interesa."
+    },
+    "report": {
+      "title": "Reportar una incidencia",
+      "body": "Pulsa aquí para crear un reporte: arrastra el pin a la ubicación exacta, añade foto y describe lo que has visto."
+    },
+    "notifications": {
+      "title": "Tus notificaciones",
+      "body": "Recibe avisos de incidencias nuevas cercanas y consulta el historial desde la campana. Configura un radio y horas de silencio en tu perfil."
+    },
+    "wrap": {
+      "title": "¡Listo!",
+      "body": "Esto era lo esencial. Puedes volver a ver este tour cuando quieras desde tu perfil, en Preferencias."
     }
   },
   "pwa": {

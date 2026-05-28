@@ -433,10 +433,77 @@ html {
   width: clamp(220px, 28vw, 320px);
 }
 
-/* Collapsed mode: trigger only, no input visible. Used on phones
-   (default) and after the user dismisses an open dropdown there. */
-.map-search--collapsed {
+/* Default visibility is driven by the viewport via CSS so the very
+   first paint (including SSR HTML) matches what the user expects
+   on their device — no React state needed. Mobile starts collapsed
+   to the icon trigger; desktop starts with the full bar. JS only
+   takes over once the user explicitly toggles via `data-mode`.
+   Without this split, the SSR HTML rendered the bar expanded by
+   default, and mobile viewports flashed the full bar overlapping
+   the brand header until hydration ran. */
+
+/* Mobile-first default: icon trigger visible, bar hidden. */
+.map-search .map-search__trigger {
+  display: inline-flex;
+}
+.map-search .map-search__inputWrap {
+  display: none;
+}
+
+/* Desktop default (≥721px) AND any viewport where the user has
+   explicitly expanded: show the bar, hide the trigger. */
+@media (min-width: 721px) {
+  .map-search:not([data-mode='collapsed']) .map-search__trigger {
+    display: none;
+  }
+  .map-search:not([data-mode='collapsed']) .map-search__inputWrap {
+    display: flex;
+  }
+}
+
+.map-search[data-mode='expanded'] .map-search__trigger {
+  display: none;
+}
+.map-search[data-mode='expanded'] .map-search__inputWrap {
+  display: flex;
+}
+
+/* When the user collapses on mobile (or desktop), the trigger comes
+   back regardless of viewport. */
+.map-search[data-mode='collapsed'] .map-search__trigger {
+  display: inline-flex;
+}
+.map-search[data-mode='collapsed'] .map-search__inputWrap {
+  display: none;
+}
+
+/* Container shrinks to fit the trigger when the input wrap is
+   hidden. We mirror the visibility rules above so the width follows
+   the layout exactly:
+   - Mobile + no user override → collapsed (icon) → width auto
+   - Any viewport + data-mode='collapsed' → width auto
+   - Everything else keeps the clamp() default. */
+@media (max-width: 720px) {
+  .map-search:not([data-mode='expanded']) {
+    width: auto;
+  }
+}
+.map-search[data-mode='collapsed'] {
   width: auto;
+}
+
+/* Back-arrow inside the bar: only visible on mobile while expanded
+   (when the bar takes over the screen as an overlay). On desktop or
+   collapsed-on-mobile the static magnifying-glass icon takes the
+   slot instead. */
+.map-search__back {
+  display: none;
+}
+.map-search--mobile-active .map-search__back {
+  display: grid;
+}
+.map-search--mobile-active .map-search__icon {
+  display: none;
 }
 
 /* Mobile expanded mode: the bar breaks out of the top-left overlay
@@ -508,7 +575,10 @@ html {
   left: 0.35rem;
   width: 32px;
   height: 32px;
-  display: grid;
+  /* `display` is owned by the visibility rules above
+     (.map-search__back default `none`, mobile-active → `grid`) so
+     it isn't repeated here — otherwise this declaration would
+     defeat the toggle. */
   place-items: center;
   border: none;
   border-radius: 50%;
@@ -5424,5 +5494,231 @@ html {
   .admin-report__people {
     gap: 0.6rem;
     font-size: 0.78rem;
+  }
+}
+
+/* --------------------------------------------------------------------
+ * Onboarding tour
+ * Renders a fixed-position dialog with a spotlight ring around the
+ * UI element being explained. Layered ABOVE every map overlay (search,
+ * filters, basemap, bell — all at z-index 20-30 in the map area) but
+ * still below transient toasts / dialogs (which sit at 60+) so the
+ * tour never blocks a critical error.
+ * -------------------------------------------------------------------- */
+
+.onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+}
+
+.onboarding__backdrop {
+  position: absolute;
+  inset: 0;
+  /* Default state (with spotlight): fully transparent — the dim is
+     painted by the spotlight's huge box-shadow, which leaves the
+     target element 100% crisp and clickable-looking. We still need
+     this element to capture clicks to skip the tour. */
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: onboarding-fade-in 220ms ease-out;
+}
+
+.onboarding__backdrop--full {
+  /* Welcome / wrap steps without a target: restore the full-screen
+     dim and gentle blur, since there is no spotlight to draw it. */
+  background: rgba(8, 12, 10, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: default;
+}
+
+.onboarding__spotlight {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 0.85rem;
+  /* Three layers in one box-shadow:
+     1. A 9999px solid outer shadow paints the dim around the target
+        — everything BUT the target rect goes dark, the target itself
+        stays pixel-perfect.
+     2. A 2px neutral ring hugs the target so it reads as "highlighted"
+        against the dark surroundings.
+     3. A soft outer glow lifts the target visually without competing
+        with the brand-green that lives inside the map. */
+  box-shadow:
+    0 0 0 9999px rgba(8, 12, 10, 0.62),
+    0 0 0 2px rgba(232, 239, 234, 0.95),
+    0 0 22px 3px rgba(232, 239, 234, 0.35);
+  transition:
+    top 180ms ease,
+    left 180ms ease,
+    width 180ms ease,
+    height 180ms ease;
+}
+
+.onboarding__tooltip {
+  position: absolute;
+  pointer-events: auto;
+  width: 320px;
+  max-width: calc(100vw - 1.5rem);
+  padding: 1rem 1.15rem 1.05rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  color: var(--color-text);
+  animation: onboarding-pop-in 220ms cubic-bezier(0.2, 1.05, 0.5, 1);
+}
+
+.onboarding__counter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  margin: 0 0 0.35rem;
+}
+
+.onboarding__title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  margin: 0 0 0.35rem;
+  color: var(--color-text);
+  line-height: 1.25;
+}
+
+.onboarding__body {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin: 0 0 0.95rem;
+}
+
+.onboarding__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.onboarding__skip {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.35rem 0.1rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.onboarding__skip:hover {
+  color: var(--color-text);
+}
+
+.onboarding__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@keyframes onboarding-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--tx, -50%), calc(var(--ty, -50%) + 6px));
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding__backdrop,
+  .onboarding__tooltip,
+  .onboarding__spotlight {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding__tooltip {
+    /* On mobile the natural placement maths still applies, but we
+       reduce padding & font sizes so the card never feels cramped. */
+    width: auto;
+    max-width: calc(100vw - 1.25rem);
+    padding: 0.95rem 1rem 1rem;
+  }
+
+  .onboarding__title {
+    font-size: 1rem;
+  }
+
+  .onboarding__body {
+    font-size: 0.88rem;
+  }
+
+  /* Highly-constrained viewports: pin the centered/wrap dialogs to
+     the bottom safe area so they don't fight the map controls. */
+  .onboarding__tooltip--center {
+    top: auto !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+    transform: none !important;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* --------------------------------------------------------------------
+ * Profile → Preferences
+ * Reuses the .profile-section / .linked-accounts patterns so it sits
+ * comfortably between LinkedAccounts and DangerZone.
+ * -------------------------------------------------------------------- */
+
+.preferences__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+}
+
+.preferences__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.preferences__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.preferences__description {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .preferences__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
   }
 }
