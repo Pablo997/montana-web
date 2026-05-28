@@ -1,4 +1,5 @@
 import { MAPTILER_KEY } from './config';
+import { getCachedGeocode, setCachedGeocode } from './geocodeCache';
 
 /**
  * Thin client over the MapTiler Geocoding REST API. We deliberately
@@ -100,10 +101,22 @@ export async function geocodePlaces(
     return [];
   }
 
+  // Cache check BEFORE the network. The cache key buckets the
+  // proximity argument so a sub-kilometre map pan doesn't bust the
+  // entry; see `geocodeCache.ts` for the rationale. We skip the
+  // cache entirely when the caller passed an AbortSignal that's
+  // already aborted — there's no point returning data the caller
+  // told us to discard.
+  const locale = options.language ?? 'es';
+  if (!options.signal?.aborted) {
+    const cached = getCachedGeocode(trimmed, locale, options.proximity);
+    if (cached) return cached;
+  }
+
   const params = new URLSearchParams();
   params.set('key', MAPTILER_KEY);
   params.set('limit', String(options.limit ?? DEFAULT_LIMIT));
-  params.set('language', options.language ?? 'es');
+  params.set('language', locale);
   if (options.proximity) {
     params.set('proximity', options.proximity.join(','));
   }
@@ -122,7 +135,12 @@ export async function geocodePlaces(
   }
 
   const payload = (await response.json()) as unknown;
-  return parseFeatureCollection(payload);
+  const parsed = parseFeatureCollection(payload);
+  // Cache AFTER parsing — we deliberately cache the [] result too
+  // ("no match for this query is a stable answer"), so callers can't
+  // accidentally re-issue the same dead query.
+  setCachedGeocode(trimmed, locale, options.proximity, parsed);
+  return parsed;
 }
 
 /**
