@@ -120,6 +120,52 @@ export async function fetchNearbyIncidents(
     .filter((v): v is Incident => v !== null);
 }
 
+/** Incident decorated with its server-computed distance from the query
+ * point. Used by the `/nearby` list page. */
+export interface NearbyIncident extends Incident {
+  /** Great-circle distance in metres, computed by PostGIS. */
+  distanceM: number;
+}
+
+/**
+ * Fetch incidents near a coordinate, ordered by distance ASC.
+ *
+ * Uses the `list_nearby_incidents` RPC (migration 00040) which adds the
+ * `distance_m` column and a hard limit. Deliberately a separate RPC from
+ * `nearby_incidents` — the latter powers the push fan-out and we don't
+ * want to couple its return shape to a UI consumer.
+ */
+export async function fetchNearbyIncidentsList(
+  lng: number,
+  lat: number,
+  radiusMeters = 50_000,
+  limit = 50,
+): Promise<NearbyIncident[]> {
+  const { data, error } = await supabase().rpc('list_nearby_incidents', {
+    p_lng: lng,
+    p_lat: lat,
+    p_radius_m: radiusMeters,
+    p_limit: limit,
+  });
+
+  if (error) throw error;
+  type Row = Parameters<typeof safeRowToIncident>[0] & {
+    distance_m: number | null;
+  };
+  const rows = (data ?? []) as Row[];
+  const out: NearbyIncident[] = [];
+  for (const row of rows) {
+    const incident = safeRowToIncident(row);
+    if (!incident) continue;
+    // PostGIS always returns a number for `st_distance`, but the JSON
+    // boundary could theoretically yield null. Default to 0 rather
+    // than dropping the row — a missing distance is a UI nuisance,
+    // not a correctness break.
+    out.push({ ...incident, distanceM: row.distance_m ?? 0 });
+  }
+  return out;
+}
+
 /**
  * Look up a single incident by id. Returns `null` when the incident
  * doesn't exist or has been dismissed. Powers the client side of deep

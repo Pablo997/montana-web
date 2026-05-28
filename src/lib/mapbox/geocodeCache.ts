@@ -1,4 +1,4 @@
-import type { SearchResult } from './geocoding';
+﻿import type { SearchResult } from './geocoding';
 
 /**
  * Small LRU cache for geocoding queries.
@@ -9,20 +9,20 @@ import type { SearchResult } from './geocoding';
  *     same query repeatedly (delete, retype, switch tabs, come
  *     back). Each repeat is currently a fresh MapTiler request.
  *     With the free tier at 100 k geocoding requests/month, a 30 %
- *     hit rate translates directly into 30 % more headroom — and
+ *     hit rate translates directly into 30 % more headroom ÔÇö and
  *     it costs us nothing because the answers are deterministic
  *     for the same (query, locale, proximity-rounded) tuple.
  *
  *   * The cache lives in module scope (closure on import), not in
  *     a store or localStorage. We DON'T want it to survive a hard
- *     reload — Mapbox / MapTiler occasionally retunes ranking and
+ *     reload ÔÇö Mapbox / MapTiler occasionally retunes ranking and
  *     a perma-cache would freeze users on stale results.
  *
  * Why LRU and not just a Map:
  *
  *   * A naked `Map` would grow without bound. A user opening the
  *     bar 50 times during a long session would pin all 50 result
- *     sets in memory. 50 results × ~3 KB each = 150 KB of JS heap
+ *     sets in memory. 50 results ├ù ~3 KB each = 150 KB of JS heap
  *     for a feature that nobody asked us to remember.
  *
  *   * LRU evicts the least-recently-used entry on overflow. 50
@@ -35,19 +35,19 @@ import type { SearchResult } from './geocoding';
  *     POI gets added, a place gets renamed). 5 minutes is the
  *     usual sweet spot for "feels live, not wasteful". We trade a
  *     tiny correctness window for ~half the request volume on
- *     queries the user re-issues quickly (typo → backspace →
+ *     queries the user re-issues quickly (typo ÔåÆ backspace ÔåÆ
  *     retype is the classic pattern).
  *
  * What the key includes:
  *
- *   * Query string (trimmed, lowercased — geocoders are case-
+ *   * Query string (trimmed, lowercased ÔÇö geocoders are case-
  *     insensitive on input).
- *   * Locale — "Madrid" in `es` returns "Madrid, Comunidad de
+ *   * Locale ÔÇö "Madrid" in `es` returns "Madrid, Comunidad de
  *     Madrid" but in `en` may return "Madrid, Spain". Mixing them
  *     would feed the wrong subtitle into the dropdown.
- *   * Proximity bucketed to 0.1°. We deliberately round so a user
+ *   * Proximity bucketed to 0.1┬░. We deliberately round so a user
  *     panning the map by tens of metres doesn't invalidate every
- *     cached entry. 0.1° ≈ 11 km — wide enough to absorb idle
+ *     cached entry. 0.1┬░ Ôëê 11 km ÔÇö wide enough to absorb idle
  *     scrolling, narrow enough that the proximity bias still
  *     matters at the city scale.
  */
@@ -69,7 +69,7 @@ function makeKey(
 ): string {
   const q = query.trim().toLowerCase();
   const prox = proximity
-    ? // Bucket to 0.1° (~11 km). See module doc for the rationale.
+    ? // Bucket to 0.1┬░ (~11 km). See module doc for the rationale.
       `${proximity[0].toFixed(1)},${proximity[1].toFixed(1)}`
     : 'none';
   return `${locale}|${prox}|${q}`;
@@ -89,7 +89,7 @@ export function getCachedGeocode(
   const hit = store.get(key);
   if (!hit) return null;
   if (hit.expiresAt < Date.now()) {
-    // Stale — evict eagerly so the next caller takes the network
+    // Stale ÔÇö evict eagerly so the next caller takes the network
     // path. Returning the stale rows would mean we never refresh.
     store.delete(key);
     return null;
@@ -103,7 +103,7 @@ export function getCachedGeocode(
 
 /**
  * Stores a freshly-fetched result set. Evicts the oldest entry
- * if the cache is full. Empty result sets are cached too — they
+ * if the cache is full. Empty result sets are cached too ÔÇö they
  * represent "no match for this query" and we should not retry the
  * server for the answer the user just got.
  */

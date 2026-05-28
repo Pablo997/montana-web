@@ -32,6 +32,7 @@ Every basemap pan, zoom, or change requests new vector tiles from `https://api.m
 **Mitigations in place**:
 
 - `maxZoom: 18` cap in `MapView.tsx`. The default of 22 quadruples tile count per level — wasted on outdoor imagery whose native resolution doesn't go past z=18 anyway. See the in-code comment for the user-experience justification.
+- `/nearby` list surface loads **zero** tiles — users on slow connections or low quota can browse incidents without touching the map at all.
 - Curated 6-basemap list (`basemaps.ts`). Each addition is a new style URL the user might warm — keeping the list short bounds the worst-case footprint.
 - Basemap preference persists per user (`useMapPreferencesStore`), so returning visitors don't pay for the basemap discovery dance every session.
 - Browser-level HTTP cache hits do NOT count against MapTiler quota. Tiles are served with `Cache-Control: max-age=86400` upstream, so an idle-tab refresh is free.
@@ -79,12 +80,15 @@ All client-side data flows through PL/pgSQL functions (RPCs), never raw `.from('
 | RPC | Trigger | Per session |
 |---|---|---|
 | `incidents_in_bbox` | `moveend` (debounced 250 ms) | 20–40 |
+| `list_nearby_incidents` | `/nearby` explicit fetch (user taps "use my location") | 0–3 |
 | `health_ping` | External uptime probe | 1 per minute (constant) |
 | `count_unread_notifications` | Initial mount, authenticated only | 1 |
 | `get_my_notifications` | Bell dropdown opened | 0–1 |
 | `is_admin` | Admin-page mount | 0 (rare) |
 | `nearby_incidents` | Push subscription setup | 0–1 |
 | `create_incident` + `upsert_push_subscription` + … | One-shot user actions | ≤ 5 |
+
+**Apply migration `00040_list_nearby_incidents.sql`** before `/nearby` works in prod. This RPC is separate from `nearby_incidents` (used by push/cron).
 
 **Mitigations in place**:
 
@@ -152,5 +156,6 @@ Before merging a feature that calls a third-party API in the user's hot path:
    - Add a temporary block via Vercel WAF or a Supabase RLS allowlist.
 4. If steady ramp:
    - Open this doc's mitigation list — anything not yet implemented is the next move.
+   - MapTiler overage → confirm `maxZoom: 18`, promote `/nearby`, check geocode cache hit rate.
    - Consider upgrading the provider tier. Both MapTiler and Supabase have linear pricing past the free tier; the first paid step is usually $25/mo and unblocks 2-10x the headroom.
 5. Update the relevant table in this file with the new numbers.

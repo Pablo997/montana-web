@@ -27,6 +27,8 @@
   "header": {
     "brandAriaLabel": "Ir al inicio de Montana",
     "signIn": "Iniciar sesión",
+    "primaryNavAria": "Navegación principal",
+    "navNearby": "Cerca",
     "userMenu": {
       "triggerAriaLabel": "Menú de cuenta ({email})",
       "myProfile": "Mi perfil",
@@ -122,7 +124,9 @@
       "hybrid": "Híbrido",
       "streets": "Calles",
       "winter": "Invierno"
-    }
+    },
+    "listToggleAriaLabel": "Ver incidencias en lista",
+    "listToggleTitle": "Lista cerca de ti"
   },
   "incident": {
     "type": {
@@ -692,5 +696,31 @@
     "switcher": "Idioma",
     "es": "Español",
     "en": "English"
+  },
+  "nearby": {
+    "metaTitle": "Incidencias cerca de ti · Montaña",
+    "metaDescription": "Lista de incidencias en montaña cerca de tu ubicación, ordenadas por distancia. Funciona en conexiones lentas y con lectores de pantalla.",
+    "title": "Cerca de ti",
+    "lede": "Lista ligera de incidencias activas alrededor de tu ubicación. Pensada para conexiones débiles en montaña — no carga el mapa.",
+    "listTitle": "Resultados",
+    "controlsAria": "Filtros de búsqueda",
+    "radiusLabel": "Radio",
+    "radiusKm": "{km} km",
+    "useLocation": "Usar mi ubicación",
+    "refresh": "Actualizar",
+    "updating": "Actualizando…",
+    "idlePrompt": "Para mostrarte lo más cercano necesitamos tu posición. Solo se usa en este dispositivo y no se guarda.",
+    "emptyTitle": "Nada por aquí",
+    "emptyHint": "No hay incidencias en este radio. Prueba a aumentarlo o vuelve a comprobarlo más tarde.",
+    "errorLocation": "No se pudo obtener tu ubicación. Revisa los permisos del navegador y vuelve a intentarlo.",
+    "errorFetch": "No se pudieron cargar las incidencias. Comprueba tu conexión y vuelve a intentarlo.",
+    "scoreAria": "Puntuación {score}",
+    "photoCount": "{count, plural, one {# foto} other {# fotos}}",
+    "relativeJustNow": "ahora",
+    "relativeMinAgo": "hace {count} min",
+    "relativeHoursAgo": "hace {count} h",
+    "relativeDaysAgo": "hace {count} d",
+    "relativeWeeksAgo": "hace {count} sem",
+    "backToMap": "Volver al mapa"
   }
 }

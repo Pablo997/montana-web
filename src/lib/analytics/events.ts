@@ -97,6 +97,12 @@ export type AnalyticsEvent =
   /** User unsubscribed (or revoked permission). */
   | 'push_unsubscribed'
 
+  // ── Nearby list ──
+  /** User tapped "Use my location" on /nearby. */
+  | 'nearby_location_requested'
+  /** Nearby list fetch succeeded. */
+  | 'nearby_list_loaded'
+
   // ── Performance ──
   /** A Core Web Vital was reported by the browser. We collapse the
    *  six vitals (LCP, CLS, INP, FCP, TTFB, FID) into a SINGLE event

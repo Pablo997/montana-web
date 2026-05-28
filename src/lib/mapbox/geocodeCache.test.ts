@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   _resetGeocodeCacheForTests,
   getCachedGeocode,
@@ -9,7 +9,7 @@ import type { SearchResult } from './geocoding';
 /**
  * The cache directly mediates how often we hit MapTiler's
  * Geocoding API. Every failure mode here translates into "we paid
- * for something we already had cached" — so the tests are tighter
+ * for something we already had cached" ÔÇö so the tests are tighter
  * than they would be for a pure in-memory speedup.
  */
 
@@ -49,18 +49,18 @@ describe('geocodeCache', () => {
     expect(getCachedGeocode('  madrid  ', 'es', undefined)).not.toBeNull();
   });
 
-  it('keys by locale — same query in different languages does NOT collide', () => {
+  it('keys by locale ÔÇö same query in different languages does NOT collide', () => {
     setCachedGeocode('madrid', 'es', undefined, [sampleResult('es')]);
     setCachedGeocode('madrid', 'en', undefined, [sampleResult('en')]);
     expect(getCachedGeocode('madrid', 'es', undefined)?.[0].id).toBe('es');
     expect(getCachedGeocode('madrid', 'en', undefined)?.[0].id).toBe('en');
   });
 
-  it('buckets proximity to 0.1° so micro-pans do not invalidate the cache', () => {
+  it('buckets proximity to 0.1┬░ so micro-pans do not invalidate the cache', () => {
     setCachedGeocode('plaza', 'es', [-3.7038, 40.4168], [sampleResult('a')]);
-    // ~100 m east — within the same 0.1° bucket. Must hit.
+    // ~100 m east ÔÇö within the same 0.1┬░ bucket. Must hit.
     expect(getCachedGeocode('plaza', 'es', [-3.7028, 40.4168])).not.toBeNull();
-    // ~50 km east — different bucket. Must miss.
+    // ~50 km east ÔÇö different bucket. Must miss.
     expect(getCachedGeocode('plaza', 'es', [-3.2, 40.4168])).toBeNull();
   });
 
@@ -82,7 +82,7 @@ describe('geocodeCache', () => {
 
   it('evicts the least-recently-used entry once the cap is reached', () => {
     // Fill the cache to capacity, then probe each entry to record
-    // recency. We then insert one more — the oldest UN-PROBED entry
+    // recency. We then insert one more ÔÇö the oldest UN-PROBED entry
     // should be evicted because every probed entry has been bumped
     // to the back of the LRU queue.
     for (let i = 0; i < 50; i++) {
