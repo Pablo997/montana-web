@@ -50,7 +50,8 @@
       "consentRequired": "You must accept the Terms and Privacy Policy to continue.",
       "submit": "Send magic link",
       "sending": "Sending…",
-      "sent": "Check <strong>{email}</strong> for a sign-in link."
+      "sent": "Check <strong>{email}</strong> for a sign-in link.",
+      "duplicateEmailNotice": "<strong>{email}</strong> is already linked to another sign-in method (magic link or Google). Sign in with your original method and, once inside, head to <strong>My profile → Linked accounts</strong> to attach the new method without creating a duplicate account."
     }
   },
   "map": {

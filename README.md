@@ -148,7 +148,8 @@ The migrations under `supabase/migrations/` create the PostGIS schema, RLS polic
    2. Under **Authorized redirect URIs** add the callback shown by Supabase Dashboard → Authentication → Providers → Google (looks like `https://<project>.supabase.co/auth/v1/callback`).
    3. Paste the Client ID and Client Secret into that same Supabase provider screen and toggle Google on.
    4. The sign-in page (`/auth/sign-in`) already renders a "Continue with Google" button; once Supabase is configured, it just works.
-   5. The **/me** page has a "Linked accounts" section that lets a user attach Google to their existing magic-link account (or vice-versa) so they don't end up with duplicate profiles. Uses Supabase's `linkIdentity` / `unlinkIdentity` APIs — no additional Supabase configuration needed beyond having both providers enabled.
+   5. The **/me** page has a "Linked accounts" section that lets a user attach Google to their existing magic-link account (or vice-versa) so they don't end up with duplicate profiles. Uses Supabase's `linkIdentity` / `unlinkIdentity` APIs — requires enabling **"Allow manual linking"** in Supabase Dashboard → Authentication → Sign In / Up.
+   6. **Duplicate-email guard**: `/auth/callback` runs the `discard_duplicate_account_for_email` RPC (migration `00039`) after every OAuth exchange. With Google specifically it's a no-op because Supabase already does "secure same-email linking" — the new Google identity is attached to the existing user automatically since Google verifies emails. The guard exists as defence in depth for future providers that DON'T return a verified email (custom OIDC, GitHub with private email, Apple "Hide my email", etc.), where Supabase would otherwise create a brand-new `auth.users` row and the user would end up with an empty duplicate account.
 
 ### 6. Run the app
 

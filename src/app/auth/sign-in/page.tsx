@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
@@ -30,10 +31,20 @@ function persistConsentEvidence(): void {
 export default function SignInPage() {
   const t = useTranslations('auth.signIn');
   const tCommon = useTranslations('common');
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
+
+  // The /auth/callback duplicate-account guard bounces back here with
+  // `?error=duplicate_email&email=<the-email>`. Render an explanatory
+  // banner above the form so the user understands why their Google
+  // sign-in didn't "stick".
+  const duplicateEmail =
+    searchParams.get('error') === 'duplicate_email'
+      ? searchParams.get('email')
+      : null;
 
   const requireConsent = (): boolean => {
     if (accepted) return true;
@@ -145,6 +156,20 @@ export default function SignInPage() {
 
         <h1 className="auth__title">{t('title')}</h1>
         <p className="auth__subtitle">{t('subtitle')}</p>
+
+        {duplicateEmail ? (
+          <div
+            className="auth__notice auth__notice--warning"
+            role="alert"
+          >
+            <p>
+              {t.rich('duplicateEmailNotice', {
+                email: duplicateEmail,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
+            </p>
+          </div>
+        ) : null}
 
         {status === 'sent' ? (
           <div className="auth__notice auth__notice--success">{sentMessage}</div>
