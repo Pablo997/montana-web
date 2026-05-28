@@ -1,5 +1,9 @@
 import { track as vercelTrack } from '@vercel/analytics';
-import type { AnalyticsEvent, AnalyticsEventProps } from './events';
+import {
+  EVENT_SAMPLE_RATES,
+  type AnalyticsEvent,
+  type AnalyticsEventProps,
+} from './events';
 
 /**
  * Thin, typed wrapper over Vercel Analytics' `track()`.
@@ -41,6 +45,17 @@ export function track(
       console.debug('[analytics]', event, props ?? {});
     }
     return;
+  }
+
+  // Sampling gate. Skipped entirely when the debug-full-sample
+  // override is set (Playwright runs and ad-hoc QA where you want
+  // every event to land regardless of dice rolls).
+  if (process.env.NEXT_PUBLIC_ANALYTICS_FULL_SAMPLE !== '1') {
+    const rate = EVENT_SAMPLE_RATES[event] ?? 1;
+    // Strict `< rate` so rate=0 fully suppresses an event (useful
+    // for deprecating an event without a code change in every call
+    // site).
+    if (rate < 1 && Math.random() >= rate) return;
   }
 
   try {

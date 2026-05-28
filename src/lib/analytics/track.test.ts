@@ -66,6 +66,51 @@ describe('analytics/track', () => {
     expect(trackMock).not.toHaveBeenCalled();
   });
 
+  it('samples high-frequency events according to EVENT_SAMPLE_RATES', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    // Force every dice roll to FAIL the sampling gate. `web_vital`
+    // has rate 0.25 < 0.99, so the event should be dropped.
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    vi.resetModules();
+    const { track } = await import('./track');
+    track('web_vital', { metric: 'LCP', value: 2000, rating: 'good', navigation_type: 'navigate' });
+    expect(trackMock).not.toHaveBeenCalled();
+  });
+
+  it('lets sampled events through when the dice roll passes', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    // `0.0` is below every configured rate; the gate must always
+    // open.
+    vi.spyOn(Math, 'random').mockReturnValue(0.0);
+    vi.resetModules();
+    const { track } = await import('./track');
+    track('incident_voted', { direction: 'up' });
+    expect(trackMock).toHaveBeenCalledOnce();
+  });
+
+  it('never samples critical (rate=1) events', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    // A failing dice roll for a critical event should STILL ship.
+    // `signin_method_chosen` has no entry in the rate map, so it
+    // defaults to 1 and the `rate < 1` branch is skipped.
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    vi.resetModules();
+    const { track } = await import('./track');
+    track('signin_method_chosen', { method: 'google' });
+    expect(trackMock).toHaveBeenCalledOnce();
+  });
+
+  it('bypasses sampling when NEXT_PUBLIC_ANALYTICS_FULL_SAMPLE=1', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_ANALYTICS_FULL_SAMPLE', '1');
+    // Even with a failing roll, the override sends the event.
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    vi.resetModules();
+    const { track } = await import('./track');
+    track('web_vital', { metric: 'LCP', value: 2000, rating: 'good', navigation_type: 'navigate' });
+    expect(trackMock).toHaveBeenCalledOnce();
+  });
+
   it('swallows errors from the underlying SDK so user flows never break', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     trackMock.mockImplementationOnce(() => {
@@ -74,9 +119,11 @@ describe('analytics/track', () => {
     vi.resetModules();
     const { track } = await import('./track');
     // No throw + no unhandled rejection: the act of calling is the
-    // assertion. We re-check that the mock fired so we know we
-    // actually exercised the catch path.
-    expect(() => track('incident_voted', { direction: 'up' })).not.toThrow();
+    // assertion. We pick an event with rate=1 (`tour_completed`)
+    // so the sampling gate isn't the thing being tested here; we
+    // re-check that the mock fired to confirm we exercised the
+    // catch path.
+    expect(() => track('tour_completed')).not.toThrow();
     expect(trackMock).toHaveBeenCalled();
   });
 });
