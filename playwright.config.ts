@@ -46,5 +46,13 @@ export default defineConfig({
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
+        // The analytics smoke spec asserts on debug logs the `track()`
+        // wrapper writes when this flag is set. Without it the wrapper
+        // is silent in dev (it only ships to Vercel in production),
+        // and the spec would have nothing to listen for. Other specs
+        // tolerate the extra console traffic.
+        env: {
+          NEXT_PUBLIC_ANALYTICS_DEBUG: '1',
+        },
       },
 });

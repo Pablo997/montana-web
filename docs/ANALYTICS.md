@@ -144,6 +144,16 @@ track('incident_report_submitted', {
 - We rely on Vercel's anonymous-by-default analytics — **no cookies are set by `@vercel/analytics`**, so this layer doesn't trigger the cookie banner.
 - Sentry events are scrubbed of PII (`sendDefaultPii: false`, custom `beforeSend`) and are observability, not analytics; they live in a separate Sentry org.
 
+## Regression coverage
+
+`tests/e2e/analytics.spec.ts` is a Playwright smoke that proves **our call sites still fire**. It does not test Vercel's transport (their job), only that interacting with the UI produces the right `track()` calls with the right props.
+
+The mechanism: `playwright.config.ts` spawns the dev server with `NEXT_PUBLIC_ANALYTICS_DEBUG=1` so the wrapper writes each call to `console.debug`. The spec listens on `page.on('console')`, parses the structured args through Playwright's `JSHandle.jsonValue()`, and asserts.
+
+Two scenarios are covered today (the highest-ROI map interactions): basemap change and filter close with non-zero count. Auth-gated funnels (`tour_*`, `signin_*`, `push_*`) deliberately stay in the unit tier — running them here would need a real Supabase session and turn a 5-second smoke into a flaky multi-minute saga.
+
+When adding a new event that fronts a critical funnel, add a scenario here. The helper `collectAnalytics(page)` exposes a `waitFor(predicate)` you can chain on.
+
 ## Debugging locally
 
 ```bash

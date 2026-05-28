@@ -17,6 +17,12 @@ out/
 build/
 dist/
 
+# Bundle analyzer output. `npm run analyze` writes treemaps here so
+# we can eyeball First Load JS by chunk. The HTML reports are huge
+# (~250 KB each) and meaningless outside the run that produced them,
+# so they MUST NOT be versioned.
+analyze/
+
 # Production
 *.tsbuildinfo
 next-env.d.ts
