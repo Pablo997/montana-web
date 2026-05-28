@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import * as maptilersdk from '@maptiler/sdk';
 import '@maptiler/sdk/style.css';
 import {
@@ -20,19 +21,58 @@ import { bboxForTiles, tilesForBbox } from '@/lib/incidents/tile-cache';
 import { useMapStore } from '@/store/useMapStore';
 import { useRealtimeIncidents } from '@/hooks/useRealtimeIncidents';
 import { IncidentMarkers } from './IncidentMarkers';
-import { FilterPanel } from './FilterPanel';
-import { BasemapSwitcher } from './BasemapSwitcher';
-import { SearchBar, type PickedPlace } from './SearchBar';
 import { MapEmptyState } from './MapEmptyState';
-import { IncidentDetailsPanel } from '@/components/incidents/IncidentDetailsPanel';
 import { ReportIncidentButton } from '@/components/incidents/ReportIncidentButton';
-import { ReportIncidentDialog } from '@/components/incidents/ReportIncidentDialog';
 import { buildPermissionDeniedMessage } from '@/lib/geo/permissionMessage';
 import {
   resolvePick as resolvePushCenterPick,
   useIsPickingPushCenter,
 } from '@/lib/push/pickMode';
 import type { LatLng } from '@/types/incident';
+import type { PickedPlace } from './SearchBar';
+
+// Map overlays that are NOT needed for the first paint of the map
+// itself. Splitting them out of the initial bundle saves ~50-150 kB
+// of JS that the user otherwise downloads before they can interact:
+//
+//   * SearchBar           — only used when the user types a place
+//   * FilterPanel         — only opened on click; pulls a chip grid
+//                            and the global filter store
+//   * BasemapSwitcher     — only opened on click; pulls 6 style refs
+//   * IncidentDetailsPanel — only mounted when a marker is selected
+//   * ReportIncidentDialog — only mounted when the user reports an
+//                            incident; transitively imports the
+//                            image-compression + offline-queue libs
+//
+// `ssr: false` everywhere because these are all client-only overlays
+// that read from zustand stores or interact with MapLibre directly.
+// They render `null` on the server anyway.
+const SearchBar = dynamic(
+  () => import('./SearchBar').then((m) => m.SearchBar),
+  { ssr: false },
+);
+const FilterPanel = dynamic(
+  () => import('./FilterPanel').then((m) => m.FilterPanel),
+  { ssr: false },
+);
+const BasemapSwitcher = dynamic(
+  () => import('./BasemapSwitcher').then((m) => m.BasemapSwitcher),
+  { ssr: false },
+);
+const IncidentDetailsPanel = dynamic(
+  () =>
+    import('@/components/incidents/IncidentDetailsPanel').then(
+      (m) => m.IncidentDetailsPanel,
+    ),
+  { ssr: false },
+);
+const ReportIncidentDialog = dynamic(
+  () =>
+    import('@/components/incidents/ReportIncidentDialog').then(
+      (m) => m.ReportIncidentDialog,
+    ),
+  { ssr: false },
+);
 
 maptilersdk.config.apiKey = MAPTILER_KEY;
 

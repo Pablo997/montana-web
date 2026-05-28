@@ -37,6 +37,22 @@ const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const EXCLUDE_SELECTORS = ['.maplibregl-map', '.maplibregl-ctrl-bottom-right'];
 
 async function audit(page: import('@playwright/test').Page) {
+  // Wait for the page to settle BEFORE injecting axe-core. The map
+  // page in particular kicks off a chain of dynamic chunk loads
+  // (FilterPanel, BasemapSwitcher, SearchBar, ReportDialog,
+  // OnboardingTour, …) which axe interprets as "execution context
+  // destroyed" mid-audit. `networkidle` is the cheapest signal that
+  // every dynamic import has finished resolving.
+  //
+  // Fallback timeout is small (3 s) because the audits themselves
+  // have their own budget — we just need to be past the React mount
+  // storm. If networkidle never fires (rare on the map page where
+  // tile streaming is continuous), we proceed anyway.
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 3_000 });
+  } catch {
+    // Tile streaming may keep network busy forever; that's fine.
+  }
   return new AxeBuilder({ page })
     .withTags(AXE_TAGS)
     .exclude(EXCLUDE_SELECTORS)

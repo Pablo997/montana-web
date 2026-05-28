@@ -1,15 +1,29 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
-import { NotificationSettings } from '@/components/push/NotificationSettings';
 import { requestPick as requestPushCenterPick } from '@/lib/push/pickMode';
 import { DEFAULT_CENTER } from '@/lib/mapbox/config';
 import type { LatLng } from '@/types/incident';
 import { LocaleSwitcher } from './LocaleSwitcher';
+
+// Defer the notification modal: it's a heavy chunk (Push API client,
+// permission orchestration, settings store) and lives inside the
+// authenticated dropdown that may never be opened on a given visit.
+// Without this, every page that mounts <SiteHeader> for a logged-in
+// user pays the Web Push cost upfront — including the legal pages
+// (/cookies, /privacy, /terms) which inflated to ~235 kB First Load.
+const NotificationSettings = dynamic(
+  () =>
+    import('@/components/push/NotificationSettings').then(
+      (m) => m.NotificationSettings,
+    ),
+  { ssr: false },
+);
 
 interface Props {
   email: string;
@@ -164,21 +178,29 @@ export function UserMenu({ email, isAdmin = false }: Props) {
         </div>
       ) : null}
 
-      <NotificationSettings
-        open={notificationsOpen}
-        onClose={() => {
-          setNotificationsOpen(false);
-          setPickedCenter(null);
-        }}
-        defaultCenter={{ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] }}
-        initialCenter={pickedCenter}
-        onPickOnMap={async () => {
-          setNotificationsOpen(false);
-          const picked = await requestPushCenterPick();
-          if (picked) setPickedCenter(picked);
-          setNotificationsOpen(true);
-        }}
-      />
+      {/* Mounted only once the user has actually opened the modal
+          (or picked a point on the map). Before that we render
+          nothing, which means the dynamic chunk above never
+          downloads — saving ~80 kB of First Load JS on pages that
+          embed <SiteHeader> but where the user never touches
+          notifications (the legal pages were the worst offender). */}
+      {notificationsOpen || pickedCenter ? (
+        <NotificationSettings
+          open={notificationsOpen}
+          onClose={() => {
+            setNotificationsOpen(false);
+            setPickedCenter(null);
+          }}
+          defaultCenter={{ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] }}
+          initialCenter={pickedCenter}
+          onPickOnMap={async () => {
+            setNotificationsOpen(false);
+            const picked = await requestPushCenterPick();
+            if (picked) setPickedCenter(picked);
+            setNotificationsOpen(true);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
