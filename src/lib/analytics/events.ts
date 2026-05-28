@@ -95,7 +95,17 @@ export type AnalyticsEvent =
   /** User completed the push-notification subscription flow. */
   | 'push_subscribed'
   /** User unsubscribed (or revoked permission). */
-  | 'push_unsubscribed';
+  | 'push_unsubscribed'
+
+  // ── Performance ──
+  /** A Core Web Vital was reported by the browser. We collapse the
+   *  six vitals (LCP, CLS, INP, FCP, TTFB, FID) into a SINGLE event
+   *  so the dashboard stays a handful of funnels rather than six
+   *  parallel ones. The `metric` prop is the discriminator, paired
+   *  with the bucketed `rating` from web.dev's thresholds so we can
+   *  segment product events ("LCP good vs. poor") without exposing
+   *  raw timings as funnel keys. */
+  | 'web_vital';
 
 /**
  * Allowed shape for event properties. Strictly scalar — objects,
