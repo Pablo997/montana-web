@@ -40,7 +40,10 @@
   "auth": {
     "signIn": {
       "title": "Inicia sesión en Montana",
-      "subtitle": "Te enviaremos un enlace mágico por email. Sin contraseñas ni complicaciones.",
+      "subtitle": "Entra con Google o recibe un enlace mágico por email. Sin contraseñas que recordar.",
+      "googleButton": "Continuar con Google",
+      "redirecting": "Redirigiendo…",
+      "or": "o",
       "emailLabel": "Email",
       "emailPlaceholder": "tu@ejemplo.com",
       "consent": "He leído y acepto los <terms>Términos</terms>, la <privacy>Política de Privacidad</privacy> y la <cookies>Política de Cookies</cookies>.",

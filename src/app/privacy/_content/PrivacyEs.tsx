@@ -123,6 +123,26 @@ export function PrivacyEs() {
             <strong>MapTiler</strong> — teselas de mapa y terreno. Solo
             recibe peticiones de teselas, no datos de tu cuenta.
           </li>
+          <li>
+            <strong>Google (solo si eliges &quot;Continuar con
+            Google&quot;)</strong> — autenticación delegada vía OAuth
+            2.0. Cuando inicias sesión con Google, recibimos
+            únicamente tu dirección de email y el identificador
+            estable de tu cuenta de Google. No recibimos contraseñas
+            ni acceso a tu Gmail, contactos, Drive ni ningún otro
+            servicio. Google, por su parte, recibe la información
+            mínima necesaria para autenticarte (que existe una
+            aplicación llamada Montana que solicita autenticación).
+            Consulta la{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              política de privacidad de Google
+            </a>{' '}
+            para más detalles.
+          </li>
         </ul>
         <p>
           Algunos encargados pueden almacenar copias de seguridad fuera del

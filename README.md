@@ -31,7 +31,7 @@ Montana lets hikers, trail runners and climbers report hazards (blocked trails, 
 | i18n         | `next-intl` (cookie-based, ES default + EN)           |
 | Map          | MapTiler SDK + MapTiler Terrain DEM                   |
 | Database     | PostgreSQL + PostGIS (Supabase)                       |
-| Auth         | Supabase Auth (magic link; Google OAuth optional)     |
+| Auth         | Supabase Auth (Google OAuth + email magic link)       |
 | Email (SMTP) | Resend via Supabase Auth custom SMTP                  |
 | Storage      | Supabase Storage (incident media)                     |
 | Real-time    | Supabase Realtime (postgres_changes)                  |
@@ -142,6 +142,12 @@ The migrations under `supabase/migrations/` create the PostGIS schema, RLS polic
    ```
 
 5. Configure custom SMTP (Resend is cheapest free option) in Supabase → Auth → SMTP Settings so the default 3-per-hour email limit doesn't throttle sign-ins.
+
+6. **Enable Google OAuth** (optional but recommended for production):
+   1. Create a Web Application OAuth Client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → OAuth 2.0 Client IDs.
+   2. Under **Authorized redirect URIs** add the callback shown by Supabase Dashboard → Authentication → Providers → Google (looks like `https://<project>.supabase.co/auth/v1/callback`).
+   3. Paste the Client ID and Client Secret into that same Supabase provider screen and toggle Google on.
+   4. The sign-in page (`/auth/sign-in`) already renders a "Continue with Google" button; once Supabase is configured, it just works.
 
 ### 6. Run the app
 
