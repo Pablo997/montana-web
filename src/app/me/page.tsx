@@ -15,7 +15,9 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { ProfileHeader } from './_components/ProfileHeader';
 import { StatsCards } from './_components/StatsCards';
 import { IncidentListItem } from './_components/IncidentListItem';
+import { LinkedAccounts } from './_components/LinkedAccounts';
 import { DangerZone } from './_components/DangerZone';
+import type { UserIdentity } from '@supabase/supabase-js';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('profile');
@@ -67,6 +69,7 @@ async function loadData(
   email: string;
   username: string | null;
   createdAt: string | null;
+  identities: UserIdentity[];
   stats: ProfileStats;
   rows: MyIncidentRow[];
   total: number;
@@ -110,6 +113,11 @@ async function loadData(
     email: user.email ?? '',
     username: profileRes.data?.username ?? null,
     createdAt: profileRes.data?.created_at ?? null,
+    // `user.identities` is populated by GoTrue on every getUser()
+    // call — no extra round-trip. Defaulting to `[]` keeps the
+    // component happy on the rare path where it's null (older
+    // accounts, edge cases during migrations).
+    identities: user.identities ?? [],
     stats: mapStats(statsRes.data),
     rows,
     total: rows[0]?.totalCount ?? 0,
@@ -169,6 +177,8 @@ export default async function MyProfilePage({
         />
 
         <StatsCards stats={data.stats} />
+
+        <LinkedAccounts identities={data.identities} />
 
         <section className="profile-section" aria-labelledby="my-incidents">
           <div className="profile-section__head">

@@ -481,6 +481,26 @@
       "scoreLabel": "Puntuación neta",
       "openReportsLabel": "Reportes abiertos"
     },
+    "linkedAccounts": {
+      "title": "Cuentas vinculadas",
+      "description": "Vincula varios métodos de inicio de sesión a una misma cuenta. Así puedes entrar con cualquiera de ellos sin acabar con perfiles duplicados.",
+      "statusLinked": "Vinculada",
+      "statusNotLinked": "No vinculada",
+      "link": "Vincular",
+      "unlink": "Desvincular",
+      "working": "Procesando…",
+      "emailLockedHint": "Tu identidad principal",
+      "cannotUnlinkLast": "No puedes desvincular tu único método de acceso",
+      "lastProviderNotice": "Vincula otro método antes de poder desvincular tu única forma de acceso actual.",
+      "providers": {
+        "email": {
+          "name": "Email (enlace mágico)"
+        },
+        "google": {
+          "name": "Google"
+        }
+      }
+    },
     "incidents": {
       "sectionAria": "Estado de incidencia",
       "title": "Mis incidencias",

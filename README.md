@@ -148,6 +148,7 @@ The migrations under `supabase/migrations/` create the PostGIS schema, RLS polic
    2. Under **Authorized redirect URIs** add the callback shown by Supabase Dashboard → Authentication → Providers → Google (looks like `https://<project>.supabase.co/auth/v1/callback`).
    3. Paste the Client ID and Client Secret into that same Supabase provider screen and toggle Google on.
    4. The sign-in page (`/auth/sign-in`) already renders a "Continue with Google" button; once Supabase is configured, it just works.
+   5. The **/me** page has a "Linked accounts" section that lets a user attach Google to their existing magic-link account (or vice-versa) so they don't end up with duplicate profiles. Uses Supabase's `linkIdentity` / `unlinkIdentity` APIs — no additional Supabase configuration needed beyond having both providers enabled.
 
 ### 6. Run the app
 

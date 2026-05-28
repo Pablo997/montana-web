@@ -481,6 +481,26 @@
       "scoreLabel": "Net score",
       "openReportsLabel": "Open reports"
     },
+    "linkedAccounts": {
+      "title": "Linked accounts",
+      "description": "Connect multiple sign-in methods to a single account so you can log in with any of them without ending up with duplicate profiles.",
+      "statusLinked": "Linked",
+      "statusNotLinked": "Not linked",
+      "link": "Link",
+      "unlink": "Unlink",
+      "working": "Working…",
+      "emailLockedHint": "Your primary identity",
+      "cannotUnlinkLast": "You cannot unlink your only sign-in method",
+      "lastProviderNotice": "Link another method before unlinking your only current way to sign in.",
+      "providers": {
+        "email": {
+          "name": "Email (magic link)"
+        },
+        "google": {
+          "name": "Google"
+        }
+      }
+    },
     "incidents": {
       "sectionAria": "Incident status",
       "title": "My incidents",
