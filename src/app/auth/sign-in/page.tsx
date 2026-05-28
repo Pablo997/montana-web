@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error' | 'redirecting';
 
@@ -131,9 +132,16 @@ export default function SignInPage() {
   return (
     <div className="auth">
       <div className="auth__card">
-        <Link href="/" className="auth__back">
-          ← {tCommon('backToMap')}
-        </Link>
+        {/* Top row: back link on the left, language picker on the
+            right. This is the first chance an anonymous visitor has
+            to switch locale (no header above the auth card) so the
+            control HAS to live inside this view. */}
+        <div className="auth__topbar">
+          <Link href="/" className="auth__back">
+            ← {tCommon('backToMap')}
+          </Link>
+          <LocaleSwitcher />
+        </div>
 
         <h1 className="auth__title">{t('title')}</h1>
         <p className="auth__subtitle">{t('subtitle')}</p>

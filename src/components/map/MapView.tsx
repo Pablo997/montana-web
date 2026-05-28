@@ -148,11 +148,32 @@ export function MapView() {
 
     map.on('moveend', onMoveEnd);
 
+    // Brand fade-while-interacting. We set a data flag on the root
+    // element on `movestart` and clear it on `moveend`. The
+    // FloatingHeader's CSS keys its opacity off that flag, so the
+    // logo + wordmark fade out while the user is panning/zooming
+    // and fade back in once the gesture stops. Same UX pattern
+    // Google Maps and Apple Maps use to keep on-map labels
+    // discoverable without occluding the view during interaction.
+    const setInteracting = (on: boolean) => {
+      if (typeof document === 'undefined') return;
+      const root = document.documentElement;
+      if (on) root.dataset.mapInteracting = 'true';
+      else delete root.dataset.mapInteracting;
+    };
+    const onMoveStart = () => setInteracting(true);
+    const onMoveEndFade = () => setInteracting(false);
+    map.on('movestart', onMoveStart);
+    map.on('moveend', onMoveEndFade);
+
     mapRef.current = map;
 
     return () => {
       if (debounceId) clearTimeout(debounceId);
       map.off('moveend', onMoveEnd);
+      map.off('movestart', onMoveStart);
+      map.off('moveend', onMoveEndFade);
+      setInteracting(false);
       map.remove();
       mapRef.current = null;
       setMapReady(false);

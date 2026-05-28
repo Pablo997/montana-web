@@ -146,7 +146,10 @@ export function UserMenu({ email, isAdmin = false }: Props) {
             role="menuitem"
           >
             <span className="user-menu__locale-label">{t('language')}</span>
-            <LocaleSwitcher className="user-menu__locale-select" />
+            <LocaleSwitcher
+              variant="native"
+              className="user-menu__locale-select"
+            />
           </div>
           <div className="user-menu__divider" />
           <button
