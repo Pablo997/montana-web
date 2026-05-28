@@ -114,6 +114,57 @@ body {
   overflow: hidden;
 }
 
+/* ---------------------------------------------------------------------
+   Custom scrollbar — applied globally so the OS default (which on
+   Windows is a wide flat grey bar with no theming) doesn't undercut
+   the dark glass look of the app on legal pages, profile and admin.
+
+   * Firefox: `scrollbar-width: thin` + `scrollbar-color`.
+   * Chromium/WebKit: the `::-webkit-scrollbar` pseudo-elements, sized
+     so the thumb stays out of the way until you reach for it.
+   The track is fully transparent on purpose: lets the underlying
+   surface (dark green-ish glass) read through, so the scrollbar feels
+   like part of the chrome rather than an OS overlay.
+   --------------------------------------------------------------------- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+  transition: background-color 160ms ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(86, 198, 134, 0.55);
+  background-clip: padding-box;
+}
+
+/* Hide the corner square Chromium draws where vertical + horizontal
+   scrollbars meet — looks like a leftover artefact when both are on
+   the page (e.g. admin tables that scroll both axes on mobile). */
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* ---------------------------- Map-only shell ----------------------------- */
 /* Full-bleed container for the map page: no header strip, the map paints
    the entire viewport and chrome lives as floating islands. */
@@ -4795,6 +4846,167 @@ body {
   color: #fff;
   background: rgba(255, 255, 255, 0.04);
   border-color: var(--color-border);
+}
+
+/* ---- Linked accounts ----
+   Sign-in providers (Email, Google, …) attached to the current
+   account. Lives between the stats and the incident list because
+   it's identity-level configuration, not content. Each row is a
+   small card with an icon, the provider name + status badge, and
+   the link/unlink action. */
+
+.linked-accounts__description {
+  margin: -0.4rem 0 1.1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.linked-accounts__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.linked-accounts__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.linked-accounts__row:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.linked-accounts__icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+}
+
+.linked-accounts__meta {
+  min-width: 0;
+}
+
+.linked-accounts__name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.linked-accounts__status {
+  margin: 0.3rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.linked-accounts__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.linked-accounts__badge--linked {
+  color: var(--color-brand-strong);
+  background: rgba(86, 198, 134, 0.14);
+  border: 1px solid rgba(86, 198, 134, 0.4);
+}
+
+.linked-accounts__badge--unlinked {
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+}
+
+.linked-accounts__email {
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.linked-accounts__action {
+  justify-self: end;
+}
+
+.linked-accounts__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.linked-accounts__notice {
+  margin: 0.85rem 0 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--color-border);
+  border-radius: 0.55rem;
+}
+
+.linked-accounts__error {
+  margin: 0.85rem 0 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.85rem;
+  color: #ff8c7a;
+  background: rgba(217, 48, 37, 0.08);
+  border: 1px solid rgba(217, 48, 37, 0.35);
+  border-radius: 0.55rem;
+}
+
+@media (max-width: 520px) {
+  .linked-accounts__row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'icon meta'
+      'action action';
+    row-gap: 0.55rem;
+  }
+
+  .linked-accounts__icon {
+    grid-area: icon;
+  }
+
+  .linked-accounts__meta {
+    grid-area: meta;
+  }
+
+  .linked-accounts__action {
+    grid-area: action;
+    justify-self: stretch;
+  }
+
+  .linked-accounts__action .button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ---- Danger zone ---- */
