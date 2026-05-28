@@ -116,3 +116,43 @@ export type AnalyticsEvent =
  * Keep keys short and snake_case to match Vercel's display layer.
  */
 export type AnalyticsEventProps = Record<string, string | number | boolean>;
+
+/**
+ * Per-event probability of actually being shipped to Vercel.
+ *
+ * Why sample at the source instead of in the dashboard:
+ *
+ *   * **Quota.** Vercel's Hobby tier caps at 2.5 k custom events
+ *     per month; Pro at 25 k. A single power user can burn 10+
+ *     `web_vital` and dozens of `incident_voted` per session, so
+ *     unsampled the high-frequency events dominate the budget and
+ *     starve the funnels that actually answer product questions.
+ *
+ *   * **Signal preservation.** Rare events (auth, tour, push) get
+ *     `1` so we see every conversion. Frequent-but-aggregated
+ *     events (vitals, votes) get a lower rate — the dashboard
+ *     still reads stable p50/p95 from a 10–25 % sample once you
+ *     have a few hundred sessions.
+ *
+ * The rates below are calibrated for the Hobby tier. Bump them up
+ * the moment we either upgrade or measure that we're consistently
+ * under quota. The wrapper exposes a debug escape hatch
+ * (`NEXT_PUBLIC_ANALYTICS_FULL_SAMPLE=1`) that bypasses sampling
+ * entirely for local QA and Playwright runs.
+ */
+export const EVENT_SAMPLE_RATES: Partial<Record<AnalyticsEvent, number>> = {
+  // High-frequency vitals: 6 per navigation × N navigations adds
+  // up quickly. 25 % still gives a defensible cohort for "rating=
+  // poor reduces submit rate" within a few weeks.
+  web_vital: 0.25,
+  // Votes fire on every up/down click — easily 5+ per active
+  // session. Direction breakdown is what matters; absolute counts
+  // are best read from `incident_voted` + DB aggregates.
+  incident_voted: 0.25,
+  // Search is medium frequency. Half-sampling still lets us split
+  // "result vs. recent" without breaking the bank.
+  search_used: 0.5,
+  basemap_changed: 0.5,
+  hillshade_toggled: 0.5,
+  filters_applied: 0.5,
+};
