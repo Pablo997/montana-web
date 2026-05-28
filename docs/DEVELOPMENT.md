@@ -298,8 +298,7 @@ Prioritise based on real user signal. Current candidates in rough priority order
 1. **Share button** on incident detail (uses `navigator.share` on mobile, clipboard fallback).
 2. **Public landing page** for logged-out visitors (currently the map loads for everyone).
 3. **i18n** with `next-intl` (ES/EN).
-4. **Google OAuth** as a second auth option alongside magic link.
-5. **Comments + mentions**, **reputation-weighted votes**, **moderation dashboard** — only once volume justifies them.
+4. **Comments + mentions**, **reputation-weighted votes**, **moderation dashboard** — only once volume justifies them.
 6. **Video uploads** via Cloudflare Stream — out of scope until storage becomes a bottleneck.
 7. **Migrate tiles** to MapLibre + OpenFreeMap if MapTiler pricing bites.
 
@@ -375,6 +374,7 @@ This repo is optimised for pair-programming with tools like Cursor.
 - **DEM** — Digital Elevation Model. Raster of per-pixel elevation used to render 3D terrain (MapTiler terrain-rgb-v2).
 - **PostGIS** — Geospatial extension for Postgres. Provides the `geography` type and functions like `ST_DWithin`.
 - **Magic link** — Passwordless email login flow used by Supabase Auth.
+- **OAuth 2.0 / OIDC (Google)** — Delegated auth: the user proves identity to Google; Supabase exchanges the returned `code` for a session at `/auth/callback`. Same callback as magic link, so the downstream session/cookie wiring is shared.
 - **VAPID** — Voluntary Application Server Identification. The auth scheme Web Push uses; a keypair proves the origin of each push to the push service.
 - **`pg_cron` / `pg_net`** — Postgres extensions used together to schedule jobs and make outbound HTTP calls from SQL.
 - **SECURITY DEFINER** — Postgres function attribute that runs with the owner's privileges, bypassing the caller's RLS. Used for trusted helper RPCs.

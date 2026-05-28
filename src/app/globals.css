@@ -1528,6 +1528,89 @@ body {
   color: var(--color-brand);
 }
 
+/* When the consent block lives above ALL providers (Google + magic
+   link) instead of inside the magic-link form, give it a touch more
+   breathing room so it reads as the gate rather than a form
+   detail. */
+.auth__consent--standalone {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* "Continue with Google" button. Follows Google's brand guidelines:
+   white surface, dark text, Roboto-like neutral typography (we use
+   the app's sans), 18px G logomark left-aligned. The button intentionally
+   does NOT match the rest of the dark theme — Google requires the G
+   logo to sit on a clearly identifiable Google-branded surface, and a
+   white button on a dark form is what users learn to recognise as
+   "OAuth, not a custom field". */
+.auth__google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  height: 44px;
+  padding: 0 1rem;
+  /* `#dadce0` is Google's recommended border colour for the light
+     button variant. */
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.auth__google:hover:not(:disabled) {
+  background: #f6f7f8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.auth__google:focus-visible {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+}
+
+.auth__google:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Horizontal "or" rule between OAuth and email form. Two `<span>`s
+   would be needed for true line-on-both-sides via CSS, but we keep
+   the markup minimal (single `<span>` child) and use pseudo-elements
+   for the lines. */
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.85rem 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.auth__divider::before,
+.auth__divider::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--color-border);
+}
+
 /* --------------------------------- Map ----------------------------------- */
 .map {
   position: relative;

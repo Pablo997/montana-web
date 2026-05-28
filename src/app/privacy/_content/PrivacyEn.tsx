@@ -120,6 +120,26 @@ export function PrivacyEn() {
             <strong>MapTiler</strong> — map tiles and terrain. Receives only
             tile requests, not your account data.
           </li>
+          <li>
+            <strong>Google (only if you choose &quot;Continue with
+            Google&quot;)</strong> — delegated authentication via
+            OAuth 2.0. When you sign in with Google we receive only
+            your email address and the stable identifier of your
+            Google account. We do not receive passwords, nor access
+            to your Gmail, contacts, Drive or any other Google
+            service. Google itself receives the minimal information
+            needed to authenticate you (the existence of an
+            application called Montana requesting auth). See
+            Google&apos;s{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              privacy policy
+            </a>{' '}
+            for details.
+          </li>
         </ul>
         <p>
           Some sub-processors may store backups outside the EEA. Transfers

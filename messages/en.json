@@ -40,7 +40,10 @@
   "auth": {
     "signIn": {
       "title": "Sign in to Montana",
-      "subtitle": "We'll email you a magic link. No password, no hassle.",
+      "subtitle": "Sign in with Google or get a magic link by email. No password to remember.",
+      "googleButton": "Continue with Google",
+      "redirecting": "Redirecting…",
+      "or": "or",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
       "consent": "I have read and accept the <terms>Terms</terms>, <privacy>Privacy Policy</privacy> and <cookies>Cookie Policy</cookies>.",
