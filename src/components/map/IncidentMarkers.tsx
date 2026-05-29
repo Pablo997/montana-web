@@ -8,6 +8,11 @@ import { getExpiryInfo } from '@/lib/incidents/expiry';
 import { useClock } from '@/hooks/useClock';
 import { glyphSvg } from './markerIcons';
 import { incidentMatchesFilters } from '@/lib/incidents/filters';
+import {
+  INCIDENTS_SOURCE_ID as SOURCE_ID,
+  INCIDENTS_GHOST_CLUSTER_LAYER_ID as GHOST_CLUSTER_LAYER_ID,
+  INCIDENTS_GHOST_POINT_LAYER_ID as GHOST_POINT_LAYER_ID,
+} from '@/lib/mapbox/customLayers';
 
 interface Props {
   map: maptilersdk.Map;
@@ -33,14 +38,12 @@ function bodyColor(incident: Incident): string {
 }
 
 // Clustering configuration. All tuneables live here so behaviour changes
-// are one-line edits instead of a hunt through the hook body.
-const SOURCE_ID = 'incidents-src';
-// Hidden GL layers whose sole purpose is to force MapLibre to tile the
-// clustered source. `querySourceFeatures` only returns features from
-// tiles that an active layer is consuming; without these, the whole
-// source sits dormant and the DOM pipeline has nothing to render.
-const GHOST_CLUSTER_LAYER_ID = 'incidents-ghost-clusters';
-const GHOST_POINT_LAYER_ID = 'incidents-ghost-points';
+// are one-line edits instead of a hunt through the hook body. The source
+// + ghost-layer IDs are imported from `customLayers` because the
+// basemap-swap transform needs to reference the same constants to carry
+// them across a style change. (Ghost layers force MapLibre to tile the
+// clustered source: `querySourceFeatures` only returns features from
+// tiles that an active layer consumes.)
 const CLUSTER_MAX_ZOOM = 12; // beyond this, every point renders individually
 const CLUSTER_RADIUS = 50; // px — typical supercluster default
 
@@ -302,12 +305,18 @@ export function IncidentMarkers({ map }: Props) {
     map.on('sourcedata', onSourceData);
     map.on('moveend', recompute);
     map.on('zoomend', recompute);
+    // `idle` fires once a basemap swap fully settles. Since the source
+    // is preserved through the swap (not recreated), `moveend` never
+    // fires, so this is what re-reads the features into the DOM markers
+    // on the new style.
+    map.on('idle', recompute);
     recompute();
 
     return () => {
       map.off('sourcedata', onSourceData);
       map.off('moveend', recompute);
       map.off('zoomend', recompute);
+      map.off('idle', recompute);
       if (raf != null) cancelAnimationFrame(raf);
     };
   }, [map]);

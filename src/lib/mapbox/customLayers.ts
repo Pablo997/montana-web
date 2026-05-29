@@ -28,7 +28,80 @@ import {
  *     standard MapLibre recipe.
  */
 
-const HILLSHADE_LAYER_ID = 'montana-hillshade';
+export const HILLSHADE_LAYER_ID = 'montana-hillshade';
+
+// IDs of the GeoJSON incident source and its two ghost layers. They
+// live here — the home of every artefact Montana adds on top of a
+// basemap — so the style-swap transform can preserve them without the
+// lib layer importing from the `IncidentMarkers` React component.
+export const INCIDENTS_SOURCE_ID = 'incidents-src';
+export const INCIDENTS_GHOST_CLUSTER_LAYER_ID = 'incidents-ghost-clusters';
+export const INCIDENTS_GHOST_POINT_LAYER_ID = 'incidents-ghost-points';
+
+// Minimal structural view of a MapLibre style — enough to relocate our
+// own sources / layers across a swap without depending on the SDK's
+// (unexported) `StyleSpecification` type.
+type StyleLike = {
+  sources?: Record<string, unknown>;
+  layers?: Array<{ id: string }>;
+  [key: string]: unknown;
+};
+
+// What we carry across a basemap swap. We deliberately preserve the
+// incident source + ghost layers (the bit that races on remount) and
+// the shared DEM source (saves a redundant tiles.json fetch), but NOT
+// the hillshade layer: `applyHillshade` re-inserts it *below the first
+// symbol layer* of the new style, and a preserved copy would land on
+// top of the labels instead.
+const PRESERVED_SOURCE_IDS = [TERRAIN_DEM_SOURCE_ID, INCIDENTS_SOURCE_ID];
+const PRESERVED_LAYER_IDS = [
+  INCIDENTS_GHOST_CLUSTER_LAYER_ID,
+  INCIDENTS_GHOST_POINT_LAYER_ID,
+];
+
+/**
+ * `setStyle({ transformStyle })` hook that carries Montana's own
+ * sources + layers across a basemap swap.
+ *
+ * MapLibre wipes every custom source / layer when a new style loads.
+ * The canonical fix is this transform: it merges the incoming basemap
+ * with the artefacts we injected on top of the previous one, in the
+ * same frame the style is applied.
+ *
+ * Why this beats remounting the marker layer: re-adding the source
+ * from a React effect after the swap *races* the `styledata` event. In
+ * production (no StrictMode, faster effects) `styledata` can fire
+ * before the child effect binds its listener, so the source never gets
+ * recreated and the icons vanish until a full reload. Preserving the
+ * source through the transform means it never disappears — there is no
+ * window to race.
+ *
+ * The GeoJSON `data` and cluster config ride along automatically
+ * because `getStyle()` serialises them inline into `previous`.
+ */
+export function transformStyleKeepingMontanaLayers(
+  previous: StyleLike | undefined,
+  next: StyleLike | undefined,
+): StyleLike {
+  if (!next) return previous ?? { sources: {}, layers: [] };
+  if (!previous) return next;
+
+  const sources: Record<string, unknown> = { ...(next.sources ?? {}) };
+  for (const id of PRESERVED_SOURCE_IDS) {
+    const prevSource = previous.sources?.[id];
+    if (prevSource) sources[id] = prevSource;
+  }
+
+  const carriedLayers = (previous.layers ?? []).filter((layer) =>
+    PRESERVED_LAYER_IDS.includes(layer.id),
+  );
+
+  return {
+    ...next,
+    sources,
+    layers: [...(next.layers ?? []), ...carriedLayers],
+  };
+}
 
 /**
  * The MapTiler SDK ships MapLibre's type definitions internally but

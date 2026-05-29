@@ -16,6 +16,7 @@ import {
   applyHillshade,
   applyTerrain,
   removeHillshade,
+  transformStyleKeepingMontanaLayers,
 } from '@/lib/mapbox/customLayers';
 import {
   readPersistedViewport,
@@ -321,11 +322,20 @@ export function MapView() {
       /* not all SDK versions accept null here — defensive only */
     }
 
-    // Retry-on-event because `isStyleLoaded()` is unreliable right
-    // after `setStyle()` — it can stay `false` even when the spec is
-    // ready. We listen for BOTH `styledata` (fires per source) and
-    // `idle` (fires once everything has settled) and unbind whichever
-    // didn't get to run.
+    // `transformStyle` carries our incident source + ghost layers (and
+    // the DEM source) into the new style atomically, so the marker
+    // layer never observes a frame without its source. This removes the
+    // production-only race that made icons vanish on swap: previously we
+    // remounted `IncidentMarkers` via `key={basemapId}` and re-added the
+    // source from an effect, but that effect could bind its `styledata`
+    // listener *after* MapLibre had already fired it (no StrictMode +
+    // faster effects in prod), so the source was never recreated.
+    //
+    // Terrain (3D) and hillshade are NOT part of the style's
+    // source/layer graph in the way `setTerrain` works, so we still
+    // re-attach them once the swap settles. `isStyleLoaded()` is
+    // unreliable right after `setStyle()`, hence the retry on both
+    // `styledata` (per source) and `idle` (once everything settles).
     let done = false;
     const reapply = () => {
       if (done) return;
@@ -348,7 +358,13 @@ export function MapView() {
     };
     map.on('styledata', reapply);
     map.on('idle', reapply);
-    map.setStyle(nextStyle);
+    // Cast via `unknown`: our `transformStyle` works on a deliberately
+    // loose structural `StyleLike` (we only touch `sources`/`layers`),
+    // which doesn't satisfy the SDK's full `StyleSpecification` (it
+    // requires `version` etc.). The runtime shape is correct.
+    map.setStyle(nextStyle, {
+      transformStyle: transformStyleKeepingMontanaLayers,
+    } as unknown as Parameters<typeof map.setStyle>[1]);
 
     return () => {
       map.off('styledata', reapply);
@@ -642,11 +658,12 @@ export function MapView() {
     <div className="map">
       <div ref={containerRef} className="map__canvas" />
       {mapReady && mapRef.current ? (
-        // `key` forces a full remount whenever the basemap changes.
-        // `setStyle` wipes the GeoJSON source IncidentMarkers
-        // registers, so the cleanest reset is a fresh mount that
-        // re-runs all the source / ghost-layer setup from scratch.
-        <IncidentMarkers key={basemapId} map={mapRef.current} />
+        // No `key={basemapId}` on purpose: the basemap-swap effect
+        // preserves the incident source via `transformStyle`, so the
+        // marker layer must stay mounted across swaps. Remounting it
+        // re-introduced the prod race where the source was never
+        // recreated and icons disappeared.
+        <IncidentMarkers map={mapRef.current} />
       ) : null}
 
       <div className="map__overlay map__overlay--top-left">
