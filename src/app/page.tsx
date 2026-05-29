@@ -30,6 +30,14 @@ const PushOnboardingBanner = dynamic(
     ),
   { ssr: false },
 );
+// Install nudge: only loads its chunk client-side and only renders from
+// the user's second visit on a touch device, so anonymous / first-time
+// / desktop visitors never pay for it.
+const InstallPwaBanner = dynamic(
+  () =>
+    import('@/components/pwa/InstallPwaBanner').then((m) => m.InstallPwaBanner),
+  { ssr: false },
+);
 
 export default async function HomePage() {
   // Resolve the auth state server-side so the onboarding tour only
@@ -45,6 +53,7 @@ export default async function HomePage() {
       <MapView />
       <FloatingHeader />
       <PushOnboardingBanner />
+      <InstallPwaBanner />
       <AppFooterLinks />
       <LegalNotice />
       <ConsentSync />

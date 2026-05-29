@@ -605,6 +605,15 @@
       "title": "Estás sin conexión",
       "body": "Montana necesita conexión para cargar incidencias actualizadas. La última zona del mapa que visitaste debería seguir disponible — prueba a volver al mapa.",
       "retry": "Reintentar"
+    },
+    "installBanner": {
+      "regionAria": "Instalar Montana en tu dispositivo",
+      "heading": "Instala Montana",
+      "body": "Añádela a tu pantalla de inicio para abrirla a pantalla completa y acceder más rápido.",
+      "iosBody": "Pulsa el botón Compartir y elige «Añadir a pantalla de inicio».",
+      "install": "Instalar",
+      "notNow": "Ahora no",
+      "dismissForever": "No volver a preguntar"
     }
   },
   "push": {
