@@ -26,6 +26,25 @@
      white and matches the hover colour we already had for
      `.button--primary`, so the visual identity stays intact. */
   --color-brand-strong: #247657;
+
+  /* iOS PWA standalone / notch / Dynamic Island safe areas. Requires
+     viewport-fit=cover (see layout.tsx). Zero on desktop and in
+     regular browser tabs where the UA chrome absorbs the insets. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Shared gutters for map overlays: base spacing + safe area so
+     controls stay below the status bar in standalone mode. */
+  --map-gutter: 0.75rem;
+  --map-gutter-md: 1rem;
+  --map-gutter-sm: 0.5rem;
+  --map-chrome-top: calc(var(--map-gutter) + var(--safe-top));
+  --map-chrome-top-md: calc(var(--map-gutter-md) + var(--safe-top));
+  --map-chrome-right: calc(var(--map-gutter) + var(--safe-right));
+  --map-chrome-left: calc(var(--map-gutter-md) + var(--safe-left));
+  --map-chrome-bottom: calc(2.5rem + var(--safe-bottom));
 }
 
 html,
@@ -186,7 +205,7 @@ html {
    forest-dark tiles without the blurry drop-shadow look. */
 .floating-header__brand {
   position: absolute;
-  top: 0.75rem;
+  top: var(--map-chrome-top);
   left: 50%;
   /* `translate3d` instead of plain `translateX` so the transform
      stays on the GPU compositor layer — combined with the opacity
@@ -310,8 +329,8 @@ html {
 
 .floating-header__actions {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: var(--map-chrome-top);
+  right: var(--map-chrome-right);
   z-index: 6;
   display: flex;
   align-items: center;
@@ -324,7 +343,7 @@ html {
    we still expect the user to be able to operate in. */
 .offline-indicator {
   position: absolute;
-  top: 3.5rem;
+  top: calc(var(--map-chrome-top) + 2.75rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 7;
@@ -366,7 +385,7 @@ html {
    !important is needed because MapLibre inlines `top: 10px` via its
    own stylesheet. */
 .maplibregl-ctrl-top-right {
-  top: 3.75rem !important;
+  top: calc(var(--map-chrome-top) + 3rem) !important;
 }
 
 /* ---------------------------- Locate button ------------------------------ */
@@ -526,9 +545,9 @@ html {
 @media (max-width: 720px) {
   .map-search--mobile-active {
     position: fixed;
-    top: 0.5rem;
-    left: 0.5rem;
-    right: 0.5rem;
+    top: calc(var(--map-gutter-sm) + var(--safe-top));
+    left: calc(var(--map-gutter-sm) + var(--safe-left));
+    right: calc(var(--map-gutter-sm) + var(--safe-right));
     width: auto;
     z-index: 20;
   }
@@ -1028,7 +1047,8 @@ html {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.7rem 1.1rem;
+  padding: calc(0.7rem + var(--safe-top)) calc(1.1rem + var(--safe-right)) 0.7rem
+    calc(1.1rem + var(--safe-left));
   background: linear-gradient(
     180deg,
     rgba(23, 32, 28, 0.92) 0%,
@@ -1766,11 +1786,11 @@ html {
 @media (max-width: 520px) {
   .notification-bell__panel {
     position: fixed;
-    top: 4rem;
-    left: 0.5rem;
-    right: 0.5rem;
+    top: calc(var(--map-chrome-top-md) + 3rem);
+    left: calc(var(--map-gutter-sm) + var(--safe-left));
+    right: calc(var(--map-gutter-sm) + var(--safe-right));
     width: auto;
-    max-height: calc(100dvh - 5rem);
+    max-height: calc(100dvh - 5rem - var(--safe-top));
   }
 }
 
@@ -2290,8 +2310,8 @@ html {
 
 .map__overlay {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: var(--map-chrome-top-md);
+  left: var(--map-chrome-left);
   display: flex;
   gap: 0.5rem;
   pointer-events: none;
@@ -2302,29 +2322,29 @@ html {
 }
 
 .map__overlay--top-left {
-  top: 1rem;
-  left: 1rem;
+  top: var(--map-chrome-top-md);
+  left: var(--map-chrome-left);
 }
 
 .map__overlay--bottom-left {
   top: auto;
-  left: 1rem;
+  left: var(--map-chrome-left);
   /* Clear the MapLibre attribution strip ("© OpenStreetMap
      contributors") which renders at the very bottom of the canvas;
      2.5rem matches the bottom-right column so both action clusters
      sit on the same baseline. */
-  bottom: 2.5rem;
+  bottom: var(--map-chrome-bottom);
 }
 
 .map__overlay--bottom-right {
   top: auto;
   left: auto;
-  right: 1rem;
+  right: var(--map-chrome-right);
   /* Lifted above the MapLibre attribution strip ("© OpenStreetMap
      contributors") which lives at the very bottom of the canvas and
      was colliding with the Report button. 2.5rem clears the default
      24-26px attribution row on both mobile and desktop. */
-  bottom: 2.5rem;
+  bottom: var(--map-chrome-bottom);
   /* Stack the locate + report buttons vertically so they form a
      single action column instead of sitting on the same row. */
   flex-direction: column;
@@ -2512,10 +2532,10 @@ html {
 
 .map__pick-banner {
   position: absolute;
-  /* Below the floating brand (top 0.75rem + ~1.6rem wordmark + halo).
+  /* Below the floating brand (top gutter + ~1.6rem wordmark + halo).
      Both pick flows — incident report and push center — use this
      class; keeping one rule avoids drifting styles. */
-  top: 3.75rem;
+  top: calc(var(--map-chrome-top) + 3rem);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2555,7 +2575,7 @@ html {
    rail, and narrow enough to stay readable on phones. */
 .map__geo-error {
   position: absolute;
-  top: 4.5rem;
+  top: calc(var(--map-chrome-top) + 3.75rem);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -3133,7 +3153,7 @@ html {
 .legal-notice {
   position: fixed;
   left: 50%;
-  bottom: 34px;
+  bottom: calc(34px + var(--safe-bottom));
   transform: translateX(-50%);
   z-index: 20;
   display: flex;
@@ -3198,7 +3218,7 @@ html {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
-    bottom: 40px;
+    bottom: calc(40px + var(--safe-bottom));
     font-size: 0.78rem;
     padding: 0.7rem 0.9rem;
   }
@@ -3211,7 +3231,7 @@ html {
 .app-footer-links {
   position: absolute;
   left: 50%;
-  bottom: 6px;
+  bottom: calc(6px + var(--safe-bottom));
   transform: translateX(-50%);
   z-index: 4;
   display: flex;
@@ -3238,7 +3258,7 @@ html {
 
 @media (max-width: 480px) {
   .app-footer-links {
-    bottom: 8px;
+    bottom: calc(8px + var(--safe-bottom));
     font-size: 0.7rem;
   }
 }
@@ -3683,13 +3703,13 @@ html {
 /* --------------------------------- Panel --------------------------------- */
 .panel {
   position: absolute;
-  right: 1rem;
+  right: calc(var(--map-gutter-md) + var(--safe-right));
   /* Drop below the floating header (brand + user menu) so the panel
      no longer collides with the UserMenu pill. The header sits at
-     0.75rem top + ~2rem tall + padding, so 4.25rem clears it and
+     map-chrome-top + ~2rem tall + padding, so +3.5rem clears it and
      leaves a visible gap. */
-  top: 4.25rem;
-  bottom: 1rem;
+  top: calc(var(--map-chrome-top) + 3.5rem);
+  bottom: calc(var(--map-gutter-md) + var(--safe-bottom));
   width: min(380px, 92vw);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -3972,7 +3992,7 @@ html {
 .push-onboarding {
   position: absolute;
   left: 50%;
-  bottom: 2.25rem;
+  bottom: calc(2.25rem + var(--safe-bottom));
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -4069,7 +4089,7 @@ html {
   .push-onboarding {
     left: 0.75rem;
     right: 0.75rem;
-    bottom: 5.25rem;
+    bottom: calc(5.25rem + var(--safe-bottom));
     transform: none;
     max-width: none;
     flex-wrap: wrap;
@@ -4099,7 +4119,7 @@ html {
 .pwa-install {
   position: absolute;
   left: 50%;
-  bottom: 2.25rem;
+  bottom: calc(2.25rem + var(--safe-bottom));
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -4180,7 +4200,7 @@ html {
     right: 0.75rem;
     /* Above the Report FAB AND above where the push banner sits, so a
        signed-in user who qualifies for both sees them stacked. */
-    bottom: 9rem;
+    bottom: calc(9rem + var(--safe-bottom));
     transform: none;
     max-width: none;
     flex-wrap: wrap;
