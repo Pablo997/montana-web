@@ -1,4 +1,5 @@
 import { test, expect, type Page, type ConsoleMessage } from '@playwright/test';
+import { seedMapTestContext } from './helpers/storage-seed';
 
 /**
  * Smoke tests for the analytics taxonomy.
@@ -103,13 +104,7 @@ function collectAnalytics(page: Page) {
 }
 
 test.beforeEach(async ({ context, baseURL }) => {
-  await context.addCookies([
-    {
-      name: 'NEXT_LOCALE',
-      value: 'es',
-      url: baseURL ?? 'http://localhost:3000',
-    },
-  ]);
+  await seedMapTestContext(context, baseURL ?? 'http://localhost:3000');
 });
 
 test.describe('analytics call sites', () => {

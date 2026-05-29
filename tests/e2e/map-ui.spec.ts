@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { seedMapTestContext } from './helpers/storage-seed';
 
 /**
  * UI behaviour tests for the map overlays.
@@ -22,13 +23,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.beforeEach(async ({ context, baseURL }) => {
-  await context.addCookies([
-    {
-      name: 'NEXT_LOCALE',
-      value: 'es',
-      url: baseURL ?? 'http://localhost:3000',
-    },
-  ]);
+  await seedMapTestContext(context, baseURL ?? 'http://localhost:3000');
 });
 
 test.describe('search bar — mobile collapses to icon by default (no SSR flash)', () => {
