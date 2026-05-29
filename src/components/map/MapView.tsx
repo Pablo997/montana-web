@@ -165,6 +165,27 @@ export function MapView() {
       // become legible on the streets style, which is the natural
       // ceiling for "I'm checking where I parked" UX.
       maxZoom: 18,
+      // Globe projection. MapLibre 5 interpolates automatically between
+      // a flat (Mercator) view when zoomed in and a 3D sphere when
+      // zoomed out — so close-up navigation is unaffected, but zooming
+      // all the way out shows the whole planet as a globe instead of a
+      // stretched Mercator plane. This is the correct model for a
+      // *global* app and fixes two artefacts in one move:
+      //   * the black bands top/bottom (Mercator can't tile past ±85°
+      //     latitude) — there's no void to expose on a sphere; and
+      //   * the world repeating sideways on pan — a sphere has a single
+      //     continuous surface, no antimeridian seam.
+      // `space` paints a starfield behind the globe (so the old "black
+      // bands" are now deep space), and `halo` adds the atmospheric
+      // glow you see from orbit. The `projection` option persists
+      // across `setStyle()` basemap swaps, so we set it once here.
+      projection: 'globe',
+      space: true,
+      halo: true,
+      // Floor the zoom at 1 so the globe can be seen in full when the
+      // user zooms all the way out, without letting it shrink to a
+      // fiddly speck.
+      minZoom: 1,
     });
 
     // Only zoom / compass go through MapTiler's control layer. The
