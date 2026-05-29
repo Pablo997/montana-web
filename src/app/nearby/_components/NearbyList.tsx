@@ -39,6 +39,15 @@ const RADIUS_OPTIONS_KM = [5, 25, 50, 100] as const;
 const DEFAULT_RADIUS_KM = 25;
 
 /**
+ * Opt-in flag persisted to localStorage after the user accepts the
+ * geolocation prompt at least once. Used as a fallback signal on
+ * platforms where the Permissions API is missing or unreliable
+ * (Safari < 16, in-app webviews) — if the user already said yes, we
+ * try the silent request again rather than nag them on every visit.
+ */
+const AUTO_LOCATE_STORAGE_KEY = 'montana:nearby-auto-locate';
+
+/**
  * Client-side controller for the `/nearby` page.
  *
  *   1. Asks the user for their location (one tap — we don't auto-prompt
@@ -95,6 +104,13 @@ export function NearbyList() {
       const fix = await getCurrentPosition();
       const pos: LatLng = { lat: fix.lat, lng: fix.lng };
       setPosition(pos);
+      // Remember consent so subsequent visits can skip the prompt on
+      // platforms without a reliable Permissions API.
+      try {
+        localStorage.setItem(AUTO_LOCATE_STORAGE_KEY, '1');
+      } catch {
+        /* private mode / storage disabled — fine, just no memory */
+      }
       await fetchAt(pos, radiusKm);
     } catch (err) {
       // For "user denied" specifically we render the platform-aware
@@ -103,6 +119,14 @@ export function NearbyList() {
       // and the localised fallback string is more helpful than the
       // raw browser code.
       if (isGeolocationDenied(err)) {
+        // User revoked permission since last visit — clear the opt-in
+        // flag so we stop auto-prompting and let them re-consent
+        // explicitly via the button.
+        try {
+          localStorage.removeItem(AUTO_LOCATE_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
         setError(buildPermissionDeniedMessage(navigator.userAgent, 'denied'));
       } else {
         setError(t('errorLocation'));
@@ -110,6 +134,59 @@ export function NearbyList() {
       setStatus('error');
     }
   }, [fetchAt, radiusKm, t]);
+
+  // Auto-request location on mount when we have reason to believe the
+  // user already consented:
+  //
+  //   * Permissions API says `granted` — the browser will resolve
+  //     `getCurrentPosition` without showing a prompt, so kicking it
+  //     off ourselves is purely a UX shortcut.
+  //   * Fallback for browsers without Permissions API (Safari < 16,
+  //     some webviews): if our own localStorage flag is set, replay
+  //     the request. If permission was revoked at the OS level we'll
+  //     hit the denial branch and clear the flag.
+  //
+  // We deliberately do NOT auto-request when the state is `prompt` —
+  // that would re-show the native dialog on every visit, which is the
+  // anti-pattern iOS Safari specifically warns against.
+  useEffect(() => {
+    let cancelled = false;
+
+    const maybeAutoLocate = async () => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+
+      let shouldAuto = false;
+      const perms = navigator.permissions;
+      if (perms && typeof perms.query === 'function') {
+        try {
+          const res = await perms.query({ name: 'geolocation' as PermissionName });
+          shouldAuto = res.state === 'granted';
+        } catch {
+          /* fall through to localStorage check */
+        }
+      }
+
+      if (!shouldAuto) {
+        try {
+          shouldAuto = localStorage.getItem(AUTO_LOCATE_STORAGE_KEY) === '1';
+        } catch {
+          /* storage disabled — give up silently */
+        }
+      }
+
+      if (!shouldAuto || cancelled) return;
+      void requestLocation();
+    };
+
+    void maybeAutoLocate();
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally mount-only: re-running on `requestLocation`
+    // identity changes would re-trigger a fetch every time the
+    // radius changes, which is already covered by `onRadiusChange`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Radius changes re-query whenever we already have a fix. */
   const onRadiusChange = useCallback(

@@ -5,13 +5,72 @@ import {
   type BasemapId,
 } from '@/lib/mapbox/basemaps';
 
+/**
+ * Camera snapshot persisted across reloads so the user lands exactly
+ * where they left the map on their previous visit. Stored without
+ * bearing / pitch on purpose — those are far less commonly touched and
+ * a 0° North reset on F5 is the standard expectation in mapping apps
+ * (Google Maps, Komoot, Strava do this too).
+ */
+export interface ViewportSnapshot {
+  lng: number;
+  lat: number;
+  zoom: number;
+}
+
 interface MapPreferencesState {
   /** Active basemap. Persisted across reloads. */
   basemapId: BasemapId;
   /** Whether the hillshade overlay is currently active. */
   hillshadeEnabled: boolean;
+  /** Last camera position the user was looking at. `null` on first
+   *  ever visit. */
+  lastViewport: ViewportSnapshot | null;
   setBasemap: (id: BasemapId) => void;
   toggleHillshade: () => void;
+  setLastViewport: (snapshot: ViewportSnapshot) => void;
+}
+
+/** Storage key — exported so callers can read the persisted blob
+ *  synchronously (before Zustand's async rehydration tick) to avoid
+ *  the "default-then-flip" UX flash when the map first renders. */
+export const MAP_PREFS_STORAGE_KEY = 'montana:map-prefs';
+
+/**
+ * Synchronously read the persisted viewport from localStorage without
+ * waiting for Zustand to rehydrate. Returns `null` when no viewport is
+ * stored, the payload is corrupt, or we're on the server.
+ *
+ * The `MapView` init effect calls this so MapLibre can be instantiated
+ * with the user's last camera position in one go. Going through the
+ * store would either require a render cycle (flash of the default
+ * center) or a `useEffect` chained on hydration (flash of jumpTo).
+ */
+export function readPersistedViewport(): ViewportSnapshot | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(MAP_PREFS_STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw) as {
+      state?: { lastViewport?: unknown };
+    };
+    const v = payload.state?.lastViewport;
+    if (
+      v &&
+      typeof v === 'object' &&
+      typeof (v as ViewportSnapshot).lng === 'number' &&
+      typeof (v as ViewportSnapshot).lat === 'number' &&
+      typeof (v as ViewportSnapshot).zoom === 'number' &&
+      Number.isFinite((v as ViewportSnapshot).lng) &&
+      Number.isFinite((v as ViewportSnapshot).lat) &&
+      Number.isFinite((v as ViewportSnapshot).zoom)
+    ) {
+      return v as ViewportSnapshot;
+    }
+  } catch {
+    /* corrupt payload — fall through to null */
+  }
+  return null;
 }
 
 /**
@@ -44,12 +103,14 @@ export const useMapPreferencesStore = create<MapPreferencesState>()(
     (set) => ({
       basemapId: DEFAULT_BASEMAP_ID,
       hillshadeEnabled: false,
+      lastViewport: null,
       setBasemap: (id) => set({ basemapId: id }),
       toggleHillshade: () =>
         set((state) => ({ hillshadeEnabled: !state.hillshadeEnabled })),
+      setLastViewport: (snapshot) => set({ lastViewport: snapshot }),
     }),
     {
-      name: 'montana:map-prefs',
+      name: MAP_PREFS_STORAGE_KEY,
       version: 1,
       // `createJSONStorage(() => localStorage)` is a no-op on the
       // server because the factory is invoked lazily. Without the
@@ -66,6 +127,7 @@ export const useMapPreferencesStore = create<MapPreferencesState>()(
       partialize: (state) => ({
         basemapId: state.basemapId,
         hillshadeEnabled: state.hillshadeEnabled,
+        lastViewport: state.lastViewport,
       }),
     },
   ),
