@@ -4248,7 +4248,8 @@ html {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.85rem 1.25rem;
+  padding: calc(0.85rem + var(--safe-top)) calc(1.25rem + var(--safe-right)) 0.85rem
+    calc(1.25rem + var(--safe-left));
   background: rgba(15, 18, 22, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
@@ -4288,7 +4289,8 @@ html {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 4rem;
+  padding: 1.5rem calc(1.25rem + var(--safe-right)) calc(4rem + var(--safe-bottom))
+    calc(1.25rem + var(--safe-left));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -5095,7 +5097,8 @@ html {
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 1.5rem 1.25rem 4rem;
+  padding: calc(1.5rem + var(--safe-top)) calc(1.25rem + var(--safe-right))
+    calc(4rem + var(--safe-bottom)) calc(1.25rem + var(--safe-left));
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -5537,13 +5540,15 @@ html {
 
 @media (max-width: 720px) {
   .admin-shell__main {
-    padding: 1rem 0.85rem 3rem;
+    padding: 1rem calc(0.85rem + var(--safe-right)) calc(3rem + var(--safe-bottom))
+      calc(0.85rem + var(--safe-left));
   }
 
   .admin-shell__header {
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.7rem 0.85rem;
+    padding: calc(0.7rem + var(--safe-top)) calc(0.85rem + var(--safe-right)) 0.7rem
+      calc(0.85rem + var(--safe-left));
   }
 
   /* The nav pills scroll horizontally when they don't fit,
@@ -5615,7 +5620,8 @@ html {
 
 @media (max-width: 720px) {
   .profile-shell {
-    padding: 1rem 0.85rem 3rem;
+    padding: calc(1rem + var(--safe-top)) calc(0.85rem + var(--safe-right))
+      calc(3rem + var(--safe-bottom)) calc(0.85rem + var(--safe-left));
     gap: 1rem;
   }
 
