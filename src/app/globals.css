@@ -632,7 +632,13 @@ html {
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
-  font-size: 0.92rem;
+  /* iOS Safari auto-zooms the entire page when a focused input has
+     computed font-size below 16px — not the map, the whole viewport.
+     That shift hides map chrome and is impossible to undo without
+     blurring the field. `max()` keeps desktop at 0.92rem when the
+     root is small but guarantees ≥16px on phones; if the user has
+     enlarged system text, the rem side wins and we respect that. */
+  font-size: max(16px, 0.92rem);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   transition:
     border-color 120ms ease,
@@ -2463,6 +2469,7 @@ html {
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
+  font-size: max(16px, 1rem);
 }
 
 .filter-panel__search-input:focus {
