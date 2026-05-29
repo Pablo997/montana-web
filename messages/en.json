@@ -605,6 +605,15 @@
       "title": "You're offline",
       "body": "Montana needs a connection to load fresh incidents. Your previously viewed map area should still be available — try going back to the map.",
       "retry": "Retry"
+    },
+    "installBanner": {
+      "regionAria": "Install Montana on your device",
+      "heading": "Install Montana",
+      "body": "Add it to your home screen to open it full-screen and get back in faster.",
+      "iosBody": "Tap the Share button and choose “Add to Home Screen”.",
+      "install": "Install",
+      "notNow": "Not now",
+      "dismissForever": "Don't ask again"
     }
   },
   "push": {

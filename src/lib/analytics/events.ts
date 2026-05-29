@@ -97,6 +97,20 @@ export type AnalyticsEvent =
   /** User unsubscribed (or revoked permission). */
   | 'push_unsubscribed'
 
+  // ── PWA install ──
+  /** The install banner was shown. `mode` distinguishes the native
+   *  `beforeinstallprompt` flow from the iOS manual-instructions
+   *  fallback so we can measure each platform separately. */
+  | 'pwa_install_offered'
+  /** User accepted the native install prompt, or the browser fired
+   *  `appinstalled`. The funnel pairs with `push_subscribed` to see
+   *  whether installed users opt into notifications at a higher rate. */
+  | 'pwa_installed'
+  /** User dismissed the install banner ("Not now" snooze or the
+   *  permanent "x"). Paired with `forever` so we can tell a snooze
+   *  from a hard opt-out. */
+  | 'pwa_install_dismissed'
+
   // ── Nearby list ──
   /** User tapped "Use my location" on /nearby. */
   | 'nearby_location_requested'

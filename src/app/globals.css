@@ -4088,6 +4088,117 @@ html {
 }
 
 /* ============================================================
+   PWA install banner
+   ============================================================ */
+
+/* Same pill/card treatment as the push-onboarding banner so the two
+   nudges feel like one system. The install banner is touch-only and
+   gated on the second visit, so the two rarely co-occur; if they do,
+   this one sits slightly higher (see media query) so they stack
+   instead of overlapping. */
+.pwa-install {
+  position: absolute;
+  left: 50%;
+  bottom: 2.25rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: min(94vw, 560px);
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color: var(--color-text);
+  z-index: 6;
+}
+
+.pwa-install__icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(40, 140, 110, 0.15);
+  color: var(--color-brand);
+}
+
+.pwa-install__copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pwa-install__heading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pwa-install__body {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.pwa-install__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pwa-install__dismiss {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.pwa-install__dismiss:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 640px) {
+  .pwa-install {
+    left: 0.75rem;
+    right: 0.75rem;
+    /* Above the Report FAB AND above where the push banner sits, so a
+       signed-in user who qualifies for both sees them stacked. */
+    bottom: 9rem;
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    padding: 0.75rem 2rem 0.75rem 0.85rem;
+  }
+
+  .pwa-install__copy {
+    flex: 1 1 180px;
+  }
+
+  .pwa-install__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin-top: 0.35rem;
+  }
+}
+
+/* ============================================================
    Admin / moderation panel
    ============================================================ */
 
