@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
@@ -17,7 +17,10 @@ import {
   applyTerrain,
   removeHillshade,
 } from '@/lib/mapbox/customLayers';
-import { useMapPreferencesStore } from '@/store/useMapPreferencesStore';
+import {
+  readPersistedViewport,
+  useMapPreferencesStore,
+} from '@/store/useMapPreferencesStore';
 import { fetchIncidentsInBbox, type BBox } from '@/lib/incidents/api';
 import { bboxForTiles, tilesForBbox } from '@/lib/incidents/tile-cache';
 import { useMapStore } from '@/store/useMapStore';
@@ -126,11 +129,21 @@ export function MapView() {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    // Restore the user's last camera position synchronously. We read
+    // localStorage directly (bypassing Zustand's async rehydration)
+    // so MapLibre instantiates at the right place in one shot — no
+    // "Pyrenees default, then flyTo" flash on F5.
+    const savedViewport = readPersistedViewport();
+    const initialCenter: [number, number] = savedViewport
+      ? [savedViewport.lng, savedViewport.lat]
+      : DEFAULT_CENTER;
+    const initialZoom = savedViewport ? savedViewport.zoom : DEFAULT_ZOOM;
+
     const map = new maptilersdk.Map({
       container: containerRef.current,
       style: getBasemap(initialBasemapRef.current).style,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
+      center: initialCenter,
+      zoom: initialZoom,
       pitch: 45,
       // MapTiler SDK auto-mounts these by default; we opt out so they don't
       // end up duplicated alongside the ones we place ourselves.
@@ -205,6 +218,23 @@ export function MapView() {
       debounceId = setTimeout(loadVisibleIncidents, 250);
     };
 
+    // Persist viewport so F5 restores the same camera position. Heavier
+    // debounce than the RPC loader because a localStorage write is
+    // cheap but still synchronous on the main thread — 600 ms keeps
+    // even a fast pan-zoom session to single-digit writes per minute.
+    let savePosId: ReturnType<typeof setTimeout> | null = null;
+    const onMoveEndSave = () => {
+      if (savePosId) clearTimeout(savePosId);
+      savePosId = setTimeout(() => {
+        const c = map.getCenter();
+        useMapPreferencesStore.getState().setLastViewport({
+          lng: c.lng,
+          lat: c.lat,
+          zoom: map.getZoom(),
+        });
+      }, 600);
+    };
+
     map.on('load', () => {
       applyTerrain(map);
       setMapReady(true);
@@ -212,6 +242,7 @@ export function MapView() {
     });
 
     map.on('moveend', onMoveEnd);
+    map.on('moveend', onMoveEndSave);
 
     // Brand fade-while-interacting. We set a data flag on the root
     // element on `movestart` and clear it on `moveend`. The
@@ -235,7 +266,9 @@ export function MapView() {
 
     return () => {
       if (debounceId) clearTimeout(debounceId);
+      if (savePosId) clearTimeout(savePosId);
       map.off('moveend', onMoveEnd);
+      map.off('moveend', onMoveEndSave);
       map.off('movestart', onMoveStart);
       map.off('moveend', onMoveEndFade);
       setInteracting(false);
@@ -354,6 +387,113 @@ export function MapView() {
   const [locating, setLocating] = useState(false);
   const userMarkerRef = useRef<maptilersdk.Marker | null>(null);
 
+  // Shared with `/nearby`. If the key is `'1'` we know the user has
+  // accepted the geolocation prompt at least once on this device, so
+  // we can replay the request silently on subsequent visits.
+  // Duplicated string (not imported) on purpose: the nearby module is
+  // dynamically split out of the initial bundle and we don't want to
+  // pull it back in just to share a constant.
+  const AUTO_LOCATE_STORAGE_KEY = 'montana:nearby-auto-locate';
+
+  /** Draws / moves the green dot for the user's current position.
+   *  Shared between the manual "Locate me" button and the silent
+   *  auto-locate on mount. */
+  const placeUserMarker = useCallback((lng: number, lat: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLngLat([lng, lat]);
+      return;
+    }
+    const el = document.createElement('div');
+    el.style.width = '16px';
+    el.style.height = '16px';
+    el.style.borderRadius = '50%';
+    el.style.background = '#2f8f6f';
+    el.style.border = '3px solid #fff';
+    el.style.boxShadow = '0 0 0 2px rgba(47, 143, 111, 0.35)';
+    userMarkerRef.current = new maptilersdk.Marker({ element: el, anchor: 'center' })
+      .setLngLat([lng, lat])
+      .addTo(map);
+  }, []);
+
+  // Auto-centre on the user's location at first load, but ONLY when:
+  //
+  //   1. There is NO persisted viewport (= absolute first visit, or
+  //      the user wiped storage). After the first session the saved
+  //      viewport always wins — F5 returning the user to wherever
+  //      they last looked beats "snap to me" every time, and matches
+  //      what Google Maps / Komoot / Strava do.
+  //   2. We have strong evidence of prior consent: Permissions API
+  //      says `granted`, or a localStorage flag from a previous fix.
+  //
+  // We never auto-prompt on `prompt`/`unknown` — that's the anti-pattern
+  // iOS Safari penalises. Silent failures are fine (we keep the
+  // viewport from step 1) so the map stays usable even when GPS
+  // is denied / off.
+  useEffect(() => {
+    if (!mapReady) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    // Respect the restored camera position: if we already opened the
+    // map at the user's last viewport, jumping to GPS would feel like
+    // the app overruling them.
+    if (readPersistedViewport()) return;
+
+    let cancelled = false;
+
+    const tryAutoLocate = async () => {
+      let shouldAuto = false;
+      const perms = navigator.permissions;
+      if (perms && typeof perms.query === 'function') {
+        try {
+          const res = await perms.query({ name: 'geolocation' as PermissionName });
+          shouldAuto = res.state === 'granted';
+        } catch {
+          /* fall through to localStorage check */
+        }
+      }
+      if (!shouldAuto) {
+        try {
+          shouldAuto = localStorage.getItem(AUTO_LOCATE_STORAGE_KEY) === '1';
+        } catch {
+          /* storage disabled — give up silently */
+        }
+      }
+      if (!shouldAuto || cancelled) return;
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (cancelled) return;
+          const map = mapRef.current;
+          if (!map) return;
+          const { latitude: lat, longitude: lng } = pos.coords;
+          map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 12) });
+          placeUserMarker(lng, lat);
+        },
+        () => {
+          // Silent failure on purpose. The user can still tap the
+          // locate button to get a real error message if they want
+          // to debug. Clear the flag on hard denial so we stop
+          // auto-prompting until they consent again.
+          try {
+            localStorage.removeItem(AUTO_LOCATE_STORAGE_KEY);
+          } catch {
+            /* ignore */
+          }
+        },
+        { enableHighAccuracy: false, timeout: 8_000, maximumAge: 5 * 60_000 },
+      );
+    };
+
+    void tryAutoLocate();
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only after mapReady flips: re-running on placeUserMarker
+    // identity changes would re-jump the camera on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
   const handleLocate = async () => {
     const map = mapRef.current;
     if (!map) return;
@@ -393,31 +533,24 @@ export function MapView() {
       (pos) => {
         setLocating(false);
         const { latitude: lat, longitude: lng } = pos.coords;
-
         map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 13) });
-
-        // Simple dot marker; re-used across subsequent presses instead
-        // of stacking new DOM elements on the map.
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLngLat([lng, lat]);
-        } else {
-          const el = document.createElement('div');
-          el.style.width = '16px';
-          el.style.height = '16px';
-          el.style.borderRadius = '50%';
-          el.style.background = '#2f8f6f';
-          el.style.border = '3px solid #fff';
-          el.style.boxShadow = '0 0 0 2px rgba(47, 143, 111, 0.35)';
-          userMarkerRef.current = new maptilersdk.Marker({
-            element: el,
-            anchor: 'center',
-          })
-            .setLngLat([lng, lat])
-            .addTo(map);
+        placeUserMarker(lng, lat);
+        // Remember consent so future loads can auto-centre silently.
+        try {
+          localStorage.setItem(AUTO_LOCATE_STORAGE_KEY, '1');
+        } catch {
+          /* private mode / storage disabled — no memory, fine */
         }
       },
       (err) => {
         setLocating(false);
+        if (err.code === 1) {
+          try {
+            localStorage.removeItem(AUTO_LOCATE_STORAGE_KEY);
+          } catch {
+            /* ignore */
+          }
+        }
         const msg =
           err.code === 1
             ? buildPermissionDeniedMessage(navigator.userAgent)
