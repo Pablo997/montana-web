@@ -116,61 +116,81 @@ export function IncidentMarkers({ map }: Props) {
   // once even though `styledata` keeps firing during tile load.
   useEffect(() => {
     let added = false;
+    let cancelled = false;
 
     const tryRegister = () => {
-      if (added) return;
-      if (!map.isStyleLoaded()) return;
+      if (added || cancelled) return;
 
-      if (!map.getSource(SOURCE_ID)) {
-        map.addSource(SOURCE_ID, {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-          cluster: true,
-          clusterMaxZoom: CLUSTER_MAX_ZOOM,
-          clusterRadius: CLUSTER_RADIUS,
-          clusterProperties: {
-            maxSev: ['max', ['get', 'severityWeight']],
-          },
-        });
+      // We used to gate on `map.isStyleLoaded()` here, but MapLibre 5
+      // sometimes leaves that flag stuck on `false` during the brief
+      // window after `setStyle()` even though the style spec is
+      // actually parsed and addSource would succeed. Just attempt the
+      // add and catch the "Style is not done loading" error — it's
+      // cheaper than racing the flag and far more reliable.
+      try {
+        if (!map.getSource(SOURCE_ID)) {
+          map.addSource(SOURCE_ID, {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+            cluster: true,
+            clusterMaxZoom: CLUSTER_MAX_ZOOM,
+            clusterRadius: CLUSTER_RADIUS,
+            clusterProperties: {
+              maxSev: ['max', ['get', 'severityWeight']],
+            },
+          });
+        }
+
+        if (!map.getLayer(GHOST_CLUSTER_LAYER_ID)) {
+          map.addLayer({
+            id: GHOST_CLUSTER_LAYER_ID,
+            type: 'circle',
+            source: SOURCE_ID,
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-radius': 1,
+              'circle-opacity': 0,
+              'circle-stroke-width': 0,
+            },
+          });
+        }
+
+        if (!map.getLayer(GHOST_POINT_LAYER_ID)) {
+          map.addLayer({
+            id: GHOST_POINT_LAYER_ID,
+            type: 'circle',
+            source: SOURCE_ID,
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-radius': 1,
+              'circle-opacity': 0,
+              'circle-stroke-width': 0,
+            },
+          });
+        }
+
+        added = true;
+        map.off('styledata', tryRegister);
+        map.off('idle', tryRegister);
+      } catch {
+        // Style still loading. We'll be called again from `styledata`
+        // or `idle` until it succeeds.
       }
-
-      if (!map.getLayer(GHOST_CLUSTER_LAYER_ID)) {
-        map.addLayer({
-          id: GHOST_CLUSTER_LAYER_ID,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-radius': 1,
-            'circle-opacity': 0,
-            'circle-stroke-width': 0,
-          },
-        });
-      }
-
-      if (!map.getLayer(GHOST_POINT_LAYER_ID)) {
-        map.addLayer({
-          id: GHOST_POINT_LAYER_ID,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: ['!', ['has', 'point_count']],
-          paint: {
-            'circle-radius': 1,
-            'circle-opacity': 0,
-            'circle-stroke-width': 0,
-          },
-        });
-      }
-
-      added = true;
-      map.off('styledata', tryRegister);
     };
 
     tryRegister();
-    if (!added) map.on('styledata', tryRegister);
+    if (!added) {
+      map.on('styledata', tryRegister);
+      // Belt-and-braces: `idle` fires once every tile / animation
+      // settles. Catches the case where `styledata` already fired
+      // for the final time before this effect bound its listener.
+      map.on('idle', tryRegister);
+    }
 
     return () => {
+      cancelled = true;
       map.off('styledata', tryRegister);
+      map.off('idle', tryRegister);
     };
   }, [map]);
 

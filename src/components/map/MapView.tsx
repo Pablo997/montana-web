@@ -167,11 +167,18 @@ export function MapView() {
 
     const loadVisibleIncidents = () => {
       const bounds = map.getBounds();
+      // Clamp longitudes to [-180, 180]. When the user zooms out far
+      // enough MapLibre wraps the world and returns west < -180 or
+      // east > 180 (the camera shows multiple copies of the globe).
+      // The bbox we send to PostGIS must stay in the canonical WGS84
+      // range or the Zod schema rejects the payload before the RPC
+      // even fires, leaving the map blank. Lat is unaffected because
+      // the projection caps at ±85.05 well before the legal range.
       const viewport: BBox = {
-        minLng: bounds.getWest(),
-        minLat: bounds.getSouth(),
-        maxLng: bounds.getEast(),
-        maxLat: bounds.getNorth(),
+        minLng: Math.max(-180, bounds.getWest()),
+        minLat: Math.max(-90, bounds.getSouth()),
+        maxLng: Math.min(180, bounds.getEast()),
+        maxLat: Math.min(90, bounds.getNorth()),
       };
 
       const missing = tilesForBbox(viewport).filter((key) => !hydratedTiles.has(key));
@@ -274,24 +281,20 @@ export function MapView() {
       /* not all SDK versions accept null here — defensive only */
     }
 
-    // `style.load` is MapLibre's "the new style spec is fully parsed
-    // and applied" event — fires exactly once per `setStyle()` call.
-    // It's the right hook for re-attaching our custom sources / layers:
-    //
-    //   * `styledata` fires repeatedly during a style swap (once per
-    //     source ready) and `isStyleLoaded()` flickers between true
-    //     and false during the same window, which previously made
-    //     `IncidentMarkers` race the parser and crash with
-    //     "Style is not done loading" when it tried to add its
-    //     GeoJSON source.
-    //   * `idle` would also work but only fires once tiles are
-    //     loaded, which can be seconds later on a slow network — we
-    //     don't want to hold `mapReady` that long.
-    map.once('style.load', () => {
+    // MapLibre 5 fires `styledata` repeatedly while a style swap is
+    // in flight (once per source ready); only when `isStyleLoaded()`
+    // returns true is the new style fully parsed and safe to mutate.
+    // There is NO `style.load` event despite older Mapbox docs — using
+    // it silently left `mapReady` stuck on `false` for the whole
+    // session, which prevented `IncidentMarkers` from ever mounting.
+    const onStyleData = () => {
+      if (!map.isStyleLoaded()) return;
+      map.off('styledata', onStyleData);
       applyTerrain(map);
       if (hillshadeEnabledRef.current) applyHillshade(map);
       setMapReady(true);
-    });
+    };
+    map.on('styledata', onStyleData);
     map.setStyle(nextStyle);
   }, [basemapId]);
 
