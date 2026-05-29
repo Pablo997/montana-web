@@ -246,10 +246,18 @@ export function MapView() {
   }, []);
 
   // Basemap swap. `setStyle()` wipes every custom source and layer,
-  // so we wait for the `styledata` event MapLibre fires once the new
-  // style finishes loading, then re-attach terrain + hillshade. The
-  // IncidentMarkers component re-mounts through its `key` prop below
-  // and rebuilds its own GeoJSON source from scratch.
+  // so we re-attach terrain + hillshade once the new style finishes
+  // loading. `IncidentMarkers` re-mounts via the `key={basemapId}`
+  // prop below and rebuilds its own GeoJSON source from scratch using
+  // the same retry-with-styledata-and-idle pattern as this effect.
+  //
+  // Crucially we do NOT toggle `mapReady` during the swap. Doing so
+  // unmounted `IncidentMarkers` for the entire transition, and on
+  // basemaps where `isStyleLoaded()` never flipped back to `true`
+  // (a MapLibre 5 quirk on certain MapTiler styles) the component
+  // would never remount and the icons disappeared until a full F5.
+  // Keeping `mapReady` latched after the initial `load` lets the
+  // markers layer ride out the swap on its own.
   //
   // We diff against `appliedBasemapRef` because the prefs store gets
   // hydrated from localStorage during the first commit; if we didn't
@@ -263,7 +271,6 @@ export function MapView() {
     if (appliedBasemapRef.current === basemapId) return;
     appliedBasemapRef.current = basemapId;
 
-    setMapReady(false);
     const nextStyle = getBasemap(basemapId).style;
 
     // Detach 3D terrain BEFORE the style swap. MapLibre keeps a
@@ -281,21 +288,39 @@ export function MapView() {
       /* not all SDK versions accept null here — defensive only */
     }
 
-    // MapLibre 5 fires `styledata` repeatedly while a style swap is
-    // in flight (once per source ready); only when `isStyleLoaded()`
-    // returns true is the new style fully parsed and safe to mutate.
-    // There is NO `style.load` event despite older Mapbox docs — using
-    // it silently left `mapReady` stuck on `false` for the whole
-    // session, which prevented `IncidentMarkers` from ever mounting.
-    const onStyleData = () => {
+    // Retry-on-event because `isStyleLoaded()` is unreliable right
+    // after `setStyle()` — it can stay `false` even when the spec is
+    // ready. We listen for BOTH `styledata` (fires per source) and
+    // `idle` (fires once everything has settled) and unbind whichever
+    // didn't get to run.
+    let done = false;
+    const reapply = () => {
+      if (done) return;
       if (!map.isStyleLoaded()) return;
-      map.off('styledata', onStyleData);
-      applyTerrain(map);
-      if (hillshadeEnabledRef.current) applyHillshade(map);
-      setMapReady(true);
+      done = true;
+      map.off('styledata', reapply);
+      map.off('idle', reapply);
+      try {
+        applyTerrain(map);
+      } catch {
+        /* style may have been swapped again before we finished */
+      }
+      if (hillshadeEnabledRef.current) {
+        try {
+          applyHillshade(map);
+        } catch {
+          /* ditto */
+        }
+      }
     };
-    map.on('styledata', onStyleData);
+    map.on('styledata', reapply);
+    map.on('idle', reapply);
     map.setStyle(nextStyle);
+
+    return () => {
+      map.off('styledata', reapply);
+      map.off('idle', reapply);
+    };
   }, [basemapId]);
 
   // The `styledata` callback above closes over a stale value of
